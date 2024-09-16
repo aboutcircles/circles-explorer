@@ -1,11 +1,14 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
 import defaultConfig from 'tailwindcss/defaultConfig'
-// eslint-disable-next-line import/no-extraneous-dependencies
 import formsPlugin from '@tailwindcss/forms'
+import { nextui } from '@nextui-org/react'
 
 /** @type {import('tailwindcss/types').Config} */
 const config = {
-	content: ['index.html', 'src/**/*.tsx'],
+	content: [
+		'index.html',
+		'src/**/*.tsx',
+		'node_modules/@nextui-org/theme/dist/**/*.{js,ts,jsx,tsx}'
+	],
 	theme: {
 		fontFamily: {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -15,7 +18,7 @@ const config = {
 		}
 	},
 	experimental: { optimizeUniversalDefaults: true },
-	plugins: [formsPlugin]
+	plugins: [formsPlugin, nextui()]
 }
 
 export default config

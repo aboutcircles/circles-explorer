@@ -90,20 +90,7 @@
 		"@typescript-eslint/no-restricted-imports": "off",
 
 		"import/no-deprecated": "error",
-		"import/order": "off",
-		"import/no-extraneous-dependencies": [
-			"error",
-			{
-				"devDependencies": [
-					"cypress.config.ts",
-					"vite.config.ts",
-					"src/setupTests.ts",
-					"src/testUtils.tsx",
-					"src/mocks/**",
-					"**/__tests__/*.{ts,tsx}"
-				]
-			}
-		],
+		"import/no-extraneous-dependencies": "off",
 
 		"react/no-did-update-set-state": "off",
 		"react/no-find-dom-node": "off",
