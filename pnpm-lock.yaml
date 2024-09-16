@@ -16,6 +16,9 @@ importers:
       '@tanstack/react-query':
         specifier: 5.29.2
         version: 5.29.2(react@18.2.0)
+      axios:
+        specifier: ^1.7.7
+        version: 1.7.7(debug@4.3.4)
       framer-motion:
         specifier: ^11.5.4
         version: 11.5.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -4279,10 +4282,10 @@ packages:
       }
     engines: { node: '>=4' }
 
-  axios@1.7.5:
+  axios@1.7.7:
     resolution:
       {
-        integrity: sha512-fZu86yCo+svH3uqJ/yTdQ0QHpQu5oL+/QE+QPSv6BZSkDAoky9vytxp7u5qk83OJFS3kEBcesWni9WTZAv3tSw==
+        integrity: sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==
       }
 
   axobject-query@3.2.1:
@@ -4471,16 +4474,10 @@ packages:
       }
     engines: { node: '>= 6' }
 
-  caniuse-lite@1.0.30001572:
+  caniuse-lite@1.0.30001660:
     resolution:
       {
-        integrity: sha512-1Pbh5FLmn5y4+QhNyJE9j3/7dK44dGB83/ZMjv/qJk86TvDbjk0LosiZo0i0WB0Vx607qMX9jYrn1VLHCkN4rw==
-      }
-
-  caniuse-lite@1.0.30001608:
-    resolution:
-      {
-        integrity: sha512-cjUJTQkk9fQlJR2s4HMuPMvTiRggl0rAVMtthQuyOlDWuqHXqN8azLq+pi8B2TjwKJ32diHjUqRIKeFX4z1FoA==
+        integrity: sha512-GacvNTTuATm26qC74pt+ad1fW15mlQ/zuTzzY1ZoIzECTP8HURDfF43kNxPgf7H1jmelCBQTTbBNxdSXOA7Bqg==
       }
 
   caseless@0.12.0:
@@ -13864,7 +13861,7 @@ snapshots:
   autoprefixer@10.4.19(postcss@8.4.38):
     dependencies:
       browserslist: 4.23.0
-      caniuse-lite: 1.0.30001608
+      caniuse-lite: 1.0.30001660
       fraction.js: 4.3.7
       normalize-range: 0.1.2
       picocolors: 1.0.0
@@ -13883,7 +13880,7 @@ snapshots:
 
   axe-core@4.7.0: {}
 
-  axios@1.7.5(debug@4.3.4):
+  axios@1.7.7(debug@4.3.4):
     dependencies:
       follow-redirects: 1.15.6(debug@4.3.4)
       form-data: 4.0.0
@@ -13960,14 +13957,14 @@ snapshots:
 
   browserslist@4.22.2:
     dependencies:
-      caniuse-lite: 1.0.30001572
+      caniuse-lite: 1.0.30001660
       electron-to-chromium: 1.4.616
       node-releases: 2.0.14
       update-browserslist-db: 1.0.13(browserslist@4.22.2)
 
   browserslist@4.23.0:
     dependencies:
-      caniuse-lite: 1.0.30001608
+      caniuse-lite: 1.0.30001660
       electron-to-chromium: 1.4.733
       node-releases: 2.0.14
       update-browserslist-db: 1.0.13(browserslist@4.23.0)
@@ -14004,9 +14001,7 @@ snapshots:
 
   camelcase-css@2.0.1: {}
 
-  caniuse-lite@1.0.30001572: {}
-
-  caniuse-lite@1.0.30001608: {}
+  caniuse-lite@1.0.30001660: {}
 
   caseless@0.12.0: {}
 
@@ -17540,7 +17535,7 @@ snapshots:
 
   wait-on@7.2.0(debug@4.3.4):
     dependencies:
-      axios: 1.7.5(debug@4.3.4)
+      axios: 1.7.7(debug@4.3.4)
       joi: 17.11.0
       lodash: 4.17.21
       minimist: 1.2.8
