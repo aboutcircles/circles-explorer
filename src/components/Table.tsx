@@ -17,20 +17,22 @@ export interface Column {
 	align?: 'center' | 'end' | 'start'
 }
 
-type Key = number | string
+export type Key = number | string
 export type Row = Record<string, number | string>
+
+type RenderCellReturnType = JSX.Element | number | string
 
 interface TableProperties extends NextUITableProperties {
 	ariaLabel?: string
 	columns: Column[]
 	rows: Row[]
-	renderCell?: (row: Row, columnKey: Key) => React.ReactNode
+	renderCell?: (row: Row, columnKey: Key) => RenderCellReturnType
 	isLoading: boolean
 	selectedKeys?: string[]
 }
 
-const defaultRenderCell = (row: Row, columnKey: Key): React.ReactNode =>
-	getKeyValue(row, columnKey) as React.ReactNode
+const defaultRenderCell = (row: Row, columnKey: Key): RenderCellReturnType =>
+	getKeyValue(row, columnKey)
 
 export function Table({
 	ariaLabel,

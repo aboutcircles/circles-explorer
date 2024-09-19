@@ -5,7 +5,7 @@ import { EventsTable } from './EventsTable'
 
 export default function Main(): ReactElement {
 	return (
-		<div>
+		<div className='m-auto flex max-w-[1200px] flex-col'>
 			<Filter />
 
 			<EventsTable />

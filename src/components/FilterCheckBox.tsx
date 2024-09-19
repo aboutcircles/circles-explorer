@@ -22,10 +22,12 @@ const checkbox = tv({
 
 interface FilterCheckBoxProperties {
 	label: string
+	className: string
 }
 
 export function FilterCheckBox({
-	label
+	label,
+	className
 }: FilterCheckBoxProperties): React.ReactElement {
 	const {
 		isSelected,
@@ -40,24 +42,26 @@ export function FilterCheckBox({
 	const styles = checkbox({ isSelected, isFocusVisible })
 
 	return (
-		// eslint-disable-next-line jsx-a11y/label-has-associated-control
-		<label {...getBaseProps()}>
-			<VisuallyHidden>
-				<input {...getInputProps()} />
-			</VisuallyHidden>
-			{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-			{/* @ts-expect-error */}
-			<Chip
-				classNames={{
-					base: styles.base(),
-					content: styles.content()
-				}}
-				color='primary'
-				variant='faded'
-				{...getLabelProps()}
-			>
-				{label}
-			</Chip>
-		</label>
+		<div className={className}>
+			{/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+			<label {...getBaseProps()}>
+				<VisuallyHidden>
+					<input {...getInputProps()} />
+				</VisuallyHidden>
+				{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+				{/* @ts-expect-error */}
+				<Chip
+					classNames={{
+						base: styles.base(),
+						content: styles.content()
+					}}
+					color='primary'
+					variant='faded'
+					{...getLabelProps()}
+				>
+					{label}
+				</Chip>
+			</label>
+		</div>
 	)
 }

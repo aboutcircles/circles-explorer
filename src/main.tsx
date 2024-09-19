@@ -4,8 +4,11 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { NextUIProvider } from '@nextui-org/react'
 import { registerSW } from 'virtual:pwa-register'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 import './index.css'
 
+dayjs.extend(relativeTime)
 registerSW()
 
 const MAX_RETRIES = 1
