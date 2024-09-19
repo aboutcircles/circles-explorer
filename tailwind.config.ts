@@ -18,7 +18,36 @@ const config = {
 		}
 	},
 	experimental: { optimizeUniversalDefaults: true },
-	plugins: [formsPlugin, nextui()]
+	plugins: [
+		formsPlugin,
+		nextui({
+			addCommonColors: true,
+			themes: {
+				light: {
+					colors: {
+						background: '#FFFFFF', // or DEFAULT
+						foreground: '#11181C', // or 50 to 900 DEFAULT
+						primary: {
+							foreground: '#FFFFFF',
+							DEFAULT: '#006FEE'
+						}
+						// ... rest of the colors
+					}
+				},
+				dark: {
+					colors: {
+						background: '#050b15', // or DEFAULT
+						foreground: '#ECEDEE', // or 50 to 900 DEFAULT
+						primary: {
+							foreground: '#FFFFFF',
+							DEFAULT: '#006FEE'
+						},
+						secondary: {}
+					}
+				}
+			}
+		})
+	]
 }
 
 export default config
