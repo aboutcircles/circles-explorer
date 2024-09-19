@@ -3,48 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import type { UseQueryResult } from '@tanstack/react-query'
 
 import { CIRCLES_INDEXER_URL } from 'constants/common'
-
+import type { CirclesEventsResponse } from 'types/events'
 import logger from 'services/logger'
 
-export type EventType = 'CrcV1_HubTransfer' | 'CrcV1_Transfer' | 'CrcV1_Trust'
-
-export interface BaseEventValues {
-	blockNumber: string
-	logIndex: string
-	timestamp: string
-	transactionHash: string
-	transactionIndex: string
-}
-
-export interface HubTransferEventValues {
-	amount: string
-	from: string
-	to: string
-}
-
-export interface TransferEventValues extends HubTransferEventValues {
-	tokenAddress: string
-}
-
-export interface TrustEventValues {
-	canSendTo: string
-	limit: string
-	user: string
-}
-
-export interface EventResponse {
-	event: EventType
-	values: BaseEventValues &
-		(HubTransferEventValues | TransferEventValues | TrustEventValues)
-}
-
-export interface CirclesEventsResponse {
-	result: EventResponse[]
-}
-
-export type Event = EventResponse['values'] & Pick<EventResponse, 'event'>
-
-const FETCH_EVENTS_FROM_BLOCK = 30_282_299
+// const FETCH_EVENTS_FROM_BLOCK = 30_282_299
+const FETCH_EVENTS_FROM_BLOCK = 35_068_365
 
 // query
 const CIRCLES_EVENTS_QUERY_KEY = 'circlesEvents'
@@ -71,7 +34,7 @@ export const useFetchCirclesEvents = (): UseQueryResult<Event[]> =>
 					key: `${event.values.blockNumber}-${event.values.transactionHash}-${event.values.logIndex}`
 				}))
 
-				console.log(response.data.result, { events })
+				logger.log(response.data.result, { events })
 
 				return events
 			} catch {

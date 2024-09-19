@@ -38,6 +38,10 @@
 		"no-restricted-exports": "off",
 		"react/jsx-props-no-spreading": "off",
 		"unicorn/no-null": "off",
+		"@typescript-eslint/no-unsafe-call": "off",
+		"@typescript-eslint/no-unsafe-return": "off",
+		"@typescript-eslint/explicit-function-return-type": "off",
+		"@typescript-eslint/no-unsafe-assignment": "off",
 
 		"no-dupe-else-if": "error",
 		"no-promise-executor-return": "error",
