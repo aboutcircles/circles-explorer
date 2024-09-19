@@ -65,7 +65,7 @@ export function Table({
 				emptyContent='No rows to display.'
 			>
 				{(item) => (
-					<TableRow key={item.id}>
+					<TableRow key={item.key}>
 						{(columnKey) => (
 							<TableCell>{renderCell(item, columnKey)}</TableCell>
 						)}

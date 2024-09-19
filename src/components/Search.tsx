@@ -1,17 +1,29 @@
+import { useState, useCallback } from 'react'
 import { Input, Button } from '@nextui-org/react'
 import type React from 'react'
+import { isAddress } from 'viem'
 
 interface SearchProperties {
-	onChange: React.ChangeEventHandler<HTMLInputElement>
-	onSubmit: () => void
+	handleSubmit: (search: string) => void
 	placeholder: string
 }
 
 export function Search({
-	onChange,
-	onSubmit,
+	handleSubmit,
 	placeholder
 }: SearchProperties): React.ReactElement {
+	const [search, setSearch] = useState<string>('')
+
+	const onChange = useCallback(
+		(event_: { target: { value: React.SetStateAction<string> } }) =>
+			setSearch(event_.target.value),
+		[]
+	)
+
+	const onSubmit = useCallback(() => {
+		handleSubmit(search)
+	}, [handleSubmit, search])
+
 	return (
 		<div className='flex'>
 			<Input
@@ -43,7 +55,12 @@ export function Search({
 				onChange={onChange}
 			/>
 
-			<Button onPress={onSubmit} className='ml-2' color='primary'>
+			<Button
+				onPress={onSubmit}
+				className='ml-2'
+				color='primary'
+				isDisabled={!isAddress(search)}
+			>
 				<img src='/icons/search.svg' alt='' className='fg-white h-5 w-5' />
 			</Button>
 		</div>

@@ -5,14 +5,19 @@ import type { UseQueryResult } from '@tanstack/react-query'
 import { CIRCLES_INDEXER_URL } from 'constants/common'
 import type { CirclesEventsResponse } from 'types/events'
 import logger from 'services/logger'
+import { useCirclesSdk } from '../providers/CirclesSdkProvider'
 
 // const FETCH_EVENTS_FROM_BLOCK = 30_282_299
-const FETCH_EVENTS_FROM_BLOCK = 35_068_365
+// const FETCH_EVENTS_FROM_BLOCK = 35_068_365
+const FETCH_EVENTS_FROM_BLOCK = 36_068_365
 
 // query
 const CIRCLES_EVENTS_QUERY_KEY = 'circlesEvents'
-export const useFetchCirclesEvents = (): UseQueryResult<Event[]> =>
-	useQuery({
+export const useFetchCirclesEvents = (): UseQueryResult<Event[]> => {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	const { sdk } = useCirclesSdk()
+
+	return useQuery({
 		queryKey: [CIRCLES_EVENTS_QUERY_KEY],
 		queryFn: async () => {
 			try {
@@ -21,7 +26,8 @@ export const useFetchCirclesEvents = (): UseQueryResult<Event[]> =>
 					{
 						method: 'circles_events',
 						params: [
-							'0xde374ece6fa50e781e81aac78e811b33d16912c7',
+							// '0xde374ece6fa50e781e81aac78e811b33d16912c7',
+							null,
 							FETCH_EVENTS_FROM_BLOCK,
 							null
 						]
@@ -43,3 +49,4 @@ export const useFetchCirclesEvents = (): UseQueryResult<Event[]> =>
 			}
 		}
 	})
+}

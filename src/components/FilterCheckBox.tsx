@@ -23,11 +23,15 @@ const checkbox = tv({
 interface FilterCheckBoxProperties {
 	label: string
 	className: string
+	isDefaultSelected: boolean
+	handleChange: (value: boolean) => void
 }
 
 export function FilterCheckBox({
 	label,
-	className
+	className,
+	isDefaultSelected,
+	handleChange
 }: FilterCheckBoxProperties): React.ReactElement {
 	const {
 		isSelected,
@@ -36,7 +40,8 @@ export function FilterCheckBox({
 		getLabelProps,
 		getInputProps
 	} = useCheckbox({
-		defaultSelected: true
+		defaultSelected: isDefaultSelected,
+		onValueChange: handleChange
 	})
 
 	const styles = checkbox({ isSelected, isFocusVisible })

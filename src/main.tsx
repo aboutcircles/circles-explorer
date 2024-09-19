@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { NextUIProvider } from '@nextui-org/react'
+import { CirclesSdkProvider } from 'providers/CirclesSdkProvider'
 import { registerSW } from 'virtual:pwa-register'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
@@ -26,11 +27,13 @@ if (container) {
 	const root = createRoot(container)
 	root.render(
 		<StrictMode>
-			<QueryClientProvider client={queryClient}>
-				<NextUIProvider>
-					<App />
-				</NextUIProvider>
-			</QueryClientProvider>
+			<CirclesSdkProvider>
+				<QueryClientProvider client={queryClient}>
+					<NextUIProvider>
+						<App />
+					</NextUIProvider>
+				</QueryClientProvider>
+			</CirclesSdkProvider>
 		</StrictMode>
 	)
 }

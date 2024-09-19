@@ -10,6 +10,18 @@ overrides:
 importers:
   .:
     dependencies:
+      '@circles-sdk/adapter-ethers':
+        specifier: ^0.9.0
+        version: 0.9.0
+      '@circles-sdk/data':
+        specifier: ^0.9.0
+        version: 0.9.0
+      '@circles-sdk/profiles':
+        specifier: ^0.9.0
+        version: 0.9.0
+      '@circles-sdk/sdk':
+        specifier: ^0.9.0
+        version: 0.9.0
       '@nextui-org/react':
         specifier: ^2.4.8
         version: 2.4.8(@types/react@18.2.76)(framer-motion@11.5.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.2.3)(typescript@5.4.5)))
@@ -22,6 +34,9 @@ importers:
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
+      ethers:
+        specifier: ^6.13.2
+        version: 6.13.2
       framer-motion:
         specifier: ^11.5.4
         version: 11.5.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -34,9 +49,6 @@ importers:
       react-router-dom:
         specifier: 6.22.3
         version: 6.22.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
-      relativeTime:
-        specifier: link:dayjs/plugin/relativeTime
-        version: link:dayjs/plugin/relativeTime
       viem:
         specifier: ^2.21.9
         version: 2.21.9(typescript@5.4.5)
@@ -219,6 +231,12 @@ packages:
     resolution:
       {
         integrity: sha512-nA9XHtlAkYfJxY7bce8DcN7eKxWWCWkU+1GR9d+U6MbNpfwQp8TI7vqOsBsMcHoT4mBu2kypKoSKnghEzOOq5Q==
+      }
+
+  '@adraffy/ens-normalize@1.10.1':
+    resolution:
+      {
+        integrity: sha512-96Z2IP3mYmF1Xg2cDm8f1gWGf/HUVedQ3FMifV4kG/PQ4yEP51xDtRAEfhVNt5f/uzpNkZHwWQuUcu6D6K+Ekw==
       }
 
   '@alloc/quick-lru@5.2.0':
@@ -1128,6 +1146,54 @@ packages:
       }
     engines: { node: '>=6.9.0' }
 
+  '@circles-sdk/abi-v1@0.9.0':
+    resolution:
+      {
+        integrity: sha512-9RM50F7TD84kw0l4IjOW4hFchgukzwV717iPRtC1r+qQjnmHwOo12aAItGINrR0TTWQ3r3dDwWc+VMgaS3Npmg==
+      }
+
+  '@circles-sdk/abi-v2@0.9.0':
+    resolution:
+      {
+        integrity: sha512-d4s8TjcVa1cD9P1bAZWJXB7ndxk4Z5XbjHihAr9cjhVkoDOlO76HxpyYbTKQVpLOV3V2UYNzfG00ZljEWzH9fg==
+      }
+
+  '@circles-sdk/adapter-ethers@0.9.0':
+    resolution:
+      {
+        integrity: sha512-Hk8dc8y85UvbIVLad/jiEL+t36skNWAH+WB6Lb+X8IbiiD1aeaDQOHy6gAke+/Tt2EEuI4QP423Uzkh51bKKwQ==
+      }
+
+  '@circles-sdk/adapter@0.9.0':
+    resolution:
+      {
+        integrity: sha512-N5jYWFuUluDAnEkPaBcH4PY3L/sSZg9wv+g4T2jK9wB786r42Wf1+5hW8JlXELy7MgIxf4zz9AEaQhkFwrSE3A==
+      }
+
+  '@circles-sdk/data@0.9.0':
+    resolution:
+      {
+        integrity: sha512-Dl0zjJoTj0M3ys6JJhB1YgoH0CGkPQHdRyZMRL3rbxcfyS2C17VhvnlYxQaV2uKAJNmgxpCoTovpejTEF2l+QA==
+      }
+
+  '@circles-sdk/profiles@0.9.0':
+    resolution:
+      {
+        integrity: sha512-8oldldn1ayI0wjBQg5wUxsRe9JikM9HUYSm3TjAShE/rCgc5nIdEerYYwxnXKtEdzCGsgdZ8bCpAQ6rGkk232A==
+      }
+
+  '@circles-sdk/sdk@0.9.0':
+    resolution:
+      {
+        integrity: sha512-tlGgHnqPPrGp4tUTtHnZ7STrddMV/5Ul0NSqG7JF3Ay8yay61D30U3kTuDqd6LdUXDTveAMgsad/SoWZ9zuNZQ==
+      }
+
+  '@circles-sdk/utils@0.9.0':
+    resolution:
+      {
+        integrity: sha512-aXgndsjfgRS71aR7PmsS8oHwd9+NKC9YmhQ+EOktK1pDPp32VOz8EAPDEtNUDdnOfiXaQiRRxK+wOrCUrMb2Jw==
+      }
+
   '@colors/colors@1.5.0':
     resolution:
       {
@@ -1646,6 +1712,12 @@ packages:
     resolution:
       {
         integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==
+      }
+
+  '@multiformats/base-x@4.0.1':
+    resolution:
+      {
+        integrity: sha512-eMk0b9ReBbV23xXU693TAIrLyeO5iTgBZGSJfpqriG8UkYvr/hC9u9pyMlAakDNHWmbhMZCDs6KQO0jzKD8OTw==
       }
 
   '@nabla/vite-plugin-eslint@2.0.2':
@@ -2346,11 +2418,24 @@ packages:
       react: '>=18'
       react-dom: '>=18'
 
+  '@noble/curves@1.2.0':
+    resolution:
+      {
+        integrity: sha512-oYclrNgRaM9SsBUBVbb8M6DTV7ZHRTKugureoYEncY5c65HOmRzvSiTE3y5CYaPYJA/GVkrhXEoF0M3Ya9PMnw==
+      }
+
   '@noble/curves@1.4.0':
     resolution:
       {
         integrity: sha512-p+4cb332SFCrReJkCYe8Xzm0OWi4Jji5jVdIZRL/PmacmDkFNw6MrrV+gGpiPxLHbV+zKFRywUWbaseT+tZRXg==
       }
+
+  '@noble/hashes@1.3.2':
+    resolution:
+      {
+        integrity: sha512-MVC8EAQp7MvEcm30KWENFjgR+Mkmf+D189XJTkFIlwohU5hcBbn1ZkKq7KVTi2Hme3PMGF390DaL52beVrIihQ==
+      }
+    engines: { node: '>= 16' }
 
   '@noble/hashes@1.4.0':
     resolution:
@@ -3709,6 +3794,12 @@ packages:
         integrity: sha512-8wTvZawATi/lsmNu10/j2hk1KEP0IvjubqPE3cu1Xz7xfXXt5oCq3SNUz4fMIP4XGF9Ky+Ue2tBA3hcS7LSBlA==
       }
 
+  '@types/node@18.15.13':
+    resolution:
+      {
+        integrity: sha512-N+0kuo9KgrUQ1Sn/ifDXsvg0TTleP7rIy4zOBGECxAljqvqfqpTfzx0Q1NUedOixRMBfe2Whhb056a42cWs26Q==
+      }
+
   '@types/node@18.19.31':
     resolution:
       {
@@ -4025,6 +4116,12 @@ packages:
       }
     engines: { node: '>=0.4.0' }
     hasBin: true
+
+  aes-js@4.0.0-beta.5:
+    resolution:
+      {
+        integrity: sha512-G965FqalsNyrPqgEGON7nIx1e/OVENSgiEIzyC63haUMuvNnwIgIjMs52hlTCKhkBny7A2ORNlfY9Zu+jmGk1Q==
+      }
 
   agent-base@7.1.0:
     resolution:
@@ -4416,6 +4513,12 @@ packages:
     resolution:
       {
         integrity: sha512-qeFIXtP4MSoi6NLqO12WfqARWWuCKi2Rn/9hJLEmtB5yTNr9DqFWkJRCf2qShWzPeAMRnOgCrq0sg/KLv5ES9w==
+      }
+
+  bignumber.js@9.1.2:
+    resolution:
+      {
+        integrity: sha512-2/mKyZH9K85bzOEfhXDBFZTGd1CTs+5IHpeFQo9luiBG7hghdC851Pj2WAhb6E3R6b9tZj/XKhbg4fum+Kepug==
       }
 
   binary-extensions@2.2.0:
@@ -5661,6 +5764,13 @@ packages:
         integrity: sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==
       }
     engines: { node: '>=0.10.0' }
+
+  ethers@6.13.2:
+    resolution:
+      {
+        integrity: sha512-9VkriTTed+/27BGuY1s0hf441kqwHJ1wtN2edksEtiRvXx+soxRX3iSXTfFqq2+YwrOqbDoTHjIhQnjJRlzKmg==
+      }
+    engines: { node: '>=14.0.0' }
 
   event-stream@3.3.4:
     resolution:
@@ -7610,6 +7720,27 @@ packages:
         integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==
       }
 
+  multibase@4.0.6:
+    resolution:
+      {
+        integrity: sha512-x23pDe5+svdLz/k5JPGCVdfn7Q5mZVMBETiC+ORfO+sor9Sgs0smJzAjfTbM5tckeCqnaUuMYoz+k3RXMmJClQ==
+      }
+    engines: { node: '>=12.0.0', npm: '>=6.0.0' }
+    deprecated: This module has been superseded by the multiformats module
+
+  multiformats@9.9.0:
+    resolution:
+      {
+        integrity: sha512-HoMUjhH9T8DDBNT+6xzkrd9ga/XiBI4xLr58LJACwK6G3HTOPeMz4nB4KJs33L2BelrIJa7P0VuNaVF3hMYfjg==
+      }
+
+  multihashes@4.0.3:
+    resolution:
+      {
+        integrity: sha512-0AhMH7Iu95XjDLxIeuCOOE4t9+vQZsACyKZ9Fxw2pcsRmlX4iCn1mby0hS0bb+nQOVpdQYWPpnyusw4da5RPhA==
+      }
+    engines: { node: '>=12.0.0', npm: '>=6.0.0' }
+
   mute-stream@0.0.8:
     resolution:
       {
@@ -9494,6 +9625,12 @@ packages:
         integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
       }
 
+  tslib@2.4.0:
+    resolution:
+      {
+        integrity: sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==
+      }
+
   tslib@2.5.2:
     resolution:
       {
@@ -9644,6 +9781,12 @@ packages:
     resolution:
       {
         integrity: sha512-o+ORpgGwaYQXgqGDwd+hkS4PuZ3QnmqMMxRuajK/a38L6fTpcE5GPIfrf+L/KemFzfUpeUQc1rRS1iDBozvnFA==
+      }
+
+  uint8arrays@3.1.1:
+    resolution:
+      {
+        integrity: sha512-+QJa8QRnbdXVpHYjLoTpJIdCTiw9Ir62nocClWuXIq2JIh4Uta0cQsTSpFL678p2CN8B+XSApwcU+pQEqVpKWg==
       }
 
   unbox-primitive@1.0.2:
@@ -9823,6 +9966,12 @@ packages:
     resolution:
       {
         integrity: sha512-DpKm2Ui/xN7/HQKCtpZxoRWBhZ9Z0kqtygG8XCgNQ8ZlDnxuQmWhj566j8fN4Cu3/JmbhsDo7fcAJq4s9h27Ew==
+      }
+
+  varint@5.0.2:
+    resolution:
+      {
+        integrity: sha512-lKxKYG6H03yCZUpAGOPOsMcGxd1RHCu1iKvEHYDPmTyq2HueGhD73ssNBqqQWfvYs04G9iUFRvmAVLW20Jw6ow==
       }
 
   verror@1.10.0:
@@ -10327,6 +10476,8 @@ snapshots:
   '@adobe/css-tools@4.3.2': {}
 
   '@adraffy/ens-normalize@1.10.0': {}
+
+  '@adraffy/ens-normalize@1.10.1': {}
 
   '@alloc/quick-lru@5.2.0': {}
 
@@ -11081,6 +11232,55 @@ snapshots:
       '@babel/helper-validator-identifier': 7.22.20
       to-fast-properties: 2.0.0
 
+  '@circles-sdk/abi-v1@0.9.0':
+    dependencies:
+      ethers: 6.13.2
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@circles-sdk/abi-v2@0.9.0':
+    dependencies:
+      ethers: 6.13.2
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@circles-sdk/adapter-ethers@0.9.0':
+    dependencies:
+      '@circles-sdk/adapter': 0.9.0
+      ethers: 6.13.2
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@circles-sdk/adapter@0.9.0': {}
+
+  '@circles-sdk/data@0.9.0':
+    dependencies:
+      '@circles-sdk/utils': 0.9.0
+
+  '@circles-sdk/profiles@0.9.0':
+    dependencies:
+      '@circles-sdk/utils': 0.9.0
+
+  '@circles-sdk/sdk@0.9.0':
+    dependencies:
+      '@circles-sdk/abi-v1': 0.9.0
+      '@circles-sdk/abi-v2': 0.9.0
+      '@circles-sdk/adapter-ethers': 0.9.0
+      '@circles-sdk/data': 0.9.0
+      '@circles-sdk/profiles': 0.9.0
+      ethers: 6.13.2
+      multihashes: 4.0.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@circles-sdk/utils@0.9.0':
+    dependencies:
+      bignumber.js: 9.1.2
+
   '@colors/colors@1.5.0':
     optional: true
 
@@ -11386,6 +11586,8 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.0
       '@jridgewell/sourcemap-codec': 1.4.15
     optional: true
+
+  '@multiformats/base-x@4.0.1': {}
 
   '@nabla/vite-plugin-eslint@2.0.2(eslint@8.57.0)(vite@5.2.8(@types/node@20.2.3)(terser@5.14.2))':
     dependencies:
@@ -12357,9 +12559,15 @@ snapshots:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
 
+  '@noble/curves@1.2.0':
+    dependencies:
+      '@noble/hashes': 1.3.2
+
   '@noble/curves@1.4.0':
     dependencies:
       '@noble/hashes': 1.4.0
+
+  '@noble/hashes@1.3.2': {}
 
   '@noble/hashes@1.4.0': {}
 
@@ -13573,6 +13781,8 @@ snapshots:
 
   '@types/lodash@4.17.7': {}
 
+  '@types/node@18.15.13': {}
+
   '@types/node@18.19.31':
     dependencies:
       undici-types: 5.26.5
@@ -13580,9 +13790,9 @@ snapshots:
   '@types/node@20.12.7':
     dependencies:
       undici-types: 5.26.5
-    optional: true
 
-  '@types/node@20.2.3': {}
+  '@types/node@20.2.3':
+    optional: true
 
   '@types/normalize-package-data@2.4.1': {}
 
@@ -13610,7 +13820,7 @@ snapshots:
 
   '@types/resolve@1.17.1':
     dependencies:
-      '@types/node': 20.2.3
+      '@types/node': 20.12.7
 
   '@types/semver@7.5.0': {}
 
@@ -13825,6 +14035,8 @@ snapshots:
   acorn-walk@8.3.2: {}
 
   acorn@8.11.3: {}
+
+  aes-js@4.0.0-beta.5: {}
 
   agent-base@7.1.0:
     dependencies:
@@ -14087,6 +14299,8 @@ snapshots:
   bcrypt-pbkdf@1.0.2:
     dependencies:
       tweetnacl: 0.14.5
+
+  bignumber.js@9.1.2: {}
 
   binary-extensions@2.2.0: {}
 
@@ -15101,6 +15315,19 @@ snapshots:
 
   esutils@2.0.3: {}
 
+  ethers@6.13.2:
+    dependencies:
+      '@adraffy/ens-normalize': 1.10.1
+      '@noble/curves': 1.2.0
+      '@noble/hashes': 1.3.2
+      '@types/node': 18.15.13
+      aes-js: 4.0.0-beta.5
+      tslib: 2.4.0
+      ws: 8.17.1
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   event-stream@3.3.4:
     dependencies:
       duplexer: 0.1.2
@@ -15875,7 +16102,7 @@ snapshots:
 
   jest-worker@26.6.2:
     dependencies:
-      '@types/node': 20.2.3
+      '@types/node': 20.12.7
       merge-stream: 2.0.0
       supports-color: 7.2.0
 
@@ -16221,6 +16448,18 @@ snapshots:
   ms@2.1.2: {}
 
   ms@2.1.3: {}
+
+  multibase@4.0.6:
+    dependencies:
+      '@multiformats/base-x': 4.0.1
+
+  multiformats@9.9.0: {}
+
+  multihashes@4.0.3:
+    dependencies:
+      multibase: 4.0.6
+      uint8arrays: 3.1.1
+      varint: 5.0.2
 
   mute-stream@0.0.8: {}
 
@@ -17411,6 +17650,8 @@ snapshots:
 
   tslib@1.14.1: {}
 
+  tslib@2.4.0: {}
+
   tslib@2.5.2: {}
 
   tsutils@3.21.0(typescript@5.4.5):
@@ -17504,6 +17745,10 @@ snapshots:
   typescript@5.4.5: {}
 
   ufo@1.3.2: {}
+
+  uint8arrays@3.1.1:
+    dependencies:
+      multiformats: 9.9.0
 
   unbox-primitive@1.0.2:
     dependencies:
@@ -17601,6 +17846,8 @@ snapshots:
     dependencies:
       spdx-correct: 3.1.1
       spdx-expression-parse: 3.0.1
+
+  varint@5.0.2: {}
 
   verror@1.10.0:
     dependencies:
@@ -17730,7 +17977,7 @@ snapshots:
   webauthn-p256@0.0.5:
     dependencies:
       '@noble/curves': 1.4.0
-      '@noble/hashes': 1.4.0
+      '@noble/hashes': 1.5.0
 
   webidl-conversions@4.0.2: {}
 

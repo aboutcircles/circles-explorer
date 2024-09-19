@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import { Link, Code, Tooltip } from '@nextui-org/react'
+import { Link, Code, Tooltip, Snippet } from '@nextui-org/react'
 import type { Hex } from 'viem'
 import { hexToNumber } from 'viem'
 import dayjs from 'dayjs'
@@ -10,6 +10,7 @@ import { Table } from 'components/Table'
 import { EXPLORER_URL } from 'constants/common'
 import { truncateHex } from 'utils/eth'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
+import { useFilterStore } from 'stores/useFilterStore'
 
 const columns: Column[] = [
 	{
@@ -36,13 +37,20 @@ const renderCell = (item: Row, columnKey: Key) => {
 	switch (columnKey) {
 		case 'transactionHash': {
 			return (
-				<Link
-					target='_blank'
-					isExternal
-					href={`${EXPLORER_URL}/tx/${cellValue}`}
+				<Snippet
+					symbol=''
+					variant='bordered'
+					size='sm'
+					codeString={String(cellValue)}
 				>
-					{truncateHex(String(cellValue))}
-				</Link>
+					<Link
+						target='_blank'
+						isExternal
+						href={`${EXPLORER_URL}/tx/${cellValue}`}
+					>
+						{truncateHex(String(cellValue))}
+					</Link>
+				</Snippet>
 			)
 		}
 		case 'event': {
@@ -80,6 +88,10 @@ const renderCell = (item: Row, columnKey: Key) => {
 
 export function EventsTable(): ReactElement {
 	const { data: events, isLoading: isEventsLoading } = useFetchCirclesEvents()
+	const search = useFilterStore.use.search()
+	const eventTypes = useFilterStore.use.eventTypes()
+
+	console.log({ search, eventTypes })
 
 	return (
 		<div>

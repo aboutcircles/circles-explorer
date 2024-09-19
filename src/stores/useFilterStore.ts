@@ -2,29 +2,30 @@ import { create } from 'zustand'
 import type { Address } from 'viem'
 
 import type { EventType } from 'types/events'
+import { EVENTS } from 'constants/events'
 
 import { createSelectors } from './createSelectors'
 
 interface State {
 	search: Address | null
-	eventsFilter: Set<EventType>
+	eventTypes: Set<EventType>
 }
 
 interface Action {
 	updateSearch: (search: Address) => void
-	updateEventsFilter: (event: EventType) => void
+	updateEventTypes: (event: EventType) => void
 }
 
 const useFilterStoreBase = create<Action & State>((set) => ({
 	search: null,
-	eventsFilter: new Set(),
+	eventTypes: new Set(EVENTS),
 
 	updateSearch: (search: Address) => set(() => ({ search })),
-	updateEventsFilter: (event: EventType) =>
-		set(({ eventsFilter }) => ({
-			eventsFilter: eventsFilter.has(event)
-				? new Set([...eventsFilter].filter((event_) => event_ !== event))
-				: new Set([...eventsFilter, event])
+	updateEventTypes: (event: EventType) =>
+		set(({ eventTypes }) => ({
+			eventTypes: eventTypes.has(event)
+				? new Set([...eventTypes].filter((event_) => event_ !== event))
+				: new Set([...eventTypes, event])
 		}))
 }))
 
