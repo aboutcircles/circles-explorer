@@ -25,7 +25,7 @@ export function Filter(): React.ReactElement {
 				<Search placeholder='0x...' handleSubmit={handleSubmit} />
 			</div>
 
-			<div className='m-4 flex flex-row'>
+			<div className='m-4 flex flex-row flex-wrap'>
 				{EVENTS.map((event) => (
 					<FilterCheckBox
 						handleChange={() => filterStore.updateEventTypes(event)}

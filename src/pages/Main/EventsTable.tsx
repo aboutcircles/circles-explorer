@@ -10,7 +10,6 @@ import { Table } from 'components/Table'
 import { EXPLORER_URL, ONE } from 'constants/common'
 import { truncateHex } from 'utils/eth'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
-import { useFilterStore } from 'stores/useFilterStore'
 import { useCirclesEventsRange } from 'hooks/useCirclesEventsRange'
 
 // each page - 1 day (filtered by amount of blocks)
@@ -93,26 +92,21 @@ const renderCell = (item: Row, columnKey: Key) => {
 export function EventsTable(): ReactElement {
 	const [page, setPage] = useState<number>(ONE)
 
-	const search = useFilterStore.use.search()
-	const eventTypes = useFilterStore.use.eventTypes()
-
 	const { events, isEventsLoading, dateRange } = useCirclesEventsRange(page)
-
-	console.log({ search, eventTypes })
 
 	return (
 		<div>
 			<Table
 				ariaLabel='Circles Events'
 				columns={columns}
-				rows={isEventsLoading || !events ? [] : (events as unknown as Row[])}
+				rows={isEventsLoading ? [] : (events as unknown as Row[])}
 				renderCell={renderCell}
 				isLoading={isEventsLoading}
 				topContent={
 					<div className='flex w-full justify-between'>
 						<div className='flex items-center justify-between'>
 							<span className='text-small text-default-400'>
-								Total Events: {events?.length ?? '...'}
+								Total Events: {events.length === 0 ? '...' : events.length}
 								<span className='pl-2 text-xs'>
 									({dateRange.start} - {dateRange.end})
 								</span>
