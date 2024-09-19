@@ -135,8 +135,7 @@
 			{
 				"eventHandlerPrefix": "on",
 				"eventHandlerPropPrefix": "on",
-				"checkLocalVariables": true,
-				"checkInlineFunction": true
+				"checkLocalVariables": true
 			}
 		],
 		"react/jsx-key": "error",

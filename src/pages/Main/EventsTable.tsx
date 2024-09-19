@@ -1,16 +1,20 @@
+import { useState } from 'react'
 import type { ReactElement } from 'react'
-import { Link, Code, Tooltip, Snippet } from '@nextui-org/react'
+import { Link, Code, Tooltip, Snippet, Pagination } from '@nextui-org/react'
 import type { Hex } from 'viem'
 import { hexToNumber } from 'viem'
 import dayjs from 'dayjs'
 
-import { useFetchCirclesEvents } from 'services/circlesIndex'
 import type { Column, Row, Key } from 'components/Table'
 import { Table } from 'components/Table'
-import { EXPLORER_URL } from 'constants/common'
+import { EXPLORER_URL, ONE } from 'constants/common'
 import { truncateHex } from 'utils/eth'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { useFilterStore } from 'stores/useFilterStore'
+import { useCirclesEventsRange } from 'hooks/useCirclesEventsRange'
+
+// each page - 1 day (filtered by amount of blocks)
+const TOTAL_PAGES = 30
 
 const columns: Column[] = [
 	{
@@ -75,7 +79,7 @@ const renderCell = (item: Row, columnKey: Key) => {
 			const date = dayjs(timestampMs)
 
 			return (
-				<Tooltip size='sm' content={date.format()}>
+				<Tooltip size='sm' content={date.format('YYYY-MMM-DD HH:mm:ss')}>
 					{dayjs().to(date)}
 				</Tooltip>
 			)
@@ -87,20 +91,58 @@ const renderCell = (item: Row, columnKey: Key) => {
 }
 
 export function EventsTable(): ReactElement {
-	const { data: events, isLoading: isEventsLoading } = useFetchCirclesEvents()
+	const [page, setPage] = useState<number>(ONE)
+
 	const search = useFilterStore.use.search()
 	const eventTypes = useFilterStore.use.eventTypes()
+
+	const { events, isEventsLoading, dateRange } = useCirclesEventsRange(page)
 
 	console.log({ search, eventTypes })
 
 	return (
 		<div>
 			<Table
-				ariaLabel='API Keys'
+				ariaLabel='Circles Events'
 				columns={columns}
 				rows={isEventsLoading || !events ? [] : (events as unknown as Row[])}
 				renderCell={renderCell}
 				isLoading={isEventsLoading}
+				topContent={
+					<div className='flex w-full justify-between'>
+						<div className='flex items-center justify-between'>
+							<span className='text-small text-default-400'>
+								Total Events: {events?.length ?? '...'}
+								<span className='pl-2 text-xs'>
+									({dateRange.start} - {dateRange.end})
+								</span>
+							</span>
+						</div>
+
+						<Pagination
+							isCompact
+							showControls
+							showShadow
+							color='primary'
+							page={page}
+							total={TOTAL_PAGES}
+							onChange={(page_) => setPage(page_)}
+						/>
+					</div>
+				}
+				bottomContent={
+					<div className='flex w-full justify-center'>
+						<Pagination
+							isCompact
+							showControls
+							showShadow
+							color='primary'
+							page={page}
+							total={TOTAL_PAGES}
+							onChange={(page_) => setPage(page_)}
+						/>
+					</div>
+				}
 			/>
 		</div>
 	)
