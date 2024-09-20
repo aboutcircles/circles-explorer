@@ -65,7 +65,10 @@ export function Table({
 				emptyContent='No rows to display.'
 			>
 				{(item) => (
-					<TableRow key={item.key}>
+					<TableRow
+						key={item.key}
+						className='animate-fade-in transition-opacity duration-500 ease-in-out'
+					>
 						{(columnKey) => (
 							<TableCell>{renderCell(item, columnKey)}</TableCell>
 						)}

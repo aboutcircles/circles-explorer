@@ -1,3 +1,5 @@
+import type { CirclesEventType } from '@circles-sdk/data'
+
 export type EventType =
 	| 'CrcV1_HubTransfer'
 	| 'CrcV1_OrganizationSignup'
@@ -56,7 +58,7 @@ export interface TrustEventValues {
 }
 
 export interface EventResponse {
-	event: EventType
+	event: CirclesEventType
 	values: BaseEventValues &
 		(HubTransferEventValues | TransferEventValues | TrustEventValues)
 }
@@ -65,4 +67,7 @@ export interface CirclesEventsResponse {
 	result: EventResponse[]
 }
 
-export type Event = EventResponse['values'] & Pick<EventResponse, 'event'>
+export type Event = EventResponse['values'] &
+	Pick<EventResponse, 'event'> & {
+		key: string
+	}

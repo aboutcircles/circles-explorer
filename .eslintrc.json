@@ -43,6 +43,7 @@
 		"@typescript-eslint/explicit-function-return-type": "off",
 		"@typescript-eslint/no-unsafe-assignment": "off",
 		"unicorn/no-keyword-prefix": "off",
+		"@typescript-eslint/max-params": "off",
 
 		"no-dupe-else-if": "error",
 		"no-promise-executor-return": "error",
@@ -91,7 +92,7 @@
 			"error",
 			{ "ignoreArrowShorthand": true }
 		],
-		"@typescript-eslint/non-nullable-type-assertion-style": "off",
+		"@typescript-eslint/non-nullable-type-assertion-": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"@typescript-eslint/no-implicit-any-catch": "off",
 		"@typescript-eslint/member-ordering": "off",

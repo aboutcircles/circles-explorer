@@ -10,7 +10,7 @@ import { Table } from 'components/Table'
 import { EXPLORER_URL, ONE } from 'constants/common'
 import { truncateHex } from 'utils/eth'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
-import { useCirclesEventsRange } from 'hooks/useCirclesEventsRange'
+import { useCirclesEvents } from 'hooks/useCirclesEvents'
 
 // each page - 1 day (filtered by amount of blocks)
 const TOTAL_PAGES = 30
@@ -92,7 +92,7 @@ const renderCell = (item: Row, columnKey: Key) => {
 export function EventsTable(): ReactElement {
 	const [page, setPage] = useState<number>(ONE)
 
-	const { events, isEventsLoading, dateRange } = useCirclesEventsRange(page)
+	const { events, isEventsLoading, dateRange } = useCirclesEvents(page)
 
 	return (
 		<div>

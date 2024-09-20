@@ -17,6 +17,8 @@ export const config: CirclesConfig = {
 	baseGroupMintPolicy: '0x5Ea08c967C69255d82a4d26e36823a720E7D0317'
 }
 
+export { Sdk } from '@circles-sdk/sdk'
+
 interface CirclesSdkContextProperties {
 	sdk: Sdk | null
 	circlesAddress: Address | null
