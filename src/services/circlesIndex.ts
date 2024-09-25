@@ -90,7 +90,7 @@ export const useFetchCirclesEvents = (
 				)
 
 				if (watch && sdk) {
-					await watchEventUpdates(sdk, queryKey, queryClient)
+					void watchEventUpdates(sdk, queryKey, queryClient)
 				}
 
 				const events = response.data.result.map((event) => ({

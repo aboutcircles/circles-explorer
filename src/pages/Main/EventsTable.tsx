@@ -1,18 +1,28 @@
 import { useState } from 'react'
 import type { ReactElement } from 'react'
-import { Link, Code, Tooltip, Snippet, Pagination } from '@nextui-org/react'
+import {
+	Link,
+	Code,
+	Tooltip,
+	Snippet,
+	Pagination,
+	RadioGroup
+} from '@nextui-org/react'
 import type { Hex } from 'viem'
 import { hexToNumber } from 'viem'
 import dayjs from 'dayjs'
 
 import type { Column, Row, Key } from 'components/Table'
+import { CustomRadio } from 'components/CustomRadio'
 import { Table } from 'components/Table'
 import { EXPLORER_URL, ONE } from 'constants/common'
 import { truncateHex } from 'utils/eth'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { useCirclesEvents } from 'hooks/useCirclesEvents'
+import type { PeriodKey } from 'stores/useFilterStore'
+import { periods, useFilterStore } from 'stores/useFilterStore'
 
-// each page - 1 day (filtered by amount of blocks)
+// each page - 1h/6h/1d (filtered by amount of blocks)
 const TOTAL_PAGES = 30
 
 const columns: Column[] = [
@@ -91,6 +101,8 @@ const renderCell = (item: Row, columnKey: Key) => {
 
 export function EventsTable(): ReactElement {
 	const [page, setPage] = useState<number>(ONE)
+	const period = useFilterStore.use.period()
+	const updatePeriod = useFilterStore.use.updatePeriod()
 
 	const { events, isEventsLoading, dateRange } = useCirclesEvents(page)
 
@@ -108,10 +120,24 @@ export function EventsTable(): ReactElement {
 							<span className='text-small text-default-400'>
 								Total Events: {events.length === 0 ? '...' : events.length}
 								<span className='pl-2 text-xs'>
-									({dateRange.start} - {dateRange.end})
+									({dateRange.start} - {dateRange.end}) ({period})
 								</span>
 							</span>
 						</div>
+
+						<RadioGroup
+							classNames={{
+								wrapper: 'flex-row'
+							}}
+							value={period}
+							onValueChange={(period_) => updatePeriod(period_ as PeriodKey)}
+						>
+							{Object.values(periods).map((period_) => (
+								<CustomRadio key={period_.label} value={period_.label}>
+									{period_.label}
+								</CustomRadio>
+							))}
+						</RadioGroup>
 
 						<Pagination
 							isCompact

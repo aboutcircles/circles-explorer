@@ -1,35 +1,32 @@
 import { useMemo } from 'react'
 import { useBlockNumber } from 'wagmi'
 
-import {
-	BLOCK_TIME,
-	HOURS_IN_DAY,
-	MINUTES_IN_HOUR,
-	SECONDS_IN_MINUTE
-} from 'constants/time'
 import { ONE } from 'constants/common'
 import { useFetchCirclesEvents } from 'services/circlesIndex'
 import { getDateRange } from 'utils/time'
-import { useFilterStore } from 'stores/useFilterStore'
+import { useFilterStore, periods } from 'stores/useFilterStore'
 import type { Event } from 'types/events'
 
-const BLOCKS_IN_DAY =
-	(HOURS_IN_DAY * MINUTES_IN_HOUR * SECONDS_IN_MINUTE) / BLOCK_TIME
-
-// 1 page - 1 day
 export const useCirclesEvents = (page: number) => {
 	const eventTypes = useFilterStore.use.eventTypes()
+	const period = periods[useFilterStore.use.period()]
 
 	const { data: blockNumber } = useBlockNumber({
 		watch: false
 	})
 
-	const dateRange = useMemo(() => getDateRange(page), [page])
-	const startBlock = useMemo(
-		() => (blockNumber ? Number(blockNumber) - page * BLOCKS_IN_DAY : 0),
-		[page, blockNumber]
+	const dateRange = useMemo(
+		() => getDateRange(page, period.value, period.unit),
+		[period, page]
 	)
-	const endBlock = useMemo(() => startBlock + BLOCKS_IN_DAY, [startBlock])
+	const startBlock = useMemo(
+		() => (blockNumber ? Number(blockNumber) - page * period.blocks : 0),
+		[period, page, blockNumber]
+	)
+	const endBlock = useMemo(
+		() => startBlock + period.blocks,
+		[period, startBlock]
+	)
 
 	const { data: events, isLoading: isEventsLoading } = useFetchCirclesEvents(
 		startBlock,

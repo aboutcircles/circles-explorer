@@ -1,16 +1,22 @@
+import type { ManipulateType } from 'dayjs'
 import dayjs from 'dayjs'
 
-import { HOURS_IN_DAY } from 'constants/time'
-
-export function getDateRange(daysBefore: number) {
+export function getDateRange(
+	unitsBefore: number,
+	unitsAmount: number,
+	unit = 'day'
+) {
 	// Get the current date and time
 	const now = dayjs()
 
 	// Calculate the start date by subtracting the daysBefore value
-	const startDate = now.subtract(daysBefore, 'day')
+	const startDate = now.subtract(
+		unitsBefore * unitsAmount,
+		unit as ManipulateType
+	)
 
-	// Calculate the end date which is 24 hours after the start date
-	const endDate = startDate.add(HOURS_IN_DAY, 'hour')
+	// Calculate the end date which is unitsAmount unit after the start date
+	const endDate = startDate.add(unitsAmount, unit as ManipulateType)
 
 	// Format the start and end dates as desired
 	const startFormatted = startDate.format('MMM-DD HH:mm')
