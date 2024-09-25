@@ -13,7 +13,7 @@ import {
 
 import { createSelectors } from './createSelectors'
 
-export type PeriodKey = '1D' | '1H' | '6H'
+export type PeriodKey = '1D' | '1H' | '12H'
 
 interface Period {
 	label: string
@@ -34,7 +34,7 @@ interface Action {
 	updatePeriod: (period: PeriodKey) => void
 }
 
-const SIX = 6
+const TWELVE = 12
 
 export const periods: Record<PeriodKey, Period> = {
 	'1H': {
@@ -43,11 +43,11 @@ export const periods: Record<PeriodKey, Period> = {
 		unit: 'hour',
 		value: ONE
 	},
-	'6H': {
-		label: '6H',
-		blocks: (SIX * MINUTES_IN_HOUR * SECONDS_IN_MINUTE) / BLOCK_TIME,
+	'12H': {
+		label: '12H',
+		blocks: (TWELVE * MINUTES_IN_HOUR * SECONDS_IN_MINUTE) / BLOCK_TIME,
 		unit: 'hour',
-		value: SIX
+		value: TWELVE
 	},
 	'1D': {
 		label: '1D',
