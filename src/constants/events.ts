@@ -1,6 +1,6 @@
-import type { EventType } from 'types/events'
+import type { CirclesEventType } from '@circles-sdk/data'
 
-export const EVENTS: EventType[] = [
+export const EVENTS: CirclesEventType[] = [
 	'CrcV1_HubTransfer',
 	'CrcV1_Transfer',
 	'CrcV1_Trust',
@@ -11,7 +11,7 @@ export const EVENTS: EventType[] = [
 	// 'CrcV2_CreateVault',
 	// 'CrcV2_DepositDemurraged',
 	'CrcV2_DepositInflationary',
-	'CrcV2_Erc20WrapperDeployed',
+	// 'CrcV2_Erc20WrapperDeployed',
 	'CrcV2_Erc20WrapperTransfer',
 	// 'CrcV2_GroupMintBatch',
 	// 'CrcV2_GroupMintSingle',

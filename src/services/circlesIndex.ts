@@ -1,17 +1,19 @@
 import { useMemo } from 'react'
 import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import type { CirclesEventType } from '@circles-sdk/data'
 import type {
 	UseQueryResult,
 	QueryClient,
 	QueryKey
 } from '@tanstack/react-query'
 
-import { CIRCLES_INDEXER_URL, MINUS_ONE } from 'constants/common'
+import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
 import type { CirclesEventsResponse, Event } from 'types/events'
 import logger from 'services/logger'
 import type { Sdk } from 'providers/CirclesSdkProvider'
 import { useCirclesSdk } from 'providers/CirclesSdkProvider'
+import { useFilterStore } from 'stores/useFilterStore'
 
 const getEventKey = (transactionHash: string, logIndex: number) =>
 	`${transactionHash}-${logIndex}`
@@ -66,6 +68,7 @@ export const useFetchCirclesEvents = (
 ): UseQueryResult<Event[]> => {
 	const { sdk } = useCirclesSdk()
 	const queryClient: QueryClient = useQueryClient()
+	const updateEventTypesAmount = useFilterStore.use.updateEventTypesAmount()
 
 	const queryKey = useMemo(
 		() => [CIRCLES_EVENTS_QUERY_KEY, startBlock, endBlock],
@@ -93,14 +96,23 @@ export const useFetchCirclesEvents = (
 					void watchEventUpdates(sdk, queryKey, queryClient)
 				}
 
-				const events = response.data.result.map((event) => ({
-					...event,
-					...event.values,
-					key: getEventKey(
-						event.values.transactionHash,
-						Number(event.values.logIndex)
+				const eventTypesAmount = new Map<CirclesEventType, number>()
+				const events = response.data.result.map((event) => {
+					eventTypesAmount.set(
+						event.event,
+						(eventTypesAmount.get(event.event) ?? 0) + ONE
 					)
-				}))
+
+					return {
+						...event,
+						...event.values,
+						key: getEventKey(
+							event.values.transactionHash,
+							Number(event.values.logIndex)
+						)
+					}
+				})
+				updateEventTypesAmount(eventTypesAmount)
 
 				logger.log(response.data.result, { events })
 

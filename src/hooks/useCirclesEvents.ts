@@ -38,8 +38,6 @@ export const useCirclesEvents = (page: number) => {
 	const filteredEvents = useMemo(() => {
 		if (!events) return []
 
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-expect-error
 		return events.filter((event: Event): boolean => eventTypes.has(event.event))
 	}, [events, eventTypes])
 
