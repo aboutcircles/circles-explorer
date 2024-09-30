@@ -10,10 +10,12 @@ import type {
 
 import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
 import type { CirclesEventsResponse, Event } from 'types/events'
+import type { StatsResponse } from 'types/stats'
 import logger from 'services/logger'
 import type { Sdk } from 'providers/CirclesSdkProvider'
 import { useCirclesSdk } from 'providers/CirclesSdkProvider'
 import { useFilterStore } from 'stores/useFilterStore'
+import { useStatsStore } from 'stores/useStatsStore'
 
 const getEventKey = (transactionHash: string, logIndex: number) =>
 	`${transactionHash}-${logIndex}`
@@ -114,14 +116,52 @@ export const useFetchCirclesEvents = (
 				})
 				updateEventTypesAmount(eventTypesAmount)
 
-				logger.log(response.data.result, { events })
+				logger.log(
+					'[service][circles] queried circles events',
+					response.data.result,
+					{ events }
+				)
 
 				return events
-			} catch {
-				logger.error('[service][circles] Failed to query circles events')
+			} catch (error) {
+				logger.error('[service][circles] Failed to query circles events', error)
 				throw new Error('Failed to query circles events')
 			}
 		},
 		enabled: Boolean(sdk) && enabled
+	})
+}
+
+// query
+const CIRCLES_STATS_QUERY_KEY = 'circlesStats'
+export const useFetchCirclesStats = (): UseQueryResult<Event[]> => {
+	const setStats = useStatsStore.use.setStats()
+
+	return useQuery({
+		queryKey: [CIRCLES_STATS_QUERY_KEY],
+		queryFn: async () => {
+			try {
+				const response = await axios.post<StatsResponse>(CIRCLES_INDEXER_URL, {
+					method: 'circles_query',
+					params: [
+						{
+							Namespace: 'V_Crc',
+							Table: 'Stats',
+							Columns: []
+						}
+					]
+				})
+
+				logger.log('[service][circles] queried circles stats', {
+					response: response.data.result
+				})
+				setStats(response.data.result)
+
+				return response.data.result
+			} catch (error) {
+				logger.error('[service][circles] Failed to query circles stats', error)
+				throw new Error('Failed to query circles stats')
+			}
+		}
 	})
 }
