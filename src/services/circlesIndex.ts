@@ -24,9 +24,12 @@ const getEventKey = (transactionHash: string, logIndex: number) =>
 const watchEventUpdates = async (
 	sdk: Sdk,
 	queryKey: QueryKey,
-	queryClient: QueryClient
+	queryClient: QueryClient,
+	address: string | null
 ) => {
-	const avatarEvents = await sdk.data.subscribeToEvents()
+	const avatarEvents = await (address
+		? sdk.data.subscribeToEvents(address)
+		: sdk.data.subscribeToEvents())
 
 	avatarEvents.subscribe((event) => {
 		const key = getEventKey(
@@ -66,15 +69,16 @@ export const useFetchCirclesEvents = (
 	startBlock: number,
 	endBlock: number,
 	enabled: boolean,
-	watch: boolean
+	watch: boolean,
+	address: string | null
 ): UseQueryResult<Event[]> => {
 	const { sdk } = useCirclesSdk()
 	const queryClient: QueryClient = useQueryClient()
 	const updateEventTypesAmount = useFilterStore.use.updateEventTypesAmount()
 
 	const queryKey = useMemo(
-		() => [CIRCLES_EVENTS_QUERY_KEY, startBlock, endBlock],
-		[startBlock, endBlock]
+		() => [CIRCLES_EVENTS_QUERY_KEY, startBlock, endBlock, address],
+		[startBlock, endBlock, address]
 	)
 
 	return useQuery({
@@ -85,17 +89,13 @@ export const useFetchCirclesEvents = (
 					CIRCLES_INDEXER_URL,
 					{
 						method: 'circles_events',
-						params: [
-							// '0xde374ece6fa50e781e81aac78e811b33d16912c7',
-							null,
-							startBlock,
-							endBlock
-						]
+						// 0xde374ece6fa50e781e81aac78e811b33d16912c7
+						params: [address, startBlock, endBlock]
 					}
 				)
 
 				if (watch && sdk) {
-					void watchEventUpdates(sdk, queryKey, queryClient)
+					void watchEventUpdates(sdk, queryKey, queryClient, address)
 				}
 
 				const eventTypesAmount = new Map<CirclesEventType, number>()

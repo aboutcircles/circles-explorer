@@ -7,7 +7,7 @@ import { getDateRange } from 'utils/time'
 import { useFilterStore, periods } from 'stores/useFilterStore'
 import type { Event } from 'types/events'
 
-export const useCirclesEvents = (page: number) => {
+export const useCirclesEvents = (page: number, address: string | null) => {
 	const eventTypes = useFilterStore.use.eventTypes()
 	const period = periods[useFilterStore.use.period()]
 
@@ -32,7 +32,8 @@ export const useCirclesEvents = (page: number) => {
 		startBlock,
 		endBlock,
 		Boolean(blockNumber),
-		page === ONE
+		page === ONE,
+		address
 	)
 
 	const filteredEvents = useMemo(() => {

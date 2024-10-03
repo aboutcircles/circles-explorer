@@ -1,12 +1,15 @@
 import type { ReactElement } from 'react'
 
-import { Filter } from './Filter'
-import { EventsTable } from './EventsTable'
+import { Search } from 'shared/Search'
+import { EventsTable } from 'shared/EventsTable'
+import { Filter } from 'shared/Filter'
 import { Stats } from './Stats'
 
 export default function Main(): ReactElement {
 	return (
-		<div className='m-auto flex max-w-[1300px] flex-col'>
+		<div className='flex flex-col'>
+			<Search />
+
 			<Stats />
 
 			<Filter />

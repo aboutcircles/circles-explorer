@@ -99,12 +99,15 @@ const renderCell = (item: Row, columnKey: Key) => {
 	}
 }
 
-export function EventsTable(): ReactElement {
+export function EventsTable({ address }: { address?: string }): ReactElement {
 	const [page, setPage] = useState<number>(ONE)
 	const period = useFilterStore.use.period()
 	const updatePeriod = useFilterStore.use.updatePeriod()
 
-	const { events, isEventsLoading, dateRange } = useCirclesEvents(page)
+	const { events, isEventsLoading, dateRange } = useCirclesEvents(
+		page,
+		address ?? null
+	)
 
 	return (
 		<div>
@@ -166,4 +169,8 @@ export function EventsTable(): ReactElement {
 			/>
 		</div>
 	)
+}
+
+EventsTable.defaultProps = {
+	address: null
 }

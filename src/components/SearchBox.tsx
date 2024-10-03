@@ -8,7 +8,7 @@ interface SearchProperties {
 	placeholder: string
 }
 
-export function Search({
+export function SearchBox({
 	handleSubmit,
 	placeholder
 }: SearchProperties): React.ReactElement {
@@ -37,6 +37,7 @@ export function Search({
 						'placeholder:text-default-700/50 dark:placeholder:text-white/60'
 					],
 					innerWrapper: 'bg-transparent',
+					mainWrapper: 'w-[400px]',
 					inputWrapper: [
 						'bg-transparent',
 						'dark:bg-default/60',
@@ -61,7 +62,11 @@ export function Search({
 				color='primary'
 				isDisabled={!isAddress(search)}
 			>
-				<img src='/icons/search.svg' alt='' className='fg-white h-5 w-5' />
+				<img
+					src='/icons/search.svg'
+					alt='Submit'
+					className='fg-white h-5 w-5'
+				/>
 			</Button>
 		</div>
 	)
