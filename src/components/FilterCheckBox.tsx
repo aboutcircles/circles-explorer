@@ -41,6 +41,7 @@ export function FilterCheckBox({
 		getInputProps
 	} = useCheckbox({
 		defaultSelected: isDefaultSelected,
+		isSelected: isDefaultSelected,
 		onValueChange: handleChange,
 		size: 'sm'
 	})

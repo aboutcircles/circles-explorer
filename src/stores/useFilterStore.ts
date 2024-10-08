@@ -69,11 +69,24 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 
 	updateSearch: (search: Address) => set(() => ({ search })),
 	updateEventTypes: (event: CirclesEventType) =>
-		set(({ eventTypes }) => ({
-			eventTypes: eventTypes.has(event)
-				? new Set([...eventTypes].filter((event_) => event_ !== event))
-				: new Set([...eventTypes, event])
-		})),
+		set(({ eventTypes }) => {
+			if (eventTypes.size === EVENTS.length) {
+				return {
+					eventTypes: new Set([event])
+				}
+			}
+			if (eventTypes.size === ONE && eventTypes.has(event)) {
+				return {
+					eventTypes: new Set(EVENTS)
+				}
+			}
+
+			return {
+				eventTypes: eventTypes.has(event)
+					? new Set([...eventTypes].filter((event_) => event_ !== event))
+					: new Set([...eventTypes, event])
+			}
+		}),
 	updatePeriod: (period: PeriodKey) => set(() => ({ period })),
 	updateEventTypesAmount: (eventTypesAmount: Map<CirclesEventType, number>) =>
 		set(() => ({ eventTypesAmount }))
