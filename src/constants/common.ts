@@ -6,3 +6,5 @@ export const EXPLORER_URL = import.meta.env.VITE_EXPLORER_URL as string
 
 export const ONE = 1
 export const MINUS_ONE = -1
+
+export const DEAD_ADDRESS = '0x0000000000000000000000000000000000000000'

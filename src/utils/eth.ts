@@ -1,3 +1,5 @@
+import { DEAD_ADDRESS } from 'constants/common'
+
 const FIRST_PART = 1
 const SECOND_PART = 2
 
@@ -15,5 +17,4 @@ export const truncate = (hash: string, number_: number) => {
 
 export const truncateHex = (hash: string) => truncate(hash, SKIP_HASH_SYMBOLS)
 
-// export const truncateAddress = (address: string) =>
-// 	truncate(address, SKIP_ADDRESS_SYMBOLS)
+export const isDeadAddress = (address: string) => address === DEAD_ADDRESS
