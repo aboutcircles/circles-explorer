@@ -13,7 +13,7 @@ import {
 
 export interface Column {
 	key: string
-	label: string
+	label: JSX.Element | string
 	align?: 'center' | 'end' | 'start'
 }
 

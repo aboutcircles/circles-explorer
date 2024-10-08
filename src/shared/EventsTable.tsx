@@ -6,7 +6,11 @@ import {
 	Tooltip,
 	Snippet,
 	Pagination,
-	RadioGroup
+	RadioGroup,
+	Button,
+	Popover,
+	PopoverTrigger,
+	PopoverContent
 } from '@nextui-org/react'
 import dayjs from 'dayjs'
 import type { CirclesEventType } from '@circles-sdk/data'
@@ -21,10 +25,22 @@ import { useCirclesEvents } from 'hooks/useCirclesEvents'
 import type { PeriodKey } from 'stores/useFilterStore'
 import { periods, useFilterStore } from 'stores/useFilterStore'
 
-// each page - 1h/6h/1d (filtered by amount of blocks)
+// each page - 1h/12h/1d (filtered by amount of blocks)
 const TOTAL_PAGES = 30
 
 const columns: Column[] = [
+	{
+		key: 'info',
+		label: (
+			<Tooltip content='See preview with event details'>
+				<img
+					className='ml-[13px] h-[13px] w-[13px]'
+					src='/icons/question.svg'
+					alt='Details'
+				/>
+			</Tooltip>
+		)
+	},
 	{
 		key: 'transactionHash',
 		label: 'Tx Hash'
@@ -43,6 +59,19 @@ const columns: Column[] = [
 	}
 ]
 
+const eventDetailsColumns: Column[] = [
+	{
+		key: 'key',
+		label: 'Key'
+	},
+	{
+		key: 'value',
+		label: 'Value'
+	}
+]
+
+const hiddenEventDetails = new Set(['key', 'values'])
+
 const useRenderCell = () => {
 	const updateEventTypes = useFilterStore.use.updateEventTypes()
 
@@ -58,6 +87,36 @@ const useRenderCell = () => {
 			const cellValue = item[columnKey]
 
 			switch (columnKey) {
+				case 'info': {
+					return (
+						<Popover size='sm'>
+							<PopoverTrigger>
+								<Button isIconOnly variant='faded'>
+									<img
+										className='h-[13px] w-[13px]'
+										src='/icons/eye.svg'
+										alt='Info'
+									/>
+								</Button>
+							</PopoverTrigger>
+							<PopoverContent>
+								<div>
+									<Table
+										ariaLabel='Event Details'
+										columns={eventDetailsColumns}
+										rows={Object.entries(item)
+											.filter(([key]) => !hiddenEventDetails.has(key))
+											.map(([key, value]) => ({
+												key,
+												value
+											}))}
+										isLoading={false}
+									/>
+								</div>
+							</PopoverContent>
+						</Popover>
+					)
+				}
 				case 'transactionHash': {
 					return (
 						<Snippet
@@ -79,7 +138,7 @@ const useRenderCell = () => {
 				case 'event': {
 					return (
 						<Code
-							className='hover:cursor-pointer hover:border-2 hover:border-dashed hover:border-amber-50'
+							className='border-2 hover:cursor-pointer hover:border-dashed hover:border-primary'
 							// eslint-disable-next-line react/jsx-no-bind
 							onClick={onEventClick.bind(null, cellValue as CirclesEventType)}
 						>

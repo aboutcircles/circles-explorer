@@ -110,6 +110,9 @@ export const useFetchCirclesEvents = (
 						...event.values,
 						blockNumber: hexToNumber(event.values.blockNumber as Hex),
 						timestamp: hexToNumber(event.values.timestamp as Hex),
+						logIndex: hexToNumber(event.values.logIndex as Hex),
+						transactionIndex: hexToNumber(event.values.transactionIndex as Hex),
+						values: null,
 						key: getEventKey(
 							event.values.transactionHash,
 							Number(event.values.logIndex)
