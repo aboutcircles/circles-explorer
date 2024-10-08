@@ -64,7 +64,7 @@ export const periods: Record<PeriodKey, Period> = {
 const useFilterStoreBase = create<Action & State>((set) => ({
 	search: null,
 	eventTypes: new Set(EVENTS),
-	period: '1H',
+	period: '12H' as PeriodKey,
 	eventTypesAmount: new Map(),
 
 	updateSearch: (search: Address) => set(() => ({ search })),

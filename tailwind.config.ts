@@ -18,6 +18,7 @@ const config = {
 		}
 	},
 	experimental: { optimizeUniversalDefaults: true },
+	darkMode: 'class',
 	plugins: [
 		formsPlugin,
 		nextui({

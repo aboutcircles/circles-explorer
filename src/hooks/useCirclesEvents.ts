@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { useBlockNumber } from 'wagmi'
 
 import { ONE } from 'constants/common'
+import { useBlockNumber } from 'hooks/useBlockNumber'
 import { useFetchCirclesEvents } from 'services/circlesIndex'
 import { getDateRange } from 'utils/time'
 import { useFilterStore, periods } from 'stores/useFilterStore'
@@ -11,9 +11,7 @@ export const useCirclesEvents = (page: number, address: string | null) => {
 	const eventTypes = useFilterStore.use.eventTypes()
 	const period = periods[useFilterStore.use.period()]
 
-	const { data: blockNumber } = useBlockNumber({
-		watch: false
-	})
+	const blockNumber = useBlockNumber()
 
 	const dateRange = useMemo(
 		() => getDateRange(page, period.value, period.unit),

@@ -1,42 +1,44 @@
-// import type { Sdk, Avatar as AvatarType } from '@circles-sdk/sdk'
-// import { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 
 import { EventsTable } from 'shared/EventsTable'
 import { Filter } from 'shared/Filter'
-// import { useCirclesSdk } from 'providers/CirclesSdkProvider'
+import { circlesData } from 'services/circlesData'
 
 export default function Avatar() {
 	const { address } = useParams()
-	// const { sdk } = useCirclesSdk()
-	// const avatar = useRef<AvatarType>()
+	useEffect(() => {
+		const loadAvatarInfo = async (address_: string) => {
+			console.log({ address_ })
+			const avatarInfo = await circlesData.getAvatarInfo(address_)
 
-	// useEffect(() => {
-	// const loadAvatarInfo = async (sdk_: Sdk, address_: string) => {
-	// 	console.log({ address_ })
-	// 	avatar.current = await sdk_.getAvatar(address_)
-	//
-	// 	console.log(avatar.current.avatarInfo)
-	//
-	// 	const [balance, mintAmount, trustRels, txnHistory] = await Promise.all([
-	// 		avatar.current.getTotalBalance(),
-	// 		avatar.current.getMintableAmount(),
-	// 		avatar.current.getTrustRelations(),
-	// 		avatar.current.getTransactionHistory(10)
-	// 	])
-	//
-	// 	console.log({
-	// 		balance,
-	// 		mintAmount,
-	// 		trustRels,
-	// 		txnHistory
-	// 	})
-	// }
+			console.log({ avatarInfo })
 
-	// if (address && sdk) {
-	// void loadAvatarInfo(sdk, address).catch(console.log)
-	// }
-	// }, [])
+			// const profile = await sdk_.profiles?.get(avatarInfo.cidV0)
+
+			// console.log({ profile })
+
+			// console.log(avatar.current.avatarInfo)
+			//
+			// const [balance, mintAmount, trustRels, txnHistory] = await Promise.all([
+			// 	avatar.current.getTotalBalance(),
+			// 	avatar.current.getMintableAmount(),
+			// 	avatar.current.getTrustRelations(),
+			// 	avatar.current.getTransactionHistory(10)
+			// ])
+			//
+			// console.log({
+			// 	balance,
+			// 	mintAmount,
+			// 	trustRels,
+			// 	txnHistory
+			// })
+		}
+
+		if (address) {
+			void loadAvatarInfo(address)
+		}
+	}, [address])
 
 	return (
 		<div>

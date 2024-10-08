@@ -12,8 +12,7 @@ import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
 import type { CirclesEventsResponse, Event } from 'types/events'
 import type { StatsResponse } from 'types/stats'
 import logger from 'services/logger'
-import type { Sdk } from 'providers/CirclesSdkProvider'
-import { useCirclesSdk } from 'providers/CirclesSdkProvider'
+import { circlesData } from 'services/circlesData'
 import { useFilterStore } from 'stores/useFilterStore'
 import { useStatsStore } from 'stores/useStatsStore'
 
@@ -22,14 +21,14 @@ const getEventKey = (transactionHash: string, logIndex: number) =>
 
 // watcher
 const watchEventUpdates = async (
-	sdk: Sdk,
 	queryKey: QueryKey,
 	queryClient: QueryClient,
 	address: string | null
 ) => {
+	// todo: does not work without sdk, move to direct connection to endpoint?
 	const avatarEvents = await (address
-		? sdk.data.subscribeToEvents(address)
-		: sdk.data.subscribeToEvents())
+		? circlesData.subscribeToEvents(address)
+		: circlesData.subscribeToEvents())
 
 	avatarEvents.subscribe((event) => {
 		const key = getEventKey(
@@ -72,7 +71,6 @@ export const useFetchCirclesEvents = (
 	watch: boolean,
 	address: string | null
 ): UseQueryResult<Event[]> => {
-	const { sdk } = useCirclesSdk()
 	const queryClient: QueryClient = useQueryClient()
 	const updateEventTypesAmount = useFilterStore.use.updateEventTypesAmount()
 
@@ -94,8 +92,8 @@ export const useFetchCirclesEvents = (
 					}
 				)
 
-				if (watch && sdk) {
-					void watchEventUpdates(sdk, queryKey, queryClient, address)
+				if (watch) {
+					void watchEventUpdates(queryKey, queryClient, address)
 				}
 
 				const eventTypesAmount = new Map<CirclesEventType, number>()
@@ -128,7 +126,7 @@ export const useFetchCirclesEvents = (
 				throw new Error('Failed to query circles events')
 			}
 		},
-		enabled: Boolean(sdk) && enabled
+		enabled
 	})
 }
 
