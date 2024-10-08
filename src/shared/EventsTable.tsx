@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import type { ReactElement } from 'react'
 import {
 	Link,
@@ -8,9 +8,8 @@ import {
 	Pagination,
 	RadioGroup
 } from '@nextui-org/react'
-import type { Hex } from 'viem'
-import { hexToNumber } from 'viem'
 import dayjs from 'dayjs'
+import type { CirclesEventType } from '@circles-sdk/data'
 
 import type { Column, Row, Key } from 'components/Table'
 import { CustomRadio } from 'components/CustomRadio'
@@ -44,59 +43,78 @@ const columns: Column[] = [
 	}
 ]
 
-const renderCell = (item: Row, columnKey: Key) => {
-	const cellValue = item[columnKey]
+const useRenderCell = () => {
+	const updateEventTypes = useFilterStore.use.updateEventTypes()
 
-	switch (columnKey) {
-		case 'transactionHash': {
-			return (
-				<Snippet
-					symbol=''
-					variant='bordered'
-					size='sm'
-					codeString={String(cellValue)}
-				>
-					<Link
-						target='_blank'
-						isExternal
-						href={`${EXPLORER_URL}/tx/${cellValue}`}
-					>
-						{truncateHex(String(cellValue))}
-					</Link>
-				</Snippet>
-			)
-		}
-		case 'event': {
-			return <Code>{cellValue}</Code>
-		}
-		case 'blockNumber': {
-			const blockNumber = hexToNumber(cellValue as Hex)
+	const onEventClick = useCallback(
+		(event: CirclesEventType) => {
+			updateEventTypes(event)
+		},
+		[updateEventTypes]
+	)
 
-			return (
-				<Link
-					target='_blank'
-					isExternal
-					href={`${EXPLORER_URL}/block/${blockNumber}`}
-				>
-					{blockNumber}
-				</Link>
-			)
-		}
-		case 'timestamp': {
-			const timestampSecs = hexToNumber(cellValue as Hex)
-			const timestampMs = timestampSecs * MILLISECONDS_IN_A_SECOND
-			const date = dayjs(timestampMs)
+	return useCallback(
+		(item: Row, columnKey: Key) => {
+			const cellValue = item[columnKey]
 
-			return (
-				<Tooltip size='sm' content={date.format('YYYY-MMM-DD HH:mm:ss')}>
-					{dayjs().to(date)}
-				</Tooltip>
-			)
-		}
-		default: {
-			return cellValue
-		}
-	}
+			switch (columnKey) {
+				case 'transactionHash': {
+					return (
+						<Snippet
+							symbol=''
+							variant='bordered'
+							size='sm'
+							codeString={String(cellValue)}
+						>
+							<Link
+								target='_blank'
+								isExternal
+								href={`${EXPLORER_URL}/tx/${cellValue}`}
+							>
+								{truncateHex(String(cellValue))}
+							</Link>
+						</Snippet>
+					)
+				}
+				case 'event': {
+					return (
+						<Code
+							className='hover:cursor-pointer hover:border-2 hover:border-dashed hover:border-amber-50'
+							// eslint-disable-next-line react/jsx-no-bind
+							onClick={onEventClick.bind(null, cellValue as CirclesEventType)}
+						>
+							{cellValue}
+						</Code>
+					)
+				}
+				case 'blockNumber': {
+					return (
+						<Link
+							target='_blank'
+							isExternal
+							href={`${EXPLORER_URL}/block/${cellValue}`}
+						>
+							{cellValue}
+						</Link>
+					)
+				}
+				case 'timestamp': {
+					const timestampMs = (cellValue as number) * MILLISECONDS_IN_A_SECOND
+					const date = dayjs(timestampMs)
+
+					return (
+						<Tooltip size='sm' content={date.format('YYYY-MMM-DD HH:mm:ss')}>
+							{dayjs().to(date)}
+						</Tooltip>
+					)
+				}
+				default: {
+					return cellValue
+				}
+			}
+		},
+		[onEventClick]
+	)
 }
 
 export function EventsTable({ address }: { address?: string }): ReactElement {
@@ -108,6 +126,8 @@ export function EventsTable({ address }: { address?: string }): ReactElement {
 		page,
 		address ?? null
 	)
+
+	const renderCell = useRenderCell()
 
 	return (
 		<div>

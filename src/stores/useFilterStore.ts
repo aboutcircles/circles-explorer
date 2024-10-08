@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import type { Address } from 'viem'
 import type { CirclesEventType } from '@circles-sdk/data'
 
 import { EVENTS } from 'constants/events'
@@ -23,14 +22,14 @@ interface Period {
 }
 
 interface State {
-	search: Address | null
+	search: string | null
 	eventTypes: Set<CirclesEventType>
 	period: PeriodKey
 	eventTypesAmount: Map<CirclesEventType, number>
 }
 
 interface Action {
-	updateSearch: (search: Address) => void
+	updateSearch: (search: string) => void
 	updateEventTypes: (event: CirclesEventType) => void
 	updatePeriod: (period: PeriodKey) => void
 	updateEventTypesAmount: (
@@ -67,7 +66,7 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 	period: '12H' as PeriodKey,
 	eventTypesAmount: new Map(),
 
-	updateSearch: (search: Address) => set(() => ({ search })),
+	updateSearch: (search: string) => set(() => ({ search })),
 	updateEventTypes: (event: CirclesEventType) =>
 		set(({ eventTypes }) => {
 			if (eventTypes.size === EVENTS.length) {

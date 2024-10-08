@@ -5,19 +5,23 @@ import { isAddress } from 'viem'
 
 interface SearchProperties {
 	handleSubmit: (search: string) => void
+	handleChange: (search: string) => void
 	placeholder: string
 }
 
 export function SearchBox({
 	handleSubmit,
+	handleChange,
 	placeholder
 }: SearchProperties): React.ReactElement {
 	const [search, setSearch] = useState<string>('')
 
 	const onChange = useCallback(
-		(event_: { target: { value: React.SetStateAction<string> } }) =>
-			setSearch(event_.target.value),
-		[]
+		(event_: { target: { value: React.SetStateAction<string> } }) => {
+			setSearch(event_.target.value)
+			handleChange(event_.target.value as string)
+		},
+		[handleChange]
 	)
 
 	const onSubmit = useCallback(() => {

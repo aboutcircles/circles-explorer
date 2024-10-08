@@ -19,9 +19,20 @@ export function Search() {
 		[updateSearch, navigate]
 	)
 
+	const handleChange = useCallback(
+		(search: string) => {
+			updateSearch(search)
+		},
+		[updateSearch]
+	)
+
 	return (
 		<div className='m-4 flex justify-center'>
-			<SearchBox placeholder='0x...' handleSubmit={handleSubmit} />
+			<SearchBox
+				placeholder='0x...'
+				handleSubmit={handleSubmit}
+				handleChange={handleChange}
+			/>
 		</div>
 	)
 }

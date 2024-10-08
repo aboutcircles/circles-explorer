@@ -7,6 +7,8 @@ import type {
 	QueryClient,
 	QueryKey
 } from '@tanstack/react-query'
+import { hexToNumber } from 'viem'
+import type { Hex } from 'viem'
 
 import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
 import type { CirclesEventsResponse, Event } from 'types/events'
@@ -106,6 +108,8 @@ export const useFetchCirclesEvents = (
 					return {
 						...event,
 						...event.values,
+						blockNumber: hexToNumber(event.values.blockNumber as Hex),
+						timestamp: hexToNumber(event.values.timestamp as Hex),
 						key: getEventKey(
 							event.values.transactionHash,
 							Number(event.values.logIndex)
