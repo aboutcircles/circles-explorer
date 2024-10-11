@@ -7,18 +7,23 @@ import {
 	BLOCK_TIME,
 	HOURS_IN_DAY,
 	MINUTES_IN_HOUR,
-	SECONDS_IN_MINUTE
+	SECONDS_IN_MINUTE,
+	DAYS_IN_WEEK,
+	DAYS_IN_MONTH
 } from '../constants/time'
 
 import { createSelectors } from './createSelectors'
 
-export type PeriodKey = '1D' | '1H' | '12H'
+export type PeriodKey = '1D' | '1H' | '1M' | '1W' | '12H'
+
+export type ShowType = 'all' | 'avatar'
 
 interface Period {
 	label: string
 	blocks: number
 	unit: string
 	value: number
+	show: ShowType[]
 }
 
 interface State {
@@ -44,19 +49,40 @@ export const periods: Record<PeriodKey, Period> = {
 		label: '1H',
 		blocks: (MINUTES_IN_HOUR * SECONDS_IN_MINUTE) / BLOCK_TIME,
 		unit: 'hour',
-		value: ONE
+		value: ONE,
+		show: ['all']
 	},
 	'12H': {
 		label: '12H',
 		blocks: (TWELVE * MINUTES_IN_HOUR * SECONDS_IN_MINUTE) / BLOCK_TIME,
 		unit: 'hour',
-		value: TWELVE
+		value: TWELVE,
+		show: ['all']
 	},
 	'1D': {
 		label: '1D',
 		blocks: (HOURS_IN_DAY * MINUTES_IN_HOUR * SECONDS_IN_MINUTE) / BLOCK_TIME,
 		unit: 'day',
-		value: ONE
+		value: ONE,
+		show: ['all', 'avatar']
+	},
+	'1W': {
+		label: '1W',
+		blocks:
+			(DAYS_IN_WEEK * HOURS_IN_DAY * MINUTES_IN_HOUR * SECONDS_IN_MINUTE) /
+			BLOCK_TIME,
+		unit: 'week',
+		value: ONE,
+		show: ['avatar']
+	},
+	'1M': {
+		label: '1M',
+		blocks:
+			(DAYS_IN_MONTH * HOURS_IN_DAY * MINUTES_IN_HOUR * SECONDS_IN_MINUTE) /
+			BLOCK_TIME,
+		unit: 'month',
+		value: ONE,
+		show: ['avatar']
 	}
 }
 

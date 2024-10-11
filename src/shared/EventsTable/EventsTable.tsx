@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { ReactElement } from 'react'
 import { Tooltip, Pagination, RadioGroup } from '@nextui-org/react'
 
@@ -58,6 +58,14 @@ export function EventsTable({ address }: { address?: string }): ReactElement {
 
 	const renderCell = useRenderCell()
 
+	useEffect(() => {
+		if (address) {
+			updatePeriod('1W')
+		} else {
+			updatePeriod('12H')
+		}
+	}, [address, updatePeriod])
+
 	return (
 		<div>
 			<Table
@@ -84,11 +92,17 @@ export function EventsTable({ address }: { address?: string }): ReactElement {
 							value={period}
 							onValueChange={(period_) => updatePeriod(period_ as PeriodKey)}
 						>
-							{Object.values(periods).map((period_) => (
-								<CustomRadio key={period_.label} value={period_.label}>
-									{period_.label}
-								</CustomRadio>
-							))}
+							{Object.values(periods)
+								.filter((period_) =>
+									address
+										? period_.show.includes('avatar')
+										: period_.show.includes('all')
+								)
+								.map((period_) => (
+									<CustomRadio key={period_.label} value={period_.label}>
+										{period_.label}
+									</CustomRadio>
+								))}
 						</RadioGroup>
 
 						<Pagination

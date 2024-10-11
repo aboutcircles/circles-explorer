@@ -13,7 +13,7 @@ export function Search() {
 		(search: string) => {
 			if (!isAddress(search)) return
 
-			updateSearch(search)
+			updateSearch('')
 			navigate(`/avatar/${search}`)
 		},
 		[updateSearch, navigate]

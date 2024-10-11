@@ -1,5 +1,10 @@
 import { CirclesRpc, CirclesData } from '@circles-sdk/data'
-import { CIRCLES_INDEXER_URL } from '../constants/common'
+import { Profiles } from '@circles-sdk/profiles'
+
+import {
+	CIRCLES_INDEXER_URL,
+	CIRCLES_PROFILE_SERVICE_URL
+} from 'constants/common'
 
 // export const config: CirclesConfig = {
 // 	pathfinderUrl: 'https://pathfinder.aboutcircles.com',
@@ -17,3 +22,5 @@ import { CIRCLES_INDEXER_URL } from '../constants/common'
 const circlesRpc = new CirclesRpc(CIRCLES_INDEXER_URL)
 
 export const circlesData = new CirclesData(circlesRpc)
+
+export const circlesProfiles = new Profiles(CIRCLES_PROFILE_SERVICE_URL)
