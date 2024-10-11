@@ -37,6 +37,10 @@ const columns: Column[] = [
 		label: 'Event'
 	},
 	{
+		key: 'details',
+		label: 'Details'
+	},
+	{
 		key: 'blockNumber',
 		label: 'Block'
 	},

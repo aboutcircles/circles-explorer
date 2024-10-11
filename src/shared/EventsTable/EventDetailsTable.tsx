@@ -28,7 +28,10 @@ const avatarFields = new Set([
 ])
 
 const eventDetailsRenderCell = (item: Row, columnKey: Key) => {
-	const cellValue = item[columnKey]
+	const cellValue =
+		typeof item[columnKey] === 'bigint'
+			? item[columnKey].toString()
+			: item[columnKey]
 
 	if (
 		avatarFields.has(item.key as string) &&

@@ -11,8 +11,17 @@ import {
 } from '@nextui-org/react'
 import dayjs from 'dayjs'
 import { useCallback } from 'react'
+import { formatUnits } from 'viem'
+import { Link as RouterLink } from 'react-router-dom'
+
 import type { Key, Row } from 'components/Table'
-import { EXPLORER_URL } from 'constants/common'
+import {
+	EXPLORER_URL,
+	CRC_TOKEN_ADDRESS,
+	CRC_TOKEN_DECIMALS,
+	CRC_TOKEN_SYMBOL,
+	INDIVIDUAL_TOKEN_SYMBOL
+} from 'constants/common'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { useFilterStore } from 'stores/useFilterStore'
 import { truncateHex } from 'utils/eth'
@@ -82,6 +91,69 @@ export const useRenderCell = () => {
 							{cellValue}
 						</Code>
 					)
+				}
+				case 'details': {
+					if (item.truster && item.trustee) {
+						return (
+							<div className='flex justify-around'>
+								<RouterLink
+									className='text-blue-500'
+									to={`/avatar/${item.truster}`}
+								>
+									{truncateHex(String(item.truster))}
+								</RouterLink>
+								{' -> '}
+								<RouterLink
+									className='text-blue-500'
+									to={`/avatar/${item.trustee}`}
+								>
+									{truncateHex(String(item.trustee))}
+								</RouterLink>
+							</div>
+						)
+					}
+
+					if (
+						item.from &&
+						item.to &&
+						item.tokenAddress &&
+						(item.amount || item.value)
+					) {
+						return (
+							<div className='flex flex-col items-center'>
+								<div>
+									<RouterLink
+										className='text-blue-500'
+										to={`/avatar/${item.from}`}
+									>
+										{truncateHex(String(item.from))}
+									</RouterLink>
+									{' -> '}
+									<RouterLink
+										className='text-blue-500'
+										to={`/avatar/${item.to}`}
+									>
+										{truncateHex(String(item.to))}
+									</RouterLink>
+								</div>
+
+								<div>
+									{Number(
+										formatUnits(
+											BigInt(item.amount || item.value),
+											CRC_TOKEN_DECIMALS
+										)
+										// eslint-disable-next-line @typescript-eslint/no-magic-numbers
+									).toFixed(4)}{' '}
+									{item.tokenAddress === CRC_TOKEN_ADDRESS.toLowerCase()
+										? CRC_TOKEN_SYMBOL
+										: INDIVIDUAL_TOKEN_SYMBOL}
+								</div>
+							</div>
+						)
+					}
+
+					return ''
 				}
 				case 'blockNumber': {
 					return (
