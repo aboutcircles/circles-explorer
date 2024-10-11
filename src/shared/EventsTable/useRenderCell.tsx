@@ -17,10 +17,8 @@ import { Link as RouterLink } from 'react-router-dom'
 import type { Key, Row } from 'components/Table'
 import {
 	EXPLORER_URL,
-	CRC_TOKEN_ADDRESS,
 	CRC_TOKEN_DECIMALS,
-	CRC_TOKEN_SYMBOL,
-	INDIVIDUAL_TOKEN_SYMBOL
+	CRC_TOKEN_SYMBOL
 } from 'constants/common'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { useFilterStore } from 'stores/useFilterStore'
@@ -116,7 +114,7 @@ export const useRenderCell = () => {
 					if (
 						item.from &&
 						item.to &&
-						item.tokenAddress &&
+						(item.tokenAddress || item.id) &&
 						(item.amount || item.value)
 					) {
 						return (
@@ -145,10 +143,20 @@ export const useRenderCell = () => {
 										)
 										// eslint-disable-next-line @typescript-eslint/no-magic-numbers
 									).toFixed(4)}{' '}
-									{item.tokenAddress === CRC_TOKEN_ADDRESS.toLowerCase()
-										? CRC_TOKEN_SYMBOL
-										: INDIVIDUAL_TOKEN_SYMBOL}
+									{CRC_TOKEN_SYMBOL}
 								</div>
+							</div>
+						)
+					}
+
+					if ((item.event as string).toLowerCase().includes('mint')) {
+						return (
+							<div className='flex justify-center'>
+								{Number(
+									formatUnits(BigInt(item.amount), CRC_TOKEN_DECIMALS)
+									// eslint-disable-next-line @typescript-eslint/no-magic-numbers
+								).toFixed(4)}{' '}
+								{CRC_TOKEN_SYMBOL}
 							</div>
 						)
 					}
