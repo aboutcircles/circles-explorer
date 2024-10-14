@@ -1,14 +1,5 @@
 import type { CirclesEventType } from '@circles-sdk/data'
-import {
-	Button,
-	Code,
-	Link,
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-	Snippet,
-	Tooltip
-} from '@nextui-org/react'
+import { Code, Link, Snippet, Tooltip } from '@nextui-org/react'
 import dayjs from 'dayjs'
 import { useCallback } from 'react'
 import { formatUnits } from 'viem'
@@ -23,8 +14,7 @@ import {
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { useFilterStore } from 'stores/useFilterStore'
 import { truncateHex } from 'utils/eth'
-
-import { EventDetailsTable } from './EventDetailsTable'
+import { EyePopoverDetails } from 'shared/EyePopoverDetails'
 
 export const useRenderCell = () => {
 	const updateEventTypes = useFilterStore.use.updateEventTypes()
@@ -42,24 +32,7 @@ export const useRenderCell = () => {
 
 			switch (columnKey) {
 				case 'info': {
-					return (
-						<Popover size='sm'>
-							<PopoverTrigger>
-								<Button isIconOnly variant='faded'>
-									<img
-										className='h-[13px] w-[13px]'
-										src='/icons/eye.svg'
-										alt='Info'
-									/>
-								</Button>
-							</PopoverTrigger>
-							<PopoverContent>
-								<div>
-									<EventDetailsTable item={item} />
-								</div>
-							</PopoverContent>
-						</Popover>
-					)
+					return <EyePopoverDetails item={item} />
 				}
 				case 'transactionHash': {
 					return (
@@ -91,21 +64,21 @@ export const useRenderCell = () => {
 					)
 				}
 				case 'details': {
-					if (item.truster && item.trustee) {
+					if ((item.truster && item.trustee) || (item.canSendTo && item.user)) {
 						return (
 							<div className='flex justify-around'>
 								<RouterLink
 									className='text-blue-500'
-									to={`/avatar/${item.truster}`}
+									to={`/avatar/${item.truster || item.canSendTo}`}
 								>
-									{truncateHex(String(item.truster))}
+									{truncateHex(String(item.truster || item.canSendTo))}
 								</RouterLink>
 								{' -> '}
 								<RouterLink
 									className='text-blue-500'
-									to={`/avatar/${item.trustee}`}
+									to={`/avatar/${item.trustee || item.user}`}
 								>
-									{truncateHex(String(item.trustee))}
+									{truncateHex(String(item.trustee || item.user))}
 								</RouterLink>
 							</div>
 						)

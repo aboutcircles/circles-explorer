@@ -27,7 +27,7 @@ const avatarFields = new Set([
 	'operator'
 ])
 
-const eventDetailsRenderCell = (item: Row, columnKey: Key) => {
+const keyValuesRenderCell = (item: Row, columnKey: Key) => {
 	const cellValue =
 		typeof item[columnKey] === 'bigint'
 			? item[columnKey].toString()
@@ -48,10 +48,10 @@ const eventDetailsRenderCell = (item: Row, columnKey: Key) => {
 	return cellValue
 }
 
-export function EventDetailsTable({ item }: { item: Row }) {
+export function KeyValuesTable({ item }: { item: Row }) {
 	return (
 		<Table
-			renderCell={eventDetailsRenderCell}
+			renderCell={keyValuesRenderCell}
 			ariaLabel='Event Details'
 			columns={eventDetailsColumns}
 			rows={Object.entries(item)

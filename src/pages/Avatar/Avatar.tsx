@@ -1,12 +1,19 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import type { AvatarRow } from '@circles-sdk/data'
 
+import type { Row } from 'components/Table'
 import { EventsTable } from 'shared/EventsTable'
 import { Filter } from 'shared/Filter'
-import { circlesData, circlesProfiles } from 'services/circlesData'
+import { circlesData } from 'services/circlesData'
+import { EyePopoverDetails } from 'shared/EyePopoverDetails'
+
+import { AvatarInfo } from './AvatarInfo'
 
 export default function Avatar() {
 	const { address } = useParams()
+	const [avatarInfo, setAvatarInfo] = useState<AvatarRow>()
+
 	useEffect(() => {
 		const loadAvatarInfo = async (address_: string) => {
 			console.log({ address_ })
@@ -18,7 +25,7 @@ export default function Avatar() {
 			// console.log(avatar.current.avatarInfo)
 			//
 			const [
-				avatarInfo,
+				avatarInfoResult,
 				totalBalance,
 				totalBalanceV2,
 				tokenBalances,
@@ -37,8 +44,10 @@ export default function Avatar() {
 				// circlesData.getAggregatedTrustRelations(address_)
 			])
 
+			setAvatarInfo(avatarInfoResult)
+
 			console.log({
-				avatarInfo,
+				avatarInfoResult,
 				totalBalance,
 				totalBalanceV2,
 				tokenBalances,
@@ -46,12 +55,6 @@ export default function Avatar() {
 				trustRelations
 				// aggregatedTrustRelations
 			})
-
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-expect-error
-			const profile = await circlesProfiles.get(avatarInfo.cidV0)
-			//
-			console.log({ profile })
 		}
 
 		if (address) {
@@ -61,8 +64,13 @@ export default function Avatar() {
 
 	return (
 		<div>
-			<h1>Hello</h1>
-			<h1>{address}</h1>
+			<div className='flex justify-between'>
+				<AvatarInfo cidV0={avatarInfo?.cidV0} />
+
+				{avatarInfo ? (
+					<EyePopoverDetails item={avatarInfo as unknown as Row} />
+				) : null}
+			</div>
 
 			<Filter />
 			<EventsTable address={address} />
