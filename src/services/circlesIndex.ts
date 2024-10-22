@@ -15,7 +15,6 @@ import type { CirclesEventsResponse, Event } from 'types/events'
 import type { StatsResponse } from 'types/stats'
 import logger from 'services/logger'
 import { circlesData } from 'services/circlesData'
-import { useFilterStore } from 'stores/useFilterStore'
 import { useStatsStore } from 'stores/useStatsStore'
 
 const getEventKey = (transactionHash: string, logIndex: number) =>
@@ -27,7 +26,6 @@ const watchEventUpdates = async (
 	queryClient: QueryClient,
 	address: string | null
 ) => {
-	// todo: does not work without sdk, move to direct connection to endpoint?
 	const avatarEvents = await (address
 		? circlesData.subscribeToEvents(address)
 		: circlesData.subscribeToEvents())
@@ -72,9 +70,11 @@ export const useFetchCirclesEvents = (
 	enabled: boolean,
 	watch: boolean,
 	address: string | null
-): UseQueryResult<Event[]> => {
+): UseQueryResult<{
+	events: Event[]
+	eventTypesAmount: Map<CirclesEventType, number>
+}> => {
 	const queryClient: QueryClient = useQueryClient()
-	const updateEventTypesAmount = useFilterStore.use.updateEventTypesAmount()
 
 	const queryKey = useMemo(
 		() => [CIRCLES_EVENTS_QUERY_KEY, startBlock, endBlock, address],
@@ -119,7 +119,6 @@ export const useFetchCirclesEvents = (
 						)
 					}
 				})
-				updateEventTypesAmount(eventTypesAmount)
 
 				logger.log(
 					'[service][circles] queried circles events',
@@ -127,7 +126,7 @@ export const useFetchCirclesEvents = (
 					{ events }
 				)
 
-				return events
+				return { events, eventTypesAmount }
 			} catch (error) {
 				logger.error('[service][circles] Failed to query circles events', error)
 				throw new Error('Failed to query circles events')

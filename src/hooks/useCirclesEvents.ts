@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 
 import { ONE } from 'constants/common'
 import { useBlockNumber } from 'hooks/useBlockNumber'
@@ -10,6 +10,7 @@ import type { Event } from 'types/events'
 export const useCirclesEvents = (page: number, address: string | null) => {
 	const eventTypes = useFilterStore.use.eventTypes()
 	const search = useFilterStore.use.search()
+	const updateEventTypesAmount = useFilterStore.use.updateEventTypesAmount()
 	const period = periods[useFilterStore.use.period()]
 
 	const blockNumber = useBlockNumber()
@@ -27,13 +28,22 @@ export const useCirclesEvents = (page: number, address: string | null) => {
 		[period, startBlock]
 	)
 
-	const { data: events, isLoading: isEventsLoading } = useFetchCirclesEvents(
+	const {
+		data: { events, eventTypesAmount } = {},
+		isLoading: isEventsLoading
+	} = useFetchCirclesEvents(
 		startBlock,
 		endBlock,
 		Boolean(blockNumber),
 		page === ONE,
 		address
 	)
+
+	useEffect(() => {
+		if (eventTypesAmount) {
+			updateEventTypesAmount(eventTypesAmount)
+		}
+	}, [updateEventTypesAmount, eventTypesAmount])
 
 	const filteredEvents = useMemo(() => {
 		if (!events) return []
