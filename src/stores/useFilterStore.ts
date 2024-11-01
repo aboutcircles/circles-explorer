@@ -27,14 +27,12 @@ interface Period {
 }
 
 interface State {
-	search: string | null
 	eventTypes: Set<CirclesEventType>
 	period: PeriodKey
 	eventTypesAmount: Map<CirclesEventType, number>
 }
 
 interface Action {
-	updateSearch: (search: string) => void
 	updateEventTypes: (event: CirclesEventType) => void
 	updatePeriod: (period: PeriodKey) => void
 	updateEventTypesAmount: (
@@ -87,12 +85,10 @@ export const periods: Record<PeriodKey, Period> = {
 }
 
 const useFilterStoreBase = create<Action & State>((set) => ({
-	search: null,
 	eventTypes: new Set(EVENTS),
 	period: '12H' as PeriodKey,
 	eventTypesAmount: new Map(),
 
-	updateSearch: (search: string) => set(() => ({ search })),
 	updateEventTypes: (event: CirclesEventType) =>
 		set(({ eventTypes }) => {
 			if (eventTypes.size === EVENTS.length) {

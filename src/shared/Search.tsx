@@ -1,38 +1,54 @@
+import { Button } from '@nextui-org/react'
 import { useCallback } from 'react'
-import { isAddress } from 'viem'
+import { isAddress, isHash } from 'viem'
 import { useNavigate } from 'react-router-dom'
 
 import { SearchBox } from 'components/SearchBox'
-import { useFilterStore } from 'stores/useFilterStore'
+import { useSearchStore } from 'stores/useSearchStore'
+import { useSearchSync } from 'hooks/useSearchSync'
 
 export function Search() {
-	const updateSearch = useFilterStore.use.updateSearch()
+	const updateSearch = useSearchStore.use.updateSearch()
+	const search = useSearchStore.use.search() ?? ''
 	const navigate = useNavigate()
 
+	useSearchSync()
+
 	const handleSubmit = useCallback(
-		(search: string) => {
-			if (!isAddress(search)) return
-
-			updateSearch('')
-			navigate(`/avatar/${search}`)
-		},
-		[updateSearch, navigate]
-	)
-
-	const handleChange = useCallback(
-		(search: string) => {
-			updateSearch(search)
+		(newSearch: string) => {
+			updateSearch(newSearch)
 		},
 		[updateSearch]
 	)
+
+	const handleNavigateToAvatar = useCallback(() => {
+		updateSearch('')
+		navigate(`/avatar/${search}`)
+	}, [updateSearch, navigate, search])
 
 	return (
 		<div className='m-4 flex justify-center'>
 			<SearchBox
 				placeholder='0x...'
 				handleSubmit={handleSubmit}
-				handleChange={handleChange}
+				outerSearch={search}
 			/>
+
+			{isAddress(search) && (
+				<Button
+					onPress={handleNavigateToAvatar}
+					isIconOnly
+					className='ml-2'
+					color='primary'
+					isDisabled={!isAddress(search) && !isHash(search)}
+				>
+					<img
+						src='/icons/arrow-right.svg'
+						alt='GoToAvatar'
+						className='fg-white h-5 w-5'
+					/>
+				</Button>
+			)}
 		</div>
 	)
 }

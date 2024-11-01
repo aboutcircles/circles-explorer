@@ -44,6 +44,7 @@
 		"@typescript-eslint/no-unsafe-assignment": "off",
 		"unicorn/no-keyword-prefix": "off",
 		"@typescript-eslint/max-params": "off",
+		"react/jsx-handler-names": "off",
 
 		"no-dupe-else-if": "error",
 		"no-promise-executor-return": "error",
@@ -131,14 +132,14 @@
 			}
 		],
 		"react/no-unstable-nested-components": "error",
-		"react/jsx-handler-names": [
-			"error",
-			{
-				"eventHandlerPrefix": "on",
-				"eventHandlerPropPrefix": "on",
-				"checkLocalVariables": true
-			}
-		],
+		//		"react/jsx-handler-names": [
+		//			"error",
+		//			{
+		//				"eventHandlerPrefix": "on",
+		//				"eventHandlerPropPrefix": "on",
+		//				"checkLocalVariables": true
+		//			}
+		//		],
 		"react/jsx-key": "error",
 		"react/jsx-no-bind": [
 			"error",

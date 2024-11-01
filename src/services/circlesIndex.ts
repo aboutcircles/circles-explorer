@@ -8,7 +8,7 @@ import type {
 	QueryKey
 } from '@tanstack/react-query'
 import { hexToNumber } from 'viem'
-import type { Hex } from 'viem'
+import type { Hex, Address, Hash } from 'viem'
 
 import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
 import type { CirclesEventsResponse, Event } from 'types/events'
@@ -169,3 +169,48 @@ export const useFetchCirclesStats = (): UseQueryResult<Event[]> => {
 		}
 	})
 }
+
+// query
+const CIRCLES_SEARCH_EVENTS_QUERY_KEY = 'circlesSearchEvents'
+export const useSearchCirclesEvents = ({
+	address,
+	txHash,
+	block
+}: {
+	address?: Address
+	txHash?: Hash
+	block?: number
+}): UseQueryResult<Event[]> =>
+	useQuery({
+		queryKey: [CIRCLES_SEARCH_EVENTS_QUERY_KEY],
+		queryFn: async () => {
+			try {
+				const response = await axios.post<StatsResponse>(CIRCLES_INDEXER_URL, {
+					method: 'circles_events',
+					params: [
+						null,
+						0,
+						null,
+						[
+							{
+								Type: 'FilterPredicate',
+								FilterType: 'Equals',
+								Column: 'transactionHash',
+								Value: [txHash]
+							}
+						]
+					]
+				})
+
+				logger.log('[service][circles] queried circles stats', {
+					response: response.data.result
+				})
+
+				return response.data.result
+			} catch (error) {
+				logger.error('[service][circles] Failed to query circles stats', error)
+				throw new Error('Failed to query circles stats')
+			}
+		},
+		enabled: Boolean(txHash ?? block ?? address)
+	})

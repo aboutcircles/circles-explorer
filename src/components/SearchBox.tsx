@@ -1,32 +1,58 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Input, Button } from '@nextui-org/react'
 import type React from 'react'
-import { isAddress } from 'viem'
+import { isAddress, isHash } from 'viem'
 
 interface SearchProperties {
 	handleSubmit: (search: string) => void
-	handleChange: (search: string) => void
+	handleChange?: (search: string) => void
 	placeholder: string
+	outerSearch: string
 }
 
 export function SearchBox({
 	handleSubmit,
 	handleChange,
-	placeholder
+	placeholder,
+	outerSearch
 }: SearchProperties): React.ReactElement {
-	const [search, setSearch] = useState<string>('')
+	const [search, setSearch] = useState<string>(outerSearch)
+
+	useEffect(() => {
+		setSearch(outerSearch)
+	}, [outerSearch])
 
 	const onChange = useCallback(
 		(event_: { target: { value: React.SetStateAction<string> } }) => {
+			if (event_.target.value === '') {
+				handleSubmit('')
+			}
+
 			setSearch(event_.target.value)
-			handleChange(event_.target.value as string)
+			handleChange?.(event_.target.value as string)
 		},
-		[handleChange]
+		[handleChange, handleSubmit]
+	)
+
+	const handleKeyDown = useCallback(
+		(event_: React.KeyboardEvent<HTMLInputElement>) => {
+			if (event_.key === 'Enter') {
+				event_.preventDefault()
+				handleSubmit(search)
+			}
+		},
+		[handleSubmit, search]
 	)
 
 	const onSubmit = useCallback(() => {
-		handleSubmit(search)
-	}, [handleSubmit, search])
+		// clear option when same search
+		if (outerSearch && outerSearch === search) {
+			handleSubmit('')
+			setSearch('')
+		} else {
+			handleSubmit(search)
+		}
+	}, [handleSubmit, search, outerSearch])
 
 	return (
 		<div className='flex'>
@@ -58,20 +84,35 @@ export function SearchBox({
 				placeholder={placeholder}
 				type='text'
 				onChange={onChange}
+				onKeyDown={handleKeyDown}
+				value={search}
 			/>
 
 			<Button
 				onPress={onSubmit}
+				isIconOnly
 				className='ml-2'
 				color='primary'
-				isDisabled={!isAddress(search)}
+				isDisabled={!isAddress(search) && !isHash(search)}
 			>
-				<img
-					src='/icons/search.svg'
-					alt='Submit'
-					className='fg-white h-5 w-5'
-				/>
+				{outerSearch && outerSearch === search ? (
+					<img
+						src='/icons/close.svg'
+						alt='Submit'
+						className='fg-white h-5 w-5'
+					/>
+				) : (
+					<img
+						src='/icons/search.svg'
+						alt='Submit'
+						className='fg-white h-5 w-5'
+					/>
+				)}
 			</Button>
 		</div>
 	)
+}
+
+SearchBox.defaultProps = {
+	handleChange: () => {}
 }
