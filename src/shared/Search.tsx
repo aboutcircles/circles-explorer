@@ -5,14 +5,11 @@ import { useNavigate } from 'react-router-dom'
 
 import { SearchBox } from 'components/SearchBox'
 import { useSearchStore } from 'stores/useSearchStore'
-import { useSearchSync } from 'hooks/useSearchSync'
 
 export function Search() {
 	const updateSearch = useSearchStore.use.updateSearch()
 	const search = useSearchStore.use.search() ?? ''
 	const navigate = useNavigate()
-
-	useSearchSync()
 
 	const handleSubmit = useCallback(
 		(newSearch: string) => {

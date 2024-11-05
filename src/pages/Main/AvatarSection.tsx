@@ -1,17 +1,13 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
 import type { AvatarRow } from '@circles-sdk/data'
 
 import type { Row } from 'components/Table'
-import { EventsTable } from 'shared/EventsTable'
-import { Filter } from 'shared/Filter'
 import { circlesData } from 'services/circlesData'
 import { EyePopoverDetails } from 'shared/EyePopoverDetails'
 
 import { AvatarInfo } from './AvatarInfo'
 
-export default function Avatar() {
-	const { address } = useParams()
+export function AvatarSection({ address }: { address: string }) {
 	const [avatarInfo, setAvatarInfo] = useState<AvatarRow>()
 
 	useEffect(() => {
@@ -63,17 +59,12 @@ export default function Avatar() {
 	}, [address])
 
 	return (
-		<div>
-			<div className='flex justify-between'>
-				<AvatarInfo cidV0={avatarInfo?.cidV0} />
+		<div className='flex justify-between'>
+			<AvatarInfo cidV0={avatarInfo?.cidV0} />
 
-				{avatarInfo ? (
-					<EyePopoverDetails item={avatarInfo as unknown as Row} />
-				) : null}
-			</div>
-
-			<Filter />
-			<EventsTable address={address} />
+			{avatarInfo ? (
+				<EyePopoverDetails item={avatarInfo as unknown as Row} />
+			) : null}
 		</div>
 	)
 }

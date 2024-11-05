@@ -5,12 +5,12 @@ import { useBlockNumber } from 'hooks/useBlockNumber'
 import { useFetchCirclesEvents } from 'services/circlesIndex'
 import { getDateRange } from 'utils/time'
 import { useFilterStore, periods } from 'stores/useFilterStore'
-// import { useSearchStore } from 'stores/useSearchStore'
+import { useSearchStore } from 'stores/useSearchStore'
 import type { Event } from 'types/events'
 
-export const useCirclesEvents = (page: number, address: string | null) => {
+export const useCirclesEvents = (page: number) => {
 	const eventTypes = useFilterStore.use.eventTypes()
-	// const search = useSearchStore.use.search()
+	const search = useSearchStore.use.search()
 	const updateEventTypesAmount = useFilterStore.use.updateEventTypesAmount()
 	const period = periods[useFilterStore.use.period()]
 
@@ -36,8 +36,8 @@ export const useCirclesEvents = (page: number, address: string | null) => {
 		startBlock,
 		endBlock,
 		Boolean(blockNumber),
-		page === ONE,
-		address
+		page === ONE && !search,
+		search
 	)
 
 	useEffect(() => {
