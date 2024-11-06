@@ -1,6 +1,5 @@
 import type { CirclesEventType } from '@circles-sdk/data'
 
-// todo: check events and update sdk, cause different amount from response and what we show
 export const EVENTS: CirclesEventType[] = [
 	'CrcV1_HubTransfer',
 	'CrcV1_Transfer',
@@ -12,10 +11,10 @@ export const EVENTS: CirclesEventType[] = [
 	'CrcV2_CreateVault',
 	'CrcV2_DepositDemurraged',
 	'CrcV2_DepositInflationary',
-	'CrcV2_Erc20WrapperDeployed',
+	'CrcV2_ERC20WrapperDeployed',
 	'CrcV2_Erc20WrapperTransfer',
-	'CrcV2_GroupMintBatch',
-	'CrcV2_GroupMintSingle',
+	// 'CrcV2_GroupMintBatch',
+	// 'CrcV2_GroupMintSingle',
 	'CrcV2_GroupRedeem',
 	'CrcV2_GroupRedeemCollateralBurn',
 	'CrcV2_GroupRedeemCollateralReturn',
@@ -32,5 +31,7 @@ export const EVENTS: CirclesEventType[] = [
 	'CrcV2_UpdateMetadataDigest',
 	'CrcV2_URI',
 	'CrcV2_WithdrawDemurraged',
-	'CrcV2_WithdrawInflationary'
+	'CrcV2_WithdrawInflationary',
+	'CrcV2_InviteHuman',
+	'CrcV2_DiscountCost'
 ]
