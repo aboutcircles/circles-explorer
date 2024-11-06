@@ -15,7 +15,7 @@ export function Search() {
 	)
 
 	return (
-		<div className='m-4 flex justify-center'>
+		<div className='flex justify-center'>
 			<SearchBox handleSubmit={handleSubmit} outerSearch={search} />
 		</div>
 	)

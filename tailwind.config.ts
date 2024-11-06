@@ -34,7 +34,11 @@ const config = {
 						icon: '#1F2937',
 						primary: {
 							foreground: '#FFFFFF',
-							DEFAULT: '#006FEE'
+							DEFAULT: '#38318B'
+						},
+						secondary: {
+							foreground: '#FFFFFF',
+							DEFAULT: '#DF6552'
 						}
 						// ... rest of the colors
 					}

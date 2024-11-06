@@ -3,7 +3,6 @@ import type { ReactElement } from 'react'
 import { useLocation } from 'react-router-dom'
 import { isAddress } from 'viem'
 
-import { Search } from 'shared/Search'
 import { EventsTable } from 'shared/EventsTable'
 import { Filter } from 'shared/Filter'
 import { useSearchSync } from 'hooks/useSearchSync'
@@ -29,8 +28,6 @@ export default function Main(): ReactElement {
 
 	return (
 		<div className='flex flex-col'>
-			<Search />
-
 			{isSearchAddress ? <AvatarSection address={search} /> : <Stats />}
 
 			<Filter />
