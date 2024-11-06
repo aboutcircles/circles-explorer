@@ -12,6 +12,7 @@ export const useCirclesEvents = (page: number) => {
 	const eventTypes = useFilterStore.use.eventTypes()
 	const search = useSearchStore.use.search()
 	const updateEventTypesAmount = useFilterStore.use.updateEventTypesAmount()
+	// todo: make update period here instead of in the component (by mistake extra time is called for bigger amount of events)
 	const period = periods[useFilterStore.use.period()]
 
 	const blockNumber = useBlockNumber()

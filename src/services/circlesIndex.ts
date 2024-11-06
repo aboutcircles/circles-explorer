@@ -21,7 +21,7 @@ const getEventKey = (transactionHash: string, logIndex: number) =>
 	`${transactionHash}-${logIndex}`
 
 const defineFiltersFromSearch = (search: string | null) => {
-	if (!search) return null
+	if (!search || isAddress(search)) return null
 
 	if (isHash(search)) {
 		return [
@@ -115,7 +115,7 @@ export const useFetchCirclesEvents = (
 		queryFn: async () => {
 			try {
 				const address = isAddress(search ?? '') ? search : null
-				const filters = defineFiltersFromSearch(search)
+				const filters = address ? null : defineFiltersFromSearch(search)
 
 				const response = await axios.post<CirclesEventsResponse>(
 					CIRCLES_INDEXER_URL,

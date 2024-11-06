@@ -28,6 +28,10 @@ const config = {
 					colors: {
 						background: '#FFFFFF', // or DEFAULT
 						foreground: '#11181C', // or 50 to 900 DEFAULT
+						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+						// @ts-expect-error
+						border: '#D1D5DB',
+						icon: '#1F2937',
 						primary: {
 							foreground: '#FFFFFF',
 							DEFAULT: '#006FEE'

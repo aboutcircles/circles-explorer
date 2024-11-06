@@ -6,7 +6,7 @@ import { isAddress, isHash } from 'viem'
 interface SearchProperties {
 	handleSubmit: (search: string) => void
 	handleChange?: (search: string) => void
-	placeholder: string
+	placeholder?: string
 	outerSearch: string
 }
 
@@ -58,54 +58,53 @@ export function SearchBox({
 		<div className='flex'>
 			<Input
 				classNames={{
-					label: 'text-black/50 dark:text-white/90',
 					input: [
 						'bg-transparent',
 						'border-0',
 						'rounded-md',
 						'text-black/90 dark:text-white/90',
-						'placeholder:text-default-700/50 dark:placeholder:text-white/60'
+						'placeholder:text-default-700/50 dark:placeholder:text-white/60',
+						'focus:ring-0'
 					],
-					innerWrapper: 'bg-transparent',
-					mainWrapper: 'w-[400px]',
-					inputWrapper: [
-						'bg-transparent',
-						'dark:bg-default/60',
-						'border-0',
-						'backdrop-blur-xl',
-						'backdrop-saturate-200',
-						'hover:bg-default-200/70',
-						'dark:hover:bg-default/70',
-						'group-data-[focus=true]:bg-default-200/50',
-						'dark:group-data-[focus=true]:bg-default/60',
-						'!cursor-text'
-					]
+					mainWrapper: 'w-[320px]'
 				}}
-				placeholder={placeholder}
+				variant='bordered'
 				type='text'
+				// todo: it stack sometimes
+				// isClearable={outerSearch ? outerSearch === search : false}
+				placeholder={placeholder}
 				onChange={onChange}
 				onKeyDown={handleKeyDown}
 				value={search}
+				onClear={onSubmit}
+				startContent={
+					<img
+						src='/icons/search.svg'
+						alt='Submit'
+						className='h-5 w-5 invert filter'
+					/>
+				}
 			/>
 
 			<Button
 				onPress={onSubmit}
 				isIconOnly
-				className='ml-2'
+				className='ml-2 disabled:cursor-not-allowed'
 				color='primary'
+				variant='faded'
 				isDisabled={!isAddress(search) && !isHash(search)}
 			>
 				{outerSearch && outerSearch === search ? (
 					<img
 						src='/icons/close.svg'
 						alt='Submit'
-						className='fg-white h-5 w-5'
+						className='h-5 w-5 invert filter'
 					/>
 				) : (
 					<img
 						src='/icons/search.svg'
 						alt='Submit'
-						className='fg-white h-5 w-5'
+						className='h-5 w-5 invert filter'
 					/>
 				)}
 			</Button>
@@ -114,5 +113,6 @@ export function SearchBox({
 }
 
 SearchBox.defaultProps = {
-	handleChange: () => {}
+	handleChange: () => {},
+	placeholder: 'Search'
 }

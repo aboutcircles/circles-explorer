@@ -16,11 +16,7 @@ export function Search() {
 
 	return (
 		<div className='m-4 flex justify-center'>
-			<SearchBox
-				placeholder='0x...'
-				handleSubmit={handleSubmit}
-				outerSearch={search}
-			/>
+			<SearchBox handleSubmit={handleSubmit} outerSearch={search} />
 		</div>
 	)
 }

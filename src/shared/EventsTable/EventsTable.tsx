@@ -98,6 +98,7 @@ export function EventsTable({
 							onValueChange={(period_) => updatePeriod(period_ as PeriodKey)}
 						>
 							{Object.values(periods)
+								// todo: hide periods for txHash / blockNumber
 								.filter((period_) =>
 									address
 										? period_.show.includes('avatar')

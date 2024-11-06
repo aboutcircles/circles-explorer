@@ -1,5 +1,6 @@
 import type { CirclesEventType } from '@circles-sdk/data'
 
+// todo: check events and update sdk, cause different amount from response and what we show
 export const EVENTS: CirclesEventType[] = [
 	'CrcV1_HubTransfer',
 	'CrcV1_Transfer',
