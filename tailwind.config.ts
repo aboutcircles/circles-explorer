@@ -39,7 +39,9 @@ const config = {
 						secondary: {
 							foreground: '#FFFFFF',
 							DEFAULT: '#DF6552'
-						}
+						},
+
+						grayText: 'rgba(31, 41, 55, 1)'
 						// ... rest of the colors
 					}
 				},
