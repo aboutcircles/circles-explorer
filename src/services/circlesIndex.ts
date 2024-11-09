@@ -65,29 +65,36 @@ const watchEventUpdates = async (
 			event.logIndex
 		)
 
-		queryClient.setQueryData(queryKey, (cacheData?: Event[]) => {
-			logger.log({ event, key, cacheData })
+		queryClient.setQueryData(
+			queryKey,
+			(cacheData?: {
+				events: Event[]
+				eventTypesAmount: Map<CirclesEventType, number>
+			}) => {
+				if (!cacheData) return [event]
 
-			if (!cacheData) return [event]
+				const updatedData = [...cacheData.events]
 
-			const updatedData = [...cacheData]
+				const eventIndex = updatedData.findIndex(
+					(cacheEvent) => cacheEvent.key === key
+				)
 
-			const eventIndex = updatedData.findIndex(
-				(cacheEvent) => cacheEvent.key === key
-			)
+				if (eventIndex === MINUS_ONE) {
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-expect-error
+					updatedData.unshift({
+						...event,
+						key,
+						event: event.$event
+					})
+				}
 
-			if (eventIndex === MINUS_ONE) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-expect-error
-				updatedData.unshift({
-					...event,
-					key,
-					event: event.$event
-				})
+				return {
+					...cacheData,
+					events: updatedData
+				}
 			}
-
-			return updatedData
-		})
+		)
 	})
 }
 
