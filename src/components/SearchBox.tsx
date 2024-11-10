@@ -66,7 +66,7 @@ export function SearchBox({
 						'placeholder:text-default-700/50 dark:placeholder:text-white/60',
 						'focus:ring-0'
 					],
-					mainWrapper: 'w-[320px]'
+					mainWrapper: 'w-[170px] md:w-[320px]'
 				}}
 				variant='bordered'
 				type='text'

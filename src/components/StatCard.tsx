@@ -23,7 +23,7 @@ export function StatCard({
 		<Tooltip
 			content={`${prettifyNumber(progressValue2)} V2 / ${prettifyNumber(progressValue1)} V1`}
 		>
-			<Card className='m-2 mt-8 w-[305px] border-1'>
+			<Card className='m-2 mt-8 w-[165px] border-1 sm:w-[200px] md:w-[305px]'>
 				<CardHeader className='flex pb-1 pl-3 pt-3'>
 					<div className='text-sm text-grayText'>{label}</div>
 				</CardHeader>
