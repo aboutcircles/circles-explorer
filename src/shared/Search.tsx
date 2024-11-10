@@ -1,38 +1,22 @@
 import { useCallback } from 'react'
-import { isAddress } from 'viem'
-import { useNavigate } from 'react-router-dom'
 
 import { SearchBox } from 'components/SearchBox'
-import { useFilterStore } from 'stores/useFilterStore'
+import { useSearchStore } from 'stores/useSearchStore'
 
 export function Search() {
-	const updateSearch = useFilterStore.use.updateSearch()
-	const navigate = useNavigate()
+	const updateSearch = useSearchStore.use.updateSearch()
+	const search = useSearchStore.use.search() ?? ''
 
 	const handleSubmit = useCallback(
-		(search: string) => {
-			if (!isAddress(search)) return
-
-			updateSearch('')
-			navigate(`/avatar/${search}`)
-		},
-		[updateSearch, navigate]
-	)
-
-	const handleChange = useCallback(
-		(search: string) => {
-			updateSearch(search)
+		(newSearch: string) => {
+			updateSearch(newSearch)
 		},
 		[updateSearch]
 	)
 
 	return (
-		<div className='m-4 flex justify-center'>
-			<SearchBox
-				placeholder='0x...'
-				handleSubmit={handleSubmit}
-				handleChange={handleChange}
-			/>
+		<div className='flex justify-center'>
+			<SearchBox handleSubmit={handleSubmit} outerSearch={search} />
 		</div>
 	)
 }

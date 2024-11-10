@@ -7,7 +7,7 @@ import type {
 	QueryClient,
 	QueryKey
 } from '@tanstack/react-query'
-import { hexToNumber } from 'viem'
+import { hexToNumber, isAddress, isHash } from 'viem'
 import type { Hex } from 'viem'
 
 import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
@@ -19,6 +19,35 @@ import { useStatsStore } from 'stores/useStatsStore'
 
 const getEventKey = (transactionHash: string, logIndex: number) =>
 	`${transactionHash}-${logIndex}`
+
+const defineFiltersFromSearch = (search: string | null) => {
+	if (!search || isAddress(search)) return null
+
+	if (isHash(search)) {
+		return [
+			{
+				Type: 'FilterPredicate',
+				FilterType: 'In',
+				Column: 'transactionHash',
+				Value: [search]
+			}
+		]
+	}
+
+	// todo: fix this, getting server error now
+	if (Number.isInteger(Number(search))) {
+		return [
+			{
+				Type: 'FilterPredicate',
+				FilterType: 'In',
+				Column: 'blockNumber',
+				Value: [Number(search)]
+			}
+		]
+	}
+
+	return null
+}
 
 // watcher
 const watchEventUpdates = async (
@@ -36,29 +65,36 @@ const watchEventUpdates = async (
 			event.logIndex
 		)
 
-		queryClient.setQueryData(queryKey, (cacheData?: Event[]) => {
-			logger.log({ event, key, cacheData })
+		queryClient.setQueryData(
+			queryKey,
+			(cacheData?: {
+				events: Event[]
+				eventTypesAmount: Map<CirclesEventType, number>
+			}) => {
+				if (!cacheData) return [event]
 
-			if (!cacheData) return [event]
+				const updatedData = [...cacheData.events]
 
-			const updatedData = [...cacheData]
+				const eventIndex = updatedData.findIndex(
+					(cacheEvent) => cacheEvent.key === key
+				)
 
-			const eventIndex = updatedData.findIndex(
-				(cacheEvent) => cacheEvent.key === key
-			)
+				if (eventIndex === MINUS_ONE) {
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-expect-error
+					updatedData.unshift({
+						...event,
+						key,
+						event: event.$event
+					})
+				}
 
-			if (eventIndex === MINUS_ONE) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-expect-error
-				updatedData.unshift({
-					...event,
-					key,
-					event: event.$event
-				})
+				return {
+					...cacheData,
+					events: updatedData
+				}
 			}
-
-			return updatedData
-		})
+		)
 	})
 }
 
@@ -69,7 +105,7 @@ export const useFetchCirclesEvents = (
 	endBlock: number,
 	enabled: boolean,
 	watch: boolean,
-	address: string | null
+	search: string | null
 ): UseQueryResult<{
 	events: Event[]
 	eventTypesAmount: Map<CirclesEventType, number>
@@ -77,20 +113,24 @@ export const useFetchCirclesEvents = (
 	const queryClient: QueryClient = useQueryClient()
 
 	const queryKey = useMemo(
-		() => [CIRCLES_EVENTS_QUERY_KEY, startBlock, endBlock, address],
-		[startBlock, endBlock, address]
+		() => [CIRCLES_EVENTS_QUERY_KEY, startBlock, endBlock, search],
+		[startBlock, endBlock, search]
 	)
 
 	return useQuery({
 		queryKey,
 		queryFn: async () => {
 			try {
+				const address = isAddress(search ?? '') ? search : null
+				const filters = address ? null : defineFiltersFromSearch(search)
+
 				const response = await axios.post<CirclesEventsResponse>(
 					CIRCLES_INDEXER_URL,
 					{
 						method: 'circles_events',
-						// 0xde374ece6fa50e781e81aac78e811b33d16912c7
-						params: [address, startBlock, endBlock]
+						params: filters
+							? [null, 0, null, null, filters]
+							: [address, startBlock, endBlock]
 					}
 				)
 

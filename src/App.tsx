@@ -6,7 +6,6 @@ import LoadingOrError from 'components/LoadingOrError'
 import { Header } from 'layout/Header'
 
 const MainPage = lazy(async () => import('pages/Main/Main'))
-const AvatarPage = lazy(async () => import('pages/Avatar/Avatar'))
 
 export default function App(): ReactElement {
 	return (
@@ -17,8 +16,6 @@ export default function App(): ReactElement {
 				<div className='m-auto max-w-[1300px]'>
 					<Routes>
 						<Route path='/' element={<MainPage />} />
-
-						<Route path='/avatar/:address' element={<AvatarPage />} />
 					</Routes>
 				</div>
 			</Suspense>

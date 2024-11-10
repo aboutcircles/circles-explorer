@@ -67,7 +67,7 @@ export function Table({
 				{(item) => (
 					<TableRow
 						key={item.key}
-						className='animate-fade-in transition-opacity duration-500 ease-in-out'
+						className='animate-fade-in border-b-1 transition-opacity duration-500 ease-in-out'
 					>
 						{(columnKey) => (
 							<TableCell>{renderCell(item, columnKey)}</TableCell>

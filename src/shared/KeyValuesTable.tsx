@@ -39,7 +39,7 @@ const keyValuesRenderCell = (item: Row, columnKey: Key) => {
 		!isDeadAddress(cellValue as string)
 	) {
 		return (
-			<RouterLink className='text-primary' to={`avatar/${cellValue}`}>
+			<RouterLink className='text-primary' to={`?search=${cellValue}`}>
 				{cellValue}
 			</RouterLink>
 		)

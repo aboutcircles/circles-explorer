@@ -5,12 +5,14 @@ import { useBlockNumber } from 'hooks/useBlockNumber'
 import { useFetchCirclesEvents } from 'services/circlesIndex'
 import { getDateRange } from 'utils/time'
 import { useFilterStore, periods } from 'stores/useFilterStore'
+import { useSearchStore } from 'stores/useSearchStore'
 import type { Event } from 'types/events'
 
-export const useCirclesEvents = (page: number, address: string | null) => {
+export const useCirclesEvents = (page: number) => {
 	const eventTypes = useFilterStore.use.eventTypes()
-	const search = useFilterStore.use.search()
+	const search = useSearchStore.use.search()
 	const updateEventTypesAmount = useFilterStore.use.updateEventTypesAmount()
+	// todo: make update period here instead of in the component (by mistake extra time is called for bigger amount of events)
 	const period = periods[useFilterStore.use.period()]
 
 	const blockNumber = useBlockNumber()
@@ -35,8 +37,8 @@ export const useCirclesEvents = (page: number, address: string | null) => {
 		startBlock,
 		endBlock,
 		Boolean(blockNumber),
-		page === ONE,
-		address
+		page === ONE && !search,
+		search
 	)
 
 	useEffect(() => {
@@ -48,21 +50,8 @@ export const useCirclesEvents = (page: number, address: string | null) => {
 	const filteredEvents = useMemo(() => {
 		if (!events) return []
 
-		const result = events.filter((event: Event): boolean =>
-			eventTypes.has(event.event)
-		)
-
-		if (search) {
-			return result.filter(
-				(event: Event): boolean =>
-					event.transactionHash.includes(search) ||
-					event.event.includes(search) ||
-					event.blockNumber.toString().includes(search)
-			)
-		}
-
-		return result
-	}, [events, eventTypes, search])
+		return events.filter((event: Event): boolean => eventTypes.has(event.event))
+	}, [events, eventTypes])
 
 	return {
 		events: filteredEvents,
