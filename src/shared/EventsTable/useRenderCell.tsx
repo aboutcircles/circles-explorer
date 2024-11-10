@@ -3,7 +3,6 @@ import { Code, Link, Snippet, Tooltip } from '@nextui-org/react'
 import dayjs from 'dayjs'
 import { useCallback } from 'react'
 import { formatUnits } from 'viem'
-import { Link as RouterLink } from 'react-router-dom'
 
 import type { Key, Row } from 'components/Table'
 import {
@@ -15,9 +14,19 @@ import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { useFilterStore } from 'stores/useFilterStore'
 import { truncateHex } from 'utils/eth'
 import { EyePopoverDetails } from 'shared/EyePopoverDetails'
+import { LABELS_MAPPER } from 'constants/events'
+import { useSearchStore } from 'stores/useSearchStore'
 
 export const useRenderCell = () => {
 	const updateEventTypes = useFilterStore.use.updateEventTypes()
+	const updateSearch = useSearchStore.use.updateSearch()
+
+	const applyAvatarSearch = useCallback(
+		(address: string) => {
+			updateSearch(address)
+		},
+		[updateSearch]
+	)
 
 	const onEventClick = useCallback(
 		(event: CirclesEventType) => {
@@ -38,7 +47,8 @@ export const useRenderCell = () => {
 					return (
 						<Snippet
 							symbol=''
-							variant='bordered'
+							variant='flat'
+							className='bg-transparent'
 							size='sm'
 							codeString={String(cellValue)}
 						>
@@ -55,31 +65,40 @@ export const useRenderCell = () => {
 				case 'event': {
 					return (
 						<Code
-							className='border-2 hover:cursor-pointer hover:border-dashed hover:border-primary'
+							className='border-2 border-gray-100 bg-gray-50 hover:cursor-pointer hover:border-dashed hover:border-primary'
 							// eslint-disable-next-line react/jsx-no-bind
 							onClick={onEventClick.bind(null, cellValue as CirclesEventType)}
 						>
-							{cellValue}
+							{String(cellValue).includes('CrcV1') ? 'V1' : 'V2'} -{' '}
+							{LABELS_MAPPER[cellValue as CirclesEventType]}
 						</Code>
 					)
 				}
 				case 'details': {
 					if ((item.truster && item.trustee) || (item.canSendTo && item.user)) {
 						return (
-							<div className='flex justify-around'>
-								<RouterLink
-									className='text-blue-500'
-									to={`/avatar/${item.truster || item.canSendTo}`}
+							<div className='flex justify-start'>
+								<Code
+									className='mr-2 cursor-pointer border-1 border-gray-100 bg-gray-50'
+									// eslint-disable-next-line react/jsx-no-bind
+									onClick={applyAvatarSearch.bind(
+										null,
+										String(item.truster || item.canSendTo)
+									)}
 								>
 									{truncateHex(String(item.truster || item.canSendTo))}
-								</RouterLink>
+								</Code>
 								{' -> '}
-								<RouterLink
-									className='text-blue-500'
-									to={`/avatar/${item.trustee || item.user}`}
+								<Code
+									className='ml-2 cursor-pointer border-1 border-gray-100 bg-gray-50'
+									// eslint-disable-next-line react/jsx-no-bind
+									onClick={applyAvatarSearch.bind(
+										null,
+										String(item.trustee || item.user)
+									)}
 								>
 									{truncateHex(String(item.trustee || item.user))}
-								</RouterLink>
+								</Code>
 							</div>
 						)
 					}
@@ -91,21 +110,23 @@ export const useRenderCell = () => {
 						(item.amount || item.value)
 					) {
 						return (
-							<div className='flex flex-col items-center'>
+							<div className='flex flex-row items-center justify-start'>
 								<div>
-									<RouterLink
-										className='text-blue-500'
-										to={`/avatar/${item.from}`}
+									<Code
+										className='mr-2 cursor-pointer border-1 border-gray-100 bg-gray-50'
+										// eslint-disable-next-line react/jsx-no-bind
+										onClick={applyAvatarSearch.bind(null, String(item.from))}
 									>
 										{truncateHex(String(item.from))}
-									</RouterLink>
+									</Code>
 									{' -> '}
-									<RouterLink
-										className='text-blue-500'
-										to={`/avatar/${item.to}`}
+									<Code
+										className='ml-2 mr-2 cursor-pointer border-1 border-gray-100 bg-gray-50'
+										// eslint-disable-next-line react/jsx-no-bind
+										onClick={applyAvatarSearch.bind(null, String(item.to))}
 									>
 										{truncateHex(String(item.to))}
-									</RouterLink>
+									</Code>
 								</div>
 
 								<div>
@@ -162,6 +183,6 @@ export const useRenderCell = () => {
 				}
 			}
 		},
-		[onEventClick]
+		[applyAvatarSearch, onEventClick]
 	)
 }
