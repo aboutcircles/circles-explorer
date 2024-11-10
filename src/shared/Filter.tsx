@@ -32,7 +32,7 @@ const renderFilters = (label: string, events: CirclesEventType[]) => {
 	)
 }
 
-export function Filter(): React.ReactElement {
+export function Filter(): React.ReactElement | null {
 	return (
 		<div className='m-4 flex flex-col flex-wrap justify-center'>
 			<div className='flex text-xl font-bold'>Filter Transaction Types:</div>

@@ -81,35 +81,37 @@ export function EventsTable({
 				isLoading={isEventsLoading}
 				topContent={
 					<div className='flex w-full justify-between'>
-						<div className='flex items-center justify-between'>
-							<span className='text-small text-default-400'>
-								Total Events: {events.length === 0 ? '...' : events.length}
-								<span className='pl-2 text-xs'>
-									({dateRange.start} - {dateRange.end}) ({period})
-								</span>
-							</span>
-						</div>
+						<div className='flex flex-row'>
+							<RadioGroup
+								classNames={{
+									wrapper: 'flex-row mr-2'
+								}}
+								value={period}
+								onValueChange={(period_) => updatePeriod(period_ as PeriodKey)}
+							>
+								{Object.values(periods)
+									// todo: hide periods for txHash / blockNumber
+									.filter((period_) =>
+										address
+											? period_.show.includes('avatar')
+											: period_.show.includes('all')
+									)
+									.map((period_) => (
+										<CustomRadio key={period_.label} value={period_.label}>
+											{period_.label}
+										</CustomRadio>
+									))}
+							</RadioGroup>
 
-						<RadioGroup
-							classNames={{
-								wrapper: 'flex-row'
-							}}
-							value={period}
-							onValueChange={(period_) => updatePeriod(period_ as PeriodKey)}
-						>
-							{Object.values(periods)
-								// todo: hide periods for txHash / blockNumber
-								.filter((period_) =>
-									address
-										? period_.show.includes('avatar')
-										: period_.show.includes('all')
-								)
-								.map((period_) => (
-									<CustomRadio key={period_.label} value={period_.label}>
-										{period_.label}
-									</CustomRadio>
-								))}
-						</RadioGroup>
+							<div className='flex items-center justify-between'>
+								<span className='text-small text-default-400'>
+									Total Events: {events.length === 0 ? '...' : events.length}
+									<span className='pl-2 text-xs'>
+										({dateRange.start} - {dateRange.end}) ({period})
+									</span>
+								</span>
+							</div>
+						</div>
 
 						<Pagination
 							isCompact

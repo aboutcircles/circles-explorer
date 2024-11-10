@@ -2,13 +2,13 @@ import { useCheckbox, Chip, VisuallyHidden, tv } from '@nextui-org/react'
 
 const checkbox = tv({
 	slots: {
-		base: 'border-default rounded-md bg-primary-50 h-[33px] my-1',
-		content: 'text-primary-300 hover:text-primary-500'
+		base: 'border-default rounded-md bg-gray-50 h-[33px] my-1',
+		content: 'text-gray-300 hover:text-primary-500'
 	},
 	variants: {
 		isSelected: {
 			true: {
-				base: 'border-primary bg-primary-100 border-primary-200',
+				base: 'bg-primary-100 border-primary-200',
 				content: 'text-primary-400 font-medium hover:text-primary-500'
 			}
 		},
