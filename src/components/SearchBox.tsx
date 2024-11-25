@@ -8,13 +8,15 @@ interface SearchProperties {
 	handleChange?: (search: string) => void
 	placeholder?: string
 	outerSearch: string
+	className?: string
 }
 
 export function SearchBox({
 	handleSubmit,
 	handleChange,
 	placeholder,
-	outerSearch
+	outerSearch,
+	className
 }: SearchProperties): React.ReactElement {
 	const [search, setSearch] = useState<string>(outerSearch)
 
@@ -66,7 +68,7 @@ export function SearchBox({
 						'placeholder:text-default-700/50 dark:placeholder:text-white/60',
 						'focus:ring-0'
 					],
-					mainWrapper: 'w-[170px] md:w-[320px]'
+					mainWrapper: `w-[170px] md:w-[320px] ${className}`
 				}}
 				variant='bordered'
 				type='text'
@@ -113,6 +115,7 @@ export function SearchBox({
 }
 
 SearchBox.defaultProps = {
+	className: '',
 	handleChange: () => {},
 	placeholder: 'Search'
 }

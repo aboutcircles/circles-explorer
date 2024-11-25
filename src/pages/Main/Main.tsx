@@ -30,7 +30,9 @@ export default function Main(): ReactElement {
 		<div className='flex flex-col'>
 			{isSearchAddress ? <AvatarSection address={search} /> : <Stats />}
 
-			<Filter />
+			<div className='hidden sm:block'>
+				<Filter />
+			</div>
 
 			<EventsTable address={isSearchAddress ? search : null} />
 		</div>

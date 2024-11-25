@@ -47,7 +47,7 @@ export function Stats() {
 	const { isLoading, ...statsValues } = useCirclesStats()
 
 	return (
-		<div className='flex flex-row flex-wrap justify-center'>
+		<div className='mb-4 flex flex-row flex-wrap justify-center'>
 			{stats.map((stat) => (
 				<StatCard
 					key={stat.label}

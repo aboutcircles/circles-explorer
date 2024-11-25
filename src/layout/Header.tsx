@@ -1,8 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import { Divider } from '@nextui-org/react'
-import { Search } from 'shared/Search'
+import { Divider, useDisclosure } from '@nextui-org/react'
+import { Search } from 'shared/Search/Search'
+import { SearchModal } from '../shared/Search'
 
 export function Header() {
+	const { isOpen, onOpen, onOpenChange } = useDisclosure()
+
 	const navigate = useNavigate()
 
 	return (
@@ -20,7 +23,12 @@ export function Header() {
 					</h1>
 				</div>
 
-				<Search />
+				<Search onOpen={onOpen} />
+				<SearchModal
+					onOpen={onOpen}
+					isOpen={isOpen}
+					onOpenChange={onOpenChange}
+				/>
 			</div>
 
 			<Divider />
