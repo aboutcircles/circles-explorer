@@ -77,7 +77,7 @@ export const useRenderCell = () => {
 				case 'details': {
 					if ((item.truster && item.trustee) || (item.canSendTo && item.user)) {
 						return (
-							<div className='flex justify-start'>
+							<div className='flex items-center justify-start'>
 								<Code
 									className='mr-2 cursor-pointer border-1 border-gray-100 bg-gray-50'
 									// eslint-disable-next-line react/jsx-no-bind
