@@ -107,13 +107,17 @@ export function EventsTable({
 			</div>
 			<div className='sm:hidden'>
 				<div className='flex flex-col items-center justify-center'>
-					<Periods address={address} />
+					<div className='mb-2'>
+						<Periods address={address} />
+					</div>
 
-					<TotalLabel
-						eventsLength={events.length}
-						dateRange={dateRange}
-						period={period}
-					/>
+					<div className='mb-2'>
+						<TotalLabel
+							eventsLength={events.length}
+							dateRange={dateRange}
+							period={period}
+						/>
+					</div>
 
 					<EventCards events={events} renderCell={renderCell} />
 

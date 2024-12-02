@@ -27,7 +27,7 @@ export function CustomRadio(properties: RadioProps) {
 
 			<div
 				{...getLabelWrapperProps()}
-				className='text-bold flex w-[52px] justify-center gap-0'
+				className='text-bold flex w-[100px] justify-center gap-0 md:w-[52px]'
 			>
 				{children ? (
 					<span {...getLabelProps()} className='text-bold'>
