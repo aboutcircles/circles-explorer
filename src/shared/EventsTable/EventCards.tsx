@@ -1,53 +1,45 @@
 import type { Event } from 'types/events'
+import type { Key, Row } from 'components/Table'
+
+type RenderCellReturnType = JSX.Element | number | string
 
 interface EventCardsProperties {
 	events: Event[]
+	renderCell: (row: Row, columnKey: Key) => RenderCellReturnType
 }
 
-export function EventCards({ events }: EventCardsProperties) {
+export function EventCards({ events, renderCell }: EventCardsProperties) {
 	return (
-		<div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+		<div className='flex w-full flex-col'>
 			{events.map((event) => (
-				<div
-					className='rounded-lg border border-gray-200 bg-white p-4 shadow-md'
-					key={event.key}
-				>
+				<div className='border-t border-gray-200 bg-white p-4' key={event.key}>
 					{/* Transaction Hash */}
-					<div className='flex items-center justify-between'>
+					<div className='flex justify-between'>
 						<div>
 							<p className='text-sm text-gray-500'>TX Hash</p>
 							<p className='font-medium text-gray-900'>
-								{event.transactionHash}
+								{renderCell(event as unknown as Row, 'transactionHash')}
 							</p>
 						</div>
-						<p className='text-sm text-gray-500'>{event.timestamp}</p>
-					</div>
-
-					{/* Block Number */}
-					<div className='mt-2'>
-						<p className='text-sm text-gray-500'>Block</p>
-						<p className='font-medium text-gray-900'>{event.blockNumber}</p>
-					</div>
-
-					{/* Transaction Type */}
-					<div className='mt-2'>
-						<p className='inline-block rounded-lg bg-gray-100 px-2 py-1 text-sm font-medium text-gray-700'>
-							{event.event}
+						<p className='text-sm text-gray-500'>
+							{renderCell(event as unknown as Row, 'timestamp')}
 						</p>
 					</div>
-
-					{/* From -> To */}
-					{/* <div className='mt-4 flex items-center gap-2'> */}
-					{/* 	<p className='text-sm text-gray-500'>{transaction.from}</p> */}
-					{/* 	<span className='text-gray-400'>→</span> */}
-					{/* 	<p className='text-sm text-gray-500'>{transaction.to}</p> */}
-					{/* </div> */}
-
-					{/* Amount */}
-					{/* <div className='mt-4'> */}
-					{/* 	<p className='text-sm text-gray-500'>Amount</p> */}
-					{/* 	<p className='font-medium text-gray-900'>{transaction.amount}</p> */}
-					{/* </div> */}
+					{/* Block Number */}
+					<div className='mt-2 flex items-center'>
+						<p className='pr-1 text-sm text-gray-500'>Block: </p>
+						<p className='font-medium text-gray-900'>
+							{renderCell(event as unknown as Row, 'blockNumber')}
+						</p>
+					</div>
+					{/* Event Type */}
+					<div className='mt-2'>
+						<p>{renderCell(event as unknown as Row, 'event')}</p>
+					</div>
+					{/* Details */}
+					<div className='mt-2'>
+						<p>{renderCell(event as unknown as Row, 'details')}</p>
+					</div>
 				</div>
 			))}
 		</div>

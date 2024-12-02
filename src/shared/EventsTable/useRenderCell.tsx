@@ -48,7 +48,7 @@ export const useRenderCell = () => {
 						<Snippet
 							symbol=''
 							variant='flat'
-							className='bg-transparent'
+							className='bg-transparent pl-0'
 							size='sm'
 							codeString={String(cellValue)}
 						>
@@ -79,7 +79,7 @@ export const useRenderCell = () => {
 						return (
 							<div className='flex items-center justify-start'>
 								<Code
-									className='mr-2 cursor-pointer border-1 border-gray-100 bg-gray-50'
+									className='mr-0 cursor-pointer border-1 border-gray-100 bg-gray-50 md:mr-2'
 									// eslint-disable-next-line react/jsx-no-bind
 									onClick={applyAvatarSearch.bind(
 										null,
@@ -90,7 +90,7 @@ export const useRenderCell = () => {
 								</Code>
 								{' -> '}
 								<Code
-									className='ml-2 cursor-pointer border-1 border-gray-100 bg-gray-50'
+									className='ml-0 cursor-pointer border-1 border-gray-100 bg-gray-50 md:ml-2'
 									// eslint-disable-next-line react/jsx-no-bind
 									onClick={applyAvatarSearch.bind(
 										null,
@@ -113,7 +113,7 @@ export const useRenderCell = () => {
 							<div className='flex flex-row items-center justify-start'>
 								<div>
 									<Code
-										className='mr-2 cursor-pointer border-1 border-gray-100 bg-gray-50'
+										className='cursor-pointer border-1 border-gray-100 bg-gray-50'
 										// eslint-disable-next-line react/jsx-no-bind
 										onClick={applyAvatarSearch.bind(null, String(item.from))}
 									>
@@ -121,7 +121,7 @@ export const useRenderCell = () => {
 									</Code>
 									{' -> '}
 									<Code
-										className='ml-2 mr-2 cursor-pointer border-1 border-gray-100 bg-gray-50'
+										className='mr-2 cursor-pointer border-1 border-gray-100 bg-gray-50'
 										// eslint-disable-next-line react/jsx-no-bind
 										onClick={applyAvatarSearch.bind(null, String(item.to))}
 									>
@@ -145,7 +145,7 @@ export const useRenderCell = () => {
 
 					if ((item.event as string).toLowerCase().includes('mint')) {
 						return (
-							<div className='flex justify-center'>
+							<div>
 								{Number(
 									formatUnits(BigInt(item.amount), CRC_TOKEN_DECIMALS)
 									// eslint-disable-next-line @typescript-eslint/no-magic-numbers

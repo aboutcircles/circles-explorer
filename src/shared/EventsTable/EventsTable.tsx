@@ -55,6 +55,18 @@ export function EventsTable({
 
 	const renderCell = useRenderCell()
 
+	const pagination = (
+		<Pagination
+			isCompact
+			showControls
+			showShadow
+			color='primary'
+			page={page}
+			total={TOTAL_PAGES}
+			onChange={(page_) => setPage(page_)}
+		/>
+	)
+
 	return (
 		<>
 			<div className='hidden sm:block'>
@@ -77,15 +89,7 @@ export function EventsTable({
 								/>
 							</div>
 
-							<Pagination
-								isCompact
-								showControls
-								showShadow
-								color='primary'
-								page={page}
-								total={TOTAL_PAGES}
-								onChange={(page_) => setPage(page_)}
-							/>
+							{pagination}
 						</div>
 					}
 					bottomContent={
@@ -96,15 +100,7 @@ export function EventsTable({
 								period={period}
 							/>
 
-							<Pagination
-								isCompact
-								showControls
-								showShadow
-								color='primary'
-								page={page}
-								total={TOTAL_PAGES}
-								onChange={(page_) => setPage(page_)}
-							/>
+							{pagination}
 						</div>
 					}
 				/>
@@ -119,7 +115,9 @@ export function EventsTable({
 						period={period}
 					/>
 
-					<EventCards events={events} />
+					<EventCards events={events} renderCell={renderCell} />
+
+					<div className='fixed bottom-2 z-10'>{pagination}</div>
 				</div>
 			</div>
 		</>
