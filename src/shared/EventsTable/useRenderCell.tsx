@@ -1,16 +1,15 @@
 import type { CirclesEventType } from '@circles-sdk/data'
-import { Code, Link, Snippet, Tooltip } from '@nextui-org/react'
-import dayjs from 'dayjs'
+import { Code, Link, Snippet } from '@nextui-org/react'
 import { useCallback } from 'react'
 import { formatUnits } from 'viem'
 
 import type { Key, Row } from 'components/Table'
+import { Timestamp } from 'components/Timestamp'
 import {
 	EXPLORER_URL,
 	CRC_TOKEN_DECIMALS,
 	CRC_TOKEN_SYMBOL
 } from 'constants/common'
-import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { useFilterStore } from 'stores/useFilterStore'
 import { truncateHex } from 'utils/eth'
 import { EyePopoverDetails } from 'shared/EyePopoverDetails'
@@ -169,14 +168,7 @@ export const useRenderCell = () => {
 					)
 				}
 				case 'timestamp': {
-					const timestampMs = (cellValue as number) * MILLISECONDS_IN_A_SECOND
-					const date = dayjs(timestampMs)
-
-					return (
-						<Tooltip size='sm' content={date.format('YYYY-MMM-DD HH:mm:ss')}>
-							{dayjs().to(date)}
-						</Tooltip>
-					)
+					return <Timestamp value={cellValue as number} />
 				}
 				default: {
 					return cellValue

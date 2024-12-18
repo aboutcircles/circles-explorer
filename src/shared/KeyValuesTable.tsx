@@ -1,6 +1,7 @@
 import { Link as RouterLink } from 'react-router-dom'
 
 import { type Column, type Key, type Row, Table } from 'components/Table'
+import { Timestamp } from 'components/Timestamp'
 import { isDeadAddress } from 'utils/eth'
 
 const eventDetailsColumns: Column[] = [
@@ -43,6 +44,9 @@ const keyValuesRenderCell = (item: Row, columnKey: Key) => {
 				{cellValue}
 			</RouterLink>
 		)
+	}
+	if (item.key === 'timestamp' && columnKey === 'value') {
+		return <Timestamp value={cellValue as number} />
 	}
 
 	return cellValue
