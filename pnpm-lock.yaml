@@ -11,17 +11,14 @@ importers:
   .:
     dependencies:
       '@circles-sdk/adapter-ethers':
-        specifier: ^0.14.0
-        version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^0.15.1
+        version: 0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@circles-sdk/data':
-        specifier: ^0.14.0
-        version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^0.15.1
+        version: 0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@circles-sdk/profiles':
-        specifier: ^0.14.0
-        version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      '@circles-sdk/sdk':
-        specifier: ^0.14.0
-        version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^0.15.1
+        version: 0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@nextui-org/react':
         specifier: ^2.4.8
         version: 2.4.8(@types/react@18.2.76)(framer-motion@11.5.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.2.3)(typescript@5.4.5)))
@@ -40,6 +37,9 @@ importers:
       framer-motion:
         specifier: ^11.5.4
         version: 11.5.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      multihashes:
+        specifier: ^4.0.3
+        version: 4.0.3
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -1759,52 +1759,34 @@ packages:
       }
     engines: { node: '>=6.9.0' }
 
-  '@circles-sdk/abi-v1@0.14.0':
+  '@circles-sdk/adapter-ethers@0.15.1':
     resolution:
       {
-        integrity: sha512-IjhO1st9Av/j0lCAcm0J1XZq6Yj3+cpLDYESCIxDlrZnDwdHnSP43dKr4YZQBOLhcoMZH3ODEHdcK9VtcsK7Tg==
+        integrity: sha512-jyLObJvGQ1uSLWW2+0JKEuk+uHgLHutVTdVXzIHUGW5xLOondoWrFbAnk51qNknsOSjE6AsChBOr3fHj3/YlLg==
       }
 
-  '@circles-sdk/abi-v2@0.14.0':
+  '@circles-sdk/adapter@0.15.1':
     resolution:
       {
-        integrity: sha512-4H1i+kYvj1mZ/l9FetuHg3EhunYRxpiicwxoHFx2F+rM8bvoTXUw0fa8xsB70hm/khwnOV3WFF9exsZ4BgQK8A==
+        integrity: sha512-xGhB2jHFmBHyuxv1ohr0MP11yylsNrq+2IFSlM8FZTTlAXFFveOSl1WQINjUC1JKtHiDybqFPdsxmraywtqY1w==
       }
 
-  '@circles-sdk/adapter-ethers@0.14.0':
+  '@circles-sdk/data@0.15.1':
     resolution:
       {
-        integrity: sha512-pJcmPXfus9fAWgqQaceiJJkfvquheu+sym+aGfsQLgzHgFU35N74vl142z/Q1Fg4UD1+JKXN3MmxDi5eT/ls3w==
+        integrity: sha512-fxZJnqMz4r4A00e98LQ+w65JUFdHtsbovGlqKH7P3UYHDRboyzRgb/SOzDjw+uPaCq58ugxaefZBy/QcJ/+Irw==
       }
 
-  '@circles-sdk/adapter@0.14.0':
+  '@circles-sdk/profiles@0.15.1':
     resolution:
       {
-        integrity: sha512-wNshd5CD+YOE7vgr8q40ssFc1Jd8PeCGVpgsiBiy8Z9y5jFlOJze4lVHzj5jdi20vCloroopKWFne2BNJ0LNVA==
+        integrity: sha512-I7bTrC1V4ZHwk8VWHNep0jZzDqo3TJAlC8ybFAxkH7FY8PpDLNiQyILt/pQ/MRPp1LDmmh49PiiuI5LOlvcsrw==
       }
 
-  '@circles-sdk/data@0.14.0':
+  '@circles-sdk/utils@0.15.1':
     resolution:
       {
-        integrity: sha512-xABJ3zJdSv7piMDj7PpL4G8lqgdcINX9cGkHnSHJuHTi1Zm9EZiuujZowMl2M4UwX4lnCxmo1RMXdcw5t6eVEQ==
-      }
-
-  '@circles-sdk/profiles@0.14.0':
-    resolution:
-      {
-        integrity: sha512-657rOiOnWh37QDCrPZ/hbbzoFEsPxmCmO2JRwkXfrozMNr39/JuuIigBk/U+KPccWxTtA5nxkOyQFlp5gC4Zmw==
-      }
-
-  '@circles-sdk/sdk@0.14.0':
-    resolution:
-      {
-        integrity: sha512-gz75Mb0m0HNNRK7vHwHb2f64Vsx1v6f7pwTttwboJB3qzbCbaZh65iC5PToYTgrshz8m03s831RqheF33bTWXA==
-      }
-
-  '@circles-sdk/utils@0.14.0':
-    resolution:
-      {
-        integrity: sha512-4MbIwfeFsIgeErcO33FeqSX3L9uRN34hQHQ0HJTIa1/Nn6klHHZIosTlZtFOsWOYqjxdqKDWbdv3beHEHAr66Q==
+        integrity: sha512-w+rI/OocXwOuUayZVCPMhliXPWkUe+nsXZTNjIc0vM2Fy6ZzOPDfocVrfgHnX9Qs0s861l4B/fTCwdbHjXxWqA==
       }
 
   '@coinbase/wallet-sdk@3.9.3':
@@ -13224,6 +13206,7 @@ packages:
       {
         integrity: sha512-Mu7R0g4ig9TUuGSxJavny5Rv0egCEtpZRNMrZaYS1vxkiIxGiGUwoezU3LazIQ+KE04hTrTfNPgxU5gzi7F5Pw==
       }
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   superstruct@1.0.4:
     resolution:
@@ -16123,59 +16106,32 @@ snapshots:
       '@babel/helper-string-parser': 7.25.9
       '@babel/helper-validator-identifier': 7.25.9
 
-  '@circles-sdk/abi-v1@0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
+  '@circles-sdk/adapter-ethers@0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
     dependencies:
+      '@circles-sdk/adapter': 0.15.1
+      '@circles-sdk/utils': 0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       ethers: 6.13.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@circles-sdk/abi-v2@0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
+  '@circles-sdk/adapter@0.15.1': {}
+
+  '@circles-sdk/data@0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
     dependencies:
-      ethers: 6.13.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      '@circles-sdk/utils': 0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@circles-sdk/adapter-ethers@0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
+  '@circles-sdk/profiles@0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
     dependencies:
-      '@circles-sdk/adapter': 0.14.0
-      '@circles-sdk/utils': 0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      ethers: 6.13.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      '@circles-sdk/utils': 0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@circles-sdk/adapter@0.14.0': {}
-
-  '@circles-sdk/data@0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@circles-sdk/utils': 0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  '@circles-sdk/profiles@0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@circles-sdk/utils': 0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  '@circles-sdk/sdk@0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@circles-sdk/abi-v1': 0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      '@circles-sdk/abi-v2': 0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      '@circles-sdk/adapter-ethers': 0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      '@circles-sdk/data': 0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      '@circles-sdk/profiles': 0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      ethers: 6.13.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      multihashes: 4.0.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  '@circles-sdk/utils@0.14.0(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
+  '@circles-sdk/utils@0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
     dependencies:
       bignumber.js: 9.1.2
       ethers: 6.13.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
@@ -22969,7 +22925,7 @@ snapshots:
     dependencies:
       node-addon-api: 2.0.2
       node-gyp-build: 4.8.2
-      readable-stream: 3.6.0
+      readable-stream: 3.6.2
 
   keyv@4.5.4:
     dependencies:
