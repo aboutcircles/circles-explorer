@@ -7,13 +7,10 @@ import {
 } from 'services/envio/indexer'
 
 import { AvatarInfo } from './AvatarInfo'
+import { AvatarStats } from './AvatarStats'
 
 // todo
-// - trust given list
-// - trust received list
-// - 3 optional small stats: burn, last mint, invited by
 // - total supply
-// - profiles from envio
 
 export function AvatarSection({ address }: { address?: Address }) {
 	const [avatar, setAvatar] = useState<CirclesAvatarFromEnvio>()
@@ -33,8 +30,10 @@ export function AvatarSection({ address }: { address?: Address }) {
 	}, [address])
 
 	return (
-		<div className='flex justify-between'>
-			<AvatarInfo profile={avatar?.profile} />
+		<div className='flex'>
+			<AvatarInfo profile={avatar?.profile} isVerified={avatar?.isVerified} />
+
+			{avatar ? <AvatarStats avatar={avatar} /> : null}
 		</div>
 	)
 }

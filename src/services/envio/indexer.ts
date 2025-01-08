@@ -54,8 +54,11 @@ export interface TrustRelationFromEnvio {
 	isMutual: boolean
 	version: number
 	timestamp: number
+	limit: string
+	expiryTime: string
 	trustee: CirclesAvatarFromEnvio
 	truster: CirclesAvatarFromEnvio
+	token_id: Address
 }
 
 class APIError extends Error {

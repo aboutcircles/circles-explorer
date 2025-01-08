@@ -162,11 +162,13 @@ export const queries = {
     	trustee_id
     	truster_id
     	isMutual
+    	version
 		}
 		trustsReceived {
 			trustee_id
 			truster_id
 			isMutual
+			version
 		}
     trustsGivenCount
     trustsReceivedCount
