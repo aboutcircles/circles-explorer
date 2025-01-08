@@ -1,22 +1,8 @@
-import { useState, useEffect } from 'react'
 import { Avatar } from '@nextui-org/react'
-import type { Profile } from '@circles-sdk/profiles'
 
-import { circlesProfiles } from 'services/circlesData'
+import type { IPFSData } from 'services/envio/indexer'
 
-export function AvatarInfo({ cidV0 }: { cidV0?: string }) {
-	const [profile, setProfile] = useState<Profile>()
-
-	useEffect(() => {
-		const loadProfile = async (cidV0_: string) => {
-			setProfile(await circlesProfiles.get(cidV0_))
-		}
-
-		if (cidV0) {
-			void loadProfile(cidV0)
-		}
-	}, [cidV0])
-
+export function AvatarInfo({ profile }: { profile?: IPFSData }) {
 	return (
 		<div className='m-5'>
 			<Avatar
@@ -34,5 +20,5 @@ export function AvatarInfo({ cidV0 }: { cidV0?: string }) {
 }
 
 AvatarInfo.defaultProps = {
-	cidV0: ''
+	profile: undefined
 }

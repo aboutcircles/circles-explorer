@@ -1,56 +1,30 @@
 import { useEffect, useState } from 'react'
-import type { AvatarRow } from '@circles-sdk/data'
+import type { Address } from 'viem'
 
-import type { Row } from 'components/Table'
-import { circlesData } from 'services/circlesData'
-import { EyePopoverDetails } from 'shared/EyePopoverDetails'
+import {
+	getProfileForAddress,
+	type CirclesAvatarFromEnvio
+} from 'services/envio/indexer'
 
 import { AvatarInfo } from './AvatarInfo'
 
-export function AvatarSection({ address }: { address: string }) {
-	const [avatarInfo, setAvatarInfo] = useState<AvatarRow>()
+// todo
+// - trust given list
+// - trust received list
+// - 3 optional small stats: burn, last mint, invited by
+// - total supply
+// - profiles from envio
+
+export function AvatarSection({ address }: { address?: Address }) {
+	const [avatar, setAvatar] = useState<CirclesAvatarFromEnvio>()
 
 	useEffect(() => {
-		const loadAvatarInfo = async (address_: string) => {
-			console.log({ address_ })
+		const loadAvatarInfo = async (address_: Address) => {
+			const avatarInfo = await getProfileForAddress(address_)
 
-			// const profile = await sdk_.profiles?.get(avatarInfo.cidV0)
+			setAvatar(avatarInfo)
 
-			// console.log({ profile })
-
-			// console.log(avatar.current.avatarInfo)
-			//
-			const [
-				avatarInfoResult,
-				totalBalance,
-				totalBalanceV2,
-				tokenBalances,
-				txHistory,
-				trustRelations
-				// aggregatedTrustRelations
-			] = await Promise.all([
-				circlesData.getAvatarInfo(address_),
-				circlesData.getTotalBalance(address_),
-				circlesData.getTotalBalanceV2(address_),
-				circlesData.getTokenBalances(address_),
-				// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-				circlesData.getTransactionHistory(address_, 50),
-				// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-				circlesData.getTrustRelations(address_, 50)
-				// circlesData.getAggregatedTrustRelations(address_)
-			])
-
-			setAvatarInfo(avatarInfoResult)
-
-			console.log({
-				avatarInfoResult,
-				totalBalance,
-				totalBalanceV2,
-				tokenBalances,
-				txHistory,
-				trustRelations
-				// aggregatedTrustRelations
-			})
+			console.log({ avatarInfo })
 		}
 
 		if (address) {
@@ -60,11 +34,11 @@ export function AvatarSection({ address }: { address: string }) {
 
 	return (
 		<div className='flex justify-between'>
-			<AvatarInfo cidV0={avatarInfo?.cidV0} />
-
-			{avatarInfo ? (
-				<EyePopoverDetails item={avatarInfo as unknown as Row} />
-			) : null}
+			<AvatarInfo profile={avatar?.profile} />
 		</div>
 	)
+}
+
+AvatarSection.defaultProps = {
+	address: undefined
 }
