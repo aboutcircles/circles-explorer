@@ -156,7 +156,13 @@ export const queries = {
     version
     avatarType
     
-    
+    balances {
+      token {
+      	id
+      	tokenType
+      	totalSupply
+      }
+    }
     
     trustsGiven {
     	trustee_id

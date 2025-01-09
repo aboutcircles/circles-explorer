@@ -14,6 +14,7 @@ interface TokenFromEnvio {
 		| 'WrappedDemurrageToken'
 		| 'WrappedStaticToken'
 	tokenOwner: CirclesAvatarFromEnvio
+	totalSupply: number
 }
 
 export interface AvatarBalanceFromEnvio {

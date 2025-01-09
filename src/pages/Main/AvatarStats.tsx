@@ -3,13 +3,17 @@ import {
 	ListboxItem,
 	Listbox,
 	Accordion,
-	AccordionItem
+	AccordionItem,
+	Tooltip
 } from '@nextui-org/react'
+import { useMemo } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
+import { formatUnits } from 'viem'
 
 import type { CirclesAvatarFromEnvio } from 'services/envio/indexer'
 import { isDeadAddress, truncateHex } from 'utils/eth'
 import { Timestamp } from 'components/Timestamp'
+import { CRC_TOKEN_DECIMALS, TWO } from 'constants/common'
 
 interface TrustStat {
 	label: string
@@ -31,6 +35,18 @@ const trustStats: TrustStat[] = [
 ]
 
 export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
+	const crcTotalSupply = useMemo(() => {
+		const crcBalance = avatar.balances.find(
+			(balance) => balance.token.tokenType === 'RegisterHuman'
+		)
+
+		if (!crcBalance) return null
+
+		return Number(
+			formatUnits(BigInt(crcBalance.token.totalSupply), CRC_TOKEN_DECIMALS)
+		)
+	}, [avatar])
+
 	return (
 		<div className='m-5'>
 			<div className='mb-5'>
@@ -40,6 +56,15 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 						<Timestamp value={Number(avatar.lastMint)} />
 					</span>
 				</Card>
+
+				{crcTotalSupply ? (
+					<Tooltip content={crcTotalSupply}>
+						<Card className='mr-2 inline-flex flex-row p-4 text-center'>
+							<b>Total CRC supply</b>:
+							<span className='pl-1'>{crcTotalSupply.toFixed(TWO)}</span>
+						</Card>
+					</Tooltip>
+				) : null}
 
 				{avatar.invitedBy && !isDeadAddress(avatar.invitedBy) ? (
 					<Card className='inline p-4 text-center'>
