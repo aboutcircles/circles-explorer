@@ -105,7 +105,7 @@ export function EventsTable({
 					}
 				/>
 			</div>
-			<div className='sm:hidden'>
+			<div className='mb-9 sm:hidden'>
 				<div className='flex flex-col items-center justify-center'>
 					<div className='mb-2'>
 						<Periods address={address} />

@@ -26,7 +26,7 @@
 		"@circles-sdk/adapter-ethers": "^0.15.1",
 		"@circles-sdk/data": "^0.15.1",
 		"@circles-sdk/profiles": "^0.15.1",
-		"@nextui-org/react": "^2.4.8",
+		"@nextui-org/react": "^2.6.11",
 		"@tanstack/react-query": "5.29.2",
 		"axios": "^1.7.7",
 		"dayjs": "^1.11.13",

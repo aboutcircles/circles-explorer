@@ -32,7 +32,7 @@ export function AvatarInfo({
 	const AvatarWithBadge = isVerified ? withBadge(Avatar) : Avatar
 
 	return (
-		<div className='m-5'>
+		<div className='m-5 text-center'>
 			<AvatarWithBadge
 				className='mb-3 h-[150px] w-[150px]'
 				size='lg'

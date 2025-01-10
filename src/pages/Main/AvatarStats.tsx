@@ -47,10 +47,24 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 		)
 	}, [avatar])
 
+	const avatarType = useMemo(() => {
+		switch (avatar.avatarType) {
+			case 'RegisterGroup': {
+				return 'Group'
+			}
+			case 'RegisterHuman': {
+				return 'Human'
+			}
+			default: {
+				return avatar.avatarType
+			}
+		}
+	}, [avatar.avatarType])
+
 	return (
 		<div className='m-5'>
-			<div className='mb-5'>
-				<Card className='mr-2 inline-flex flex-row p-4 text-center'>
+			<div className='mb-5 text-center'>
+				<Card className='mb-2 mr-2 inline-flex w-[240px] flex-row p-4 text-center'>
 					<b>Last mint</b>:
 					<span className='pl-1'>
 						<Timestamp value={Number(avatar.lastMint)} />
@@ -59,7 +73,7 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 
 				{crcTotalSupply ? (
 					<Tooltip content={crcTotalSupply}>
-						<Card className='mr-2 inline-flex flex-row p-4 text-center'>
+						<Card className='mb-2 mr-2 inline-flex w-[240px] flex-row p-4 text-center'>
 							<b>Total CRC supply</b>:
 							<span className='pl-1'>{crcTotalSupply.toFixed(TWO)}</span>
 						</Card>
@@ -67,7 +81,7 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 				) : null}
 
 				{avatar.invitedBy && !isDeadAddress(avatar.invitedBy) ? (
-					<Card className='inline p-4 text-center'>
+					<Card className='mb-2 mr-2 inline w-[240px] p-4 text-center'>
 						Invited by:{' '}
 						<RouterLink
 							className='inline text-primary'
@@ -79,24 +93,24 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 				) : null}
 
 				{avatar.avatarType ? (
-					<Card className='mr-2 inline-flex flex-row p-4 text-center'>
-						<b>Avatar type</b>:{' '}
-						{avatar.avatarType === 'RegisterHuman' ? 'Human' : 'Group'}
+					<Card className='mb-2 mr-2 inline-flex w-[240px] flex-row p-4 text-center'>
+						<b>Avatar type</b>: {avatarType}
 					</Card>
 				) : null}
 			</div>
 
-			<div className='flex'>
+			<div className='flex flex-wrap justify-center md:justify-start'>
 				{trustStats.map((stat) => (
-					<Card key={stat.label} className='mr-3 w-[460px] p-2'>
+					<Card key={stat.label} className='mb-2 mr-2 w-[240px] p-2'>
 						<Accordion>
 							<AccordionItem
 								title={`${stat.label}: ${avatar[stat.arrayField].length}`}
 							>
 								<Listbox
-									className='py-0'
+									className='h-[200px] overflow-auto py-0'
 									variant='light'
 									label={`${stat.label}: ${avatar[stat.arrayField].length}`}
+									isVirtualized
 								>
 									{avatar[stat.arrayField].map((trust) => (
 										<ListboxItem
@@ -107,7 +121,8 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 												className='text-primary'
 												to={`?search=${trust[stat.addressField]}`}
 											>
-												(v{trust.version}) - {trust[stat.addressField]}
+												(v{trust.version}) -{' '}
+												{truncateHex(trust[stat.addressField])}
 											</RouterLink>
 										</ListboxItem>
 									))}
