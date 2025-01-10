@@ -101,6 +101,7 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 									{avatar[stat.arrayField].map((trust) => (
 										<ListboxItem
 											key={trust.truster_id + trust.trustee_id + trust.version}
+											textValue={`(v${trust.version}) - ${trust[stat.addressField]}`}
 										>
 											<RouterLink
 												className='text-primary'

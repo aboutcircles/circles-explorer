@@ -1,4 +1,4 @@
-import { Avatar, Badge, Tooltip } from '@nextui-org/react'
+import { Avatar, Badge } from '@nextui-org/react'
 
 import type { IPFSData } from 'services/envio/indexer'
 
@@ -12,11 +12,7 @@ const withBadge = (Component: unknown) =>
 			<Badge
 				isOneChar
 				color='success'
-				content={
-					<Tooltip content='Verified'>
-						<CheckIconImage />
-					</Tooltip>
-				}
+				content={<CheckIconImage />}
 				placement='bottom-right'
 			>
 				{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
