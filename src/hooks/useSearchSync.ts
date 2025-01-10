@@ -1,46 +1,43 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import { useSearchStore } from 'stores/useSearchStore'
+import { useFilterStore } from 'stores/useFilterStore'
 
 export const useSearchSync = () => {
 	const navigate = useNavigate()
 	const location = useLocation()
-	const search = useSearchStore.use.search()
-	const updateSearch = useSearchStore.use.updateSearch()
+	const search = useFilterStore.use.search()
+	const updateSearch = useFilterStore.use.updateSearch()
 
-	// Update the pathname when the store's query changes
-	useEffect(
-		() =>
-			useSearchStore.subscribe(
-				(state) => state.search,
-				(newSearch) => {
-					const searchParameters = new URLSearchParams(location.search)
+	// Update store when query changes (e.g., pasting a URL with `search`)
+	useEffect(() => {
+		if (location.search) {
+			const searchParameters = new URLSearchParams(location.search)
+			const searchQuery = searchParameters.get('search')
 
-					if (newSearch) {
-						searchParameters.set('search', newSearch)
-					} else {
-						searchParameters.delete('search')
-					}
+			if (searchQuery) {
+				updateSearch(searchQuery)
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [location.search])
 
-					navigate({
-						pathname: location.pathname,
-						search: `?${searchParameters.toString()}`
-					})
-				}
-			),
-		[location.pathname, location.search, navigate]
-	)
-
-	// Update the store when pathname search query changes
+	// Update URL when store changes
 	useEffect(() => {
 		const searchParameters = new URLSearchParams(location.search)
-		const searchQuery = searchParameters.get('search')
 
-		if (searchQuery && searchQuery !== search) {
-			updateSearch(searchQuery)
+		if (search) {
+			searchParameters.set('search', search)
+		} else {
+			searchParameters.delete('search')
 		}
-	}, [location.search, search, updateSearch])
+
+		navigate({
+			pathname: location.pathname,
+			search: `?${searchParameters.toString()}`
+		})
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [search])
 
 	return null
 }

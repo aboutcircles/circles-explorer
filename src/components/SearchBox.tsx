@@ -72,13 +72,10 @@ export function SearchBox({
 				}}
 				variant='bordered'
 				type='text'
-				// todo: it stack sometimes
-				// isClearable={outerSearch ? outerSearch === search : false}
 				placeholder={placeholder}
 				onChange={onChange}
 				onKeyDown={handleKeyDown}
 				value={search}
-				onClear={onSubmit}
 				startContent={
 					<img
 						src='/icons/search.svg'

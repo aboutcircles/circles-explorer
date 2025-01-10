@@ -1,5 +1,4 @@
 import { RadioGroup } from '@nextui-org/react'
-import { useEffect } from 'react'
 
 import { CustomRadio } from 'components/CustomRadio'
 import { periods, useFilterStore } from 'stores/useFilterStore'
@@ -8,14 +7,6 @@ import type { PeriodKey } from 'stores/useFilterStore'
 export function Periods({ address }: { address: string | null }) {
 	const period = useFilterStore.use.period()
 	const updatePeriod = useFilterStore.use.updatePeriod()
-
-	useEffect(() => {
-		if (address) {
-			updatePeriod('1W')
-		} else {
-			updatePeriod('12H')
-		}
-	}, [address, updatePeriod])
 
 	return (
 		<RadioGroup

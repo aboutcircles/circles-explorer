@@ -2,7 +2,7 @@ import { Button } from '@nextui-org/react'
 import { useCallback } from 'react'
 
 import { SearchBox } from 'components/SearchBox'
-import { useSearchStore } from 'stores/useSearchStore'
+import { useFilterStore } from 'stores/useFilterStore'
 
 export function Search({
 	onOpen,
@@ -13,8 +13,8 @@ export function Search({
 	isSearchBox?: boolean
 	onSubmit?: () => void
 }) {
-	const updateSearch = useSearchStore.use.updateSearch()
-	const search = useSearchStore.use.search() ?? ''
+	const updateSearch = useFilterStore.use.updateSearch()
+	const search = useFilterStore.use.search() ?? ''
 
 	const handleSubmit = useCallback(
 		(newSearch: string) => {

@@ -14,11 +14,10 @@ import { useFilterStore } from 'stores/useFilterStore'
 import { truncateHex } from 'utils/eth'
 import { EyePopoverDetails } from 'shared/EyePopoverDetails'
 import { LABELS_MAPPER } from 'constants/events'
-import { useSearchStore } from 'stores/useSearchStore'
 
 export const useRenderCell = () => {
 	const updateEventTypes = useFilterStore.use.updateEventTypes()
-	const updateSearch = useSearchStore.use.updateSearch()
+	const updateSearch = useFilterStore.use.updateSearch()
 
 	const applyAvatarSearch = useCallback(
 		(address: string) => {

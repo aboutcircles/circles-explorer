@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { CirclesEventType } from '@circles-sdk/data'
+import { isAddress } from 'viem'
 
 import { EVENTS } from 'constants/events'
 import { ONE } from '../constants/common'
@@ -30,6 +31,7 @@ interface State {
 	eventTypes: Set<CirclesEventType>
 	period: PeriodKey
 	eventTypesAmount: Map<CirclesEventType, number>
+	search: string | null
 }
 
 interface Action {
@@ -38,6 +40,7 @@ interface Action {
 	updateEventTypesAmount: (
 		eventTypesAmount: Map<CirclesEventType, number>
 	) => void
+	updateSearch: (search: string) => void
 }
 
 const TWELVE = 12
@@ -88,6 +91,7 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 	eventTypes: new Set(EVENTS),
 	period: '12H' as PeriodKey,
 	eventTypesAmount: new Map(),
+	search: null,
 
 	updateEventTypes: (event: CirclesEventType) =>
 		set(({ eventTypes }) => {
@@ -110,7 +114,13 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 		}),
 	updatePeriod: (period: PeriodKey) => set(() => ({ period })),
 	updateEventTypesAmount: (eventTypesAmount: Map<CirclesEventType, number>) =>
-		set(() => ({ eventTypesAmount }))
+		set(() => ({ eventTypesAmount })),
+	updateSearch: (search: string) => {
+		set(() => ({
+			search,
+			period: isAddress(search) ? '1W' : ('12H' as PeriodKey)
+		}))
+	}
 }))
 
 export const useFilterStore = createSelectors(useFilterStoreBase)
