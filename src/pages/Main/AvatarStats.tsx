@@ -107,10 +107,16 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 								title={`${stat.label}: ${avatar[stat.arrayField].length}`}
 							>
 								<Listbox
-									className='h-[200px] overflow-auto py-0'
+									className='overflow-auto py-0'
 									variant='light'
 									label={`${stat.label}: ${avatar[stat.arrayField].length}`}
 									isVirtualized
+									virtualization={{
+										// eslint-disable-next-line @typescript-eslint/no-magic-numbers
+										maxListboxHeight: 200,
+										// eslint-disable-next-line @typescript-eslint/no-magic-numbers
+										itemHeight: 40
+									}}
 								>
 									{avatar[stat.arrayField].map((trust) => (
 										<ListboxItem
