@@ -1,6 +1,4 @@
-import { useRef } from 'react'
 import type React from 'react'
-// import { useVirtualizer } from '@tanstack/react-virtual'
 import type { TableProps as NextUITableProperties } from '@nextui-org/react'
 import {
 	Table as NextUITable,
@@ -45,19 +43,8 @@ export function Table({
 	topContent,
 	...rest
 }: TableProperties): React.ReactElement {
-	// The scrollable element for your list
-	const parentReference = useRef(null)
-
-	// The virtualizer
-	// const rowVirtualizer = useVirtualizer({
-	// 	count: 10_000,
-	// 	getScrollElement: () => parentReference.current,
-	// 	estimateSize: () => 56
-	// })
-
 	return (
 		<NextUITable
-			ref={parentReference}
 			isStriped
 			color='primary'
 			aria-label={ariaLabel ?? 'Table'}

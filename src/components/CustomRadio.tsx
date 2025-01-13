@@ -1,5 +1,5 @@
 import type { RadioProps } from '@nextui-org/react'
-import { useRadio, VisuallyHidden, cn } from '@nextui-org/react'
+import { cn, useRadio, VisuallyHidden } from '@nextui-org/react'
 
 export function CustomRadio(properties: RadioProps) {
 	const {
@@ -16,9 +16,10 @@ export function CustomRadio(properties: RadioProps) {
 		<Component
 			{...getBaseProps()}
 			className={cn(
-				'group inline-flex flex-row-reverse items-center hover:bg-content2',
-				'max-w-[300px] cursor-pointer gap-0 rounded-lg border-1 border-default p-1',
-				'data-[selected=true]:border-primary-200 data-[selected=true]:bg-primary-100'
+				'group inline-flex items-center',
+				'cursor-pointer gap-0 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5',
+				'hover:bg-gray-100',
+				'data-[selected=true]:bg-[#312E81] data-[selected=true]:text-white'
 			)}
 		>
 			<VisuallyHidden>
@@ -27,10 +28,10 @@ export function CustomRadio(properties: RadioProps) {
 
 			<div
 				{...getLabelWrapperProps()}
-				className='text-bold flex w-[100px] justify-center gap-0 md:w-[52px]'
+				className='text-bold flex justify-center gap-0'
 			>
 				{children ? (
-					<span {...getLabelProps()} className='text-bold'>
+					<span {...getLabelProps()} className='text-sm font-medium'>
 						{children}
 					</span>
 				) : null}

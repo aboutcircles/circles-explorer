@@ -1,8 +1,8 @@
 import { RadioGroup } from '@nextui-org/react'
 
 import { CustomRadio } from 'components/CustomRadio'
-import { periods, useFilterStore } from 'stores/useFilterStore'
 import type { PeriodKey } from 'stores/useFilterStore'
+import { periods, useFilterStore } from 'stores/useFilterStore'
 
 export function Periods({ address }: { address: string | null }) {
 	const period = useFilterStore.use.period()
@@ -11,7 +11,7 @@ export function Periods({ address }: { address: string | null }) {
 	return (
 		<RadioGroup
 			classNames={{
-				wrapper: 'flex-row mr-2'
+				wrapper: 'flex-row gap-2 mr-2'
 			}}
 			value={period}
 			onValueChange={(period_) => updatePeriod(period_ as PeriodKey)}

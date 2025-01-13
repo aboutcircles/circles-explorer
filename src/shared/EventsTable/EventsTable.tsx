@@ -2,8 +2,8 @@ import { useState } from 'react'
 import type { ReactElement } from 'react'
 import { Pagination } from '@nextui-org/react'
 
-import type { Column, Row } from 'components/Table'
-import { Table } from 'components/Table'
+import type { Column, Row } from 'components/VirtualizedTable'
+import { VirtualizedTable } from 'components/VirtualizedTable'
 import { ONE } from 'constants/common'
 import { useCirclesEvents } from 'hooks/useCirclesEvents'
 import { useFilterStore } from 'stores/useFilterStore'
@@ -70,8 +70,7 @@ export function EventsTable({
 	return (
 		<>
 			<div className='hidden sm:block'>
-				<Table
-					isStriped={false}
+				<VirtualizedTable
 					ariaLabel='Circles Events'
 					columns={columns}
 					rows={isEventsLoading ? [] : (events as unknown as Row[])}
@@ -88,17 +87,6 @@ export function EventsTable({
 									period={period}
 								/>
 							</div>
-
-							{pagination}
-						</div>
-					}
-					bottomContent={
-						<div className='flex w-full justify-between'>
-							<TotalLabel
-								eventsLength={events.length}
-								dateRange={dateRange}
-								period={period}
-							/>
 
 							{pagination}
 						</div>
