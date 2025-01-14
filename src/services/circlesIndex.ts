@@ -8,7 +8,7 @@ import type {
 	QueryKey
 } from '@tanstack/react-query'
 import { hexToNumber, isAddress, isHash } from 'viem'
-import type { Hex } from 'viem'
+import type { Hex, Address } from 'viem'
 
 import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
 import type { CirclesEventsResponse, Event } from 'types/events'
@@ -209,3 +209,53 @@ export const useFetchCirclesStats = (): UseQueryResult<Event[]> => {
 		}
 	})
 }
+
+// query
+const CIRCLES_CRC_V2_TOKEN_STOPPED = 'circlesCrcV2TokenStopped'
+export const useFetchCrcV2TokenStopped = (address: Address): UseQueryResult =>
+	useQuery({
+		queryKey: [CIRCLES_CRC_V2_TOKEN_STOPPED],
+		queryFn: async () => {
+			try {
+				const response = await axios.post<StatsResponse>(CIRCLES_INDEXER_URL, {
+					method: 'circles_query',
+					params: [
+						{
+							Namespace: 'CrcV2',
+							Table: 'Stopped',
+							Columns: [],
+							Filter: [
+								{
+									Type: 'Conjunction',
+									ConjunctionType: 'Or',
+									Predicates: [
+										{
+											Type: 'FilterPredicate',
+											FilterType: 'Equals',
+											Column: 'avatar',
+											Value: [address]
+										}
+									]
+								}
+							]
+						}
+					]
+				})
+
+				logger.log(
+					'[service][circles] queried circles crc v2 token stopped status',
+					{
+						response: response.data.result
+					}
+				)
+
+				return response.data.result
+			} catch (error) {
+				logger.error(
+					'[service][circles] Failed to query crc v2 token stopped status',
+					error
+				)
+				throw new Error('Failed to query circles crc v2 token stopped status')
+			}
+		}
+	})

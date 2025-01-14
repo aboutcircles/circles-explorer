@@ -16,6 +16,7 @@ import { isDeadAddress, truncateHex } from 'utils/eth'
 import { Timestamp } from 'components/Timestamp'
 import { CRC_TOKEN_DECIMALS, TWO } from 'constants/common'
 import { getCrcV1TokenStopped } from 'services/viemClient'
+import { useFetchCrcV2TokenStopped } from 'services/circlesIndex'
 import logger from 'services/logger'
 
 interface TrustStat {
@@ -39,6 +40,12 @@ const trustStats: TrustStat[] = [
 
 export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 	const [crcV1Stopped, setCrcV1Stopped] = useState<boolean | null>(null)
+
+	const { data } = useFetchCrcV2TokenStopped(avatar.id)
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-expect-error
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	const crcV2Stopped = Boolean(data?.rows?.length)
 
 	const crcTotalSupply = useMemo(() => {
 		const crcBalanceV2 = avatar.balances.find(
@@ -112,12 +119,16 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 				) : null}
 
 				{crcTotalSupply.v2 ? (
-					<Tooltip content={crcTotalSupply.v2}>
-						<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center'>
-							<b>Total CRC supply (V2)</b>:
-							<span className='pl-1'>{crcTotalSupply.v2.toFixed(TWO)}</span>
-						</Card>
-					</Tooltip>
+					<Badge color={crcV2Stopped ? 'danger' : 'success'} content=' '>
+						<Tooltip
+							content={`${crcTotalSupply.v2} : ${crcV2Stopped ? 'stopped' : 'active'}`}
+						>
+							<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center'>
+								<b>Total CRC supply (V2)</b>:
+								<span className='pl-1'>{crcTotalSupply.v2.toFixed(TWO)}</span>
+							</Card>
+						</Tooltip>
+					</Badge>
 				) : null}
 
 				{avatar.invitedBy && !isDeadAddress(avatar.invitedBy) ? (
