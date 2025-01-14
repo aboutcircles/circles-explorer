@@ -36,15 +36,31 @@ const trustStats: TrustStat[] = [
 
 export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 	const crcTotalSupply = useMemo(() => {
-		const crcBalance = avatar.balances.find(
+		const crcBalanceV2 = avatar.balances.find(
 			(balance) => balance.token.tokenType === 'RegisterHuman'
 		)
-
-		if (!crcBalance) return null
-
-		return Number(
-			formatUnits(BigInt(crcBalance.token.totalSupply), CRC_TOKEN_DECIMALS)
+		const crcBalanceV1 = avatar.balances.find(
+			(balance) => balance.token.tokenType === 'Signup'
 		)
+
+		return {
+			v1: crcBalanceV1
+				? Number(
+						formatUnits(
+							BigInt(crcBalanceV1.token.totalSupply),
+							CRC_TOKEN_DECIMALS
+						)
+					)
+				: null,
+			v2: crcBalanceV2
+				? Number(
+						formatUnits(
+							BigInt(crcBalanceV2.token.totalSupply),
+							CRC_TOKEN_DECIMALS
+						)
+					)
+				: null
+		}
 	}, [avatar])
 
 	const avatarType = useMemo(() => {
@@ -71,17 +87,26 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 					</span>
 				</Card>
 
-				{crcTotalSupply ? (
-					<Tooltip content={crcTotalSupply}>
-						<Card className='mb-2 mr-2 inline-flex w-[240px] flex-row p-4 text-center'>
-							<b>Total CRC supply</b>:
-							<span className='pl-1'>{crcTotalSupply.toFixed(TWO)}</span>
+				{crcTotalSupply.v1 ? (
+					<Tooltip content={crcTotalSupply.v1}>
+						<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center'>
+							<b>Total CRC supply (V1)</b>:
+							<span className='pl-1'>{crcTotalSupply.v1.toFixed(TWO)}</span>
+						</Card>
+					</Tooltip>
+				) : null}
+
+				{crcTotalSupply.v2 ? (
+					<Tooltip content={crcTotalSupply.v2}>
+						<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center'>
+							<b>Total CRC supply (V2)</b>:
+							<span className='pl-1'>{crcTotalSupply.v2.toFixed(TWO)}</span>
 						</Card>
 					</Tooltip>
 				) : null}
 
 				{avatar.invitedBy && !isDeadAddress(avatar.invitedBy) ? (
-					<Card className='mb-2 mr-2 inline w-[240px] p-4 text-center'>
+					<Card className='mb-2 mr-2 inline p-4 text-center'>
 						Invited by:{' '}
 						<RouterLink
 							className='inline text-primary'
@@ -93,7 +118,7 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 				) : null}
 
 				{avatar.avatarType ? (
-					<Card className='mb-2 mr-2 inline-flex w-[240px] flex-row p-4 text-center'>
+					<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center'>
 						<b>Avatar type</b>: {avatarType}
 					</Card>
 				) : null}
