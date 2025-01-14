@@ -4,16 +4,19 @@ import {
 	Listbox,
 	Accordion,
 	AccordionItem,
-	Tooltip
+	Tooltip,
+	Badge
 } from '@nextui-org/react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
-import { formatUnits } from 'viem'
+import { formatUnits, type Address } from 'viem'
 
 import type { CirclesAvatarFromEnvio } from 'services/envio/indexer'
 import { isDeadAddress, truncateHex } from 'utils/eth'
 import { Timestamp } from 'components/Timestamp'
 import { CRC_TOKEN_DECIMALS, TWO } from 'constants/common'
+import { getCrcV1TokenStopped } from 'services/viemClient'
+import logger from 'services/logger'
 
 interface TrustStat {
 	label: string
@@ -35,6 +38,8 @@ const trustStats: TrustStat[] = [
 ]
 
 export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
+	const [crcV1Stopped, setCrcV1Stopped] = useState<boolean | null>(null)
+
 	const crcTotalSupply = useMemo(() => {
 		const crcBalanceV2 = avatar.balances.find(
 			(balance) => balance.token.tokenType === 'RegisterHuman'
@@ -42,6 +47,12 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 		const crcBalanceV1 = avatar.balances.find(
 			(balance) => balance.token.tokenType === 'Signup'
 		)
+
+		if (crcBalanceV1) {
+			getCrcV1TokenStopped(crcBalanceV1.token.id as Address)
+				.then((stopped) => setCrcV1Stopped(stopped as boolean))
+				.catch((error: unknown) => logger.error(error))
+		}
 
 		return {
 			v1: crcBalanceV1
@@ -88,12 +99,16 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 				</Card>
 
 				{crcTotalSupply.v1 ? (
-					<Tooltip content={crcTotalSupply.v1}>
-						<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center'>
-							<b>Total CRC supply (V1)</b>:
-							<span className='pl-1'>{crcTotalSupply.v1.toFixed(TWO)}</span>
-						</Card>
-					</Tooltip>
+					<Badge color={crcV1Stopped ? 'danger' : 'success'} content=' '>
+						<Tooltip
+							content={`${crcTotalSupply.v1} : ${crcV1Stopped ? 'stopped' : 'active'}`}
+						>
+							<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center'>
+								<b>Total CRC supply (V1)</b>:
+								<span className='pl-1'>{crcTotalSupply.v1.toFixed(TWO)}</span>
+							</Card>
+						</Tooltip>
+					</Badge>
 				) : null}
 
 				{crcTotalSupply.v2 ? (

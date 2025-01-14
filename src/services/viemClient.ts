@@ -1,6 +1,8 @@
 import { http, createPublicClient, type Address, erc20Abi } from 'viem'
 import { gnosis } from 'viem/chains'
 
+import tokenAbi from 'abis/tokenAbi.json'
+
 export const viemClient = createPublicClient({
 	chain: gnosis,
 	transport: http()
@@ -25,3 +27,10 @@ export const getTokenDetails = async (tokenAddress: Address) => {
 		symbol
 	}
 }
+
+export const getCrcV1TokenStopped = async (tokenAddress: Address) =>
+	viemClient.readContract({
+		address: tokenAddress,
+		abi: tokenAbi,
+		functionName: 'stopped'
+	})
