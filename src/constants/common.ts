@@ -7,6 +7,10 @@ export const EXPLORER_URL = import.meta.env.VITE_EXPLORER_URL as string
 export const CIRCLES_PROFILE_SERVICE_URL = import.meta.env
 	.VITE_CIRCLES_PROFILE_SERVICE_URL as string
 
+export const ENVIO_CIRCLES_ENDPOINT = import.meta.env
+	.VITE_ENVIO_CIRCLES_ENDPOINT as string
+export const ENVIO_API_TOKEN = import.meta.env.VITE_ENVIO_API_TOKEN as string
+
 export const ONE = 1
 export const TWO = 2
 export const MINUS_ONE = -1

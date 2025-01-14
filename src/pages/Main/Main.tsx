@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import type { ReactElement } from 'react'
 import { useLocation } from 'react-router-dom'
+import type { Address } from 'viem'
 import { isAddress } from 'viem'
 
 import { EventsTable } from 'shared/EventsTable'
@@ -28,7 +29,11 @@ export default function Main(): ReactElement {
 
 	return (
 		<div className='flex flex-col'>
-			{isSearchAddress ? <AvatarSection address={search} /> : <Stats />}
+			{isSearchAddress ? (
+				<AvatarSection address={search as Address} />
+			) : (
+				<Stats />
+			)}
 
 			<div className='hidden sm:block'>
 				<Filter />

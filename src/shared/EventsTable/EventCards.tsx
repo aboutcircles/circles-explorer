@@ -16,29 +16,29 @@ export function EventCards({ events, renderCell }: EventCardsProperties) {
 					{/* Transaction Hash */}
 					<div className='flex justify-between'>
 						<div>
-							<p className='text-sm text-gray-500'>TX Hash</p>
-							<p className='font-medium text-gray-900'>
+							<div className='text-sm text-gray-500'>TX Hash</div>
+							<div className='font-medium text-gray-900'>
 								{renderCell(event as unknown as Row, 'transactionHash')}
-							</p>
+							</div>
 						</div>
-						<p className='text-sm text-gray-500'>
+						<div className='text-sm text-gray-500'>
 							{renderCell(event as unknown as Row, 'timestamp')}
-						</p>
+						</div>
 					</div>
 					{/* Block Number */}
 					<div className='mt-2 flex items-center'>
-						<p className='pr-1 text-sm text-gray-500'>Block: </p>
-						<p className='font-medium text-gray-900'>
+						<div className='pr-1 text-sm text-gray-500'>Block: </div>
+						<div className='font-medium text-gray-900'>
 							{renderCell(event as unknown as Row, 'blockNumber')}
-						</p>
+						</div>
 					</div>
 					{/* Event Type */}
 					<div className='mt-2'>
-						<p>{renderCell(event as unknown as Row, 'event')}</p>
+						<div>{renderCell(event as unknown as Row, 'event')}</div>
 					</div>
 					{/* Details */}
 					<div className='mt-2'>
-						<p>{renderCell(event as unknown as Row, 'details')}</p>
+						<div>{renderCell(event as unknown as Row, 'details')}</div>
 					</div>
 				</div>
 			))}

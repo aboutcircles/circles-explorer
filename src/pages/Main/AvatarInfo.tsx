@@ -1,25 +1,39 @@
-import { useState, useEffect } from 'react'
-import { Avatar } from '@nextui-org/react'
-import type { Profile } from '@circles-sdk/profiles'
+import { Avatar, Badge } from '@nextui-org/react'
 
-import { circlesProfiles } from 'services/circlesData'
+import type { IPFSData } from 'services/envio/indexer'
 
-export function AvatarInfo({ cidV0 }: { cidV0?: string }) {
-	const [profile, setProfile] = useState<Profile>()
+function CheckIconImage() {
+	return <img src='/icons/check.svg' className='fill-green-500' alt='Check' />
+}
 
-	useEffect(() => {
-		const loadProfile = async (cidV0_: string) => {
-			setProfile(await circlesProfiles.get(cidV0_))
-		}
+const withBadge = (Component: unknown) =>
+	function (properties: unknown) {
+		return (
+			<Badge
+				isOneChar
+				color='success'
+				content={<CheckIconImage />}
+				placement='bottom-right'
+			>
+				{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+				{/* @ts-expect-error */}
+				<Component {...properties} />
+			</Badge>
+		)
+	}
 
-		if (cidV0) {
-			void loadProfile(cidV0)
-		}
-	}, [cidV0])
+export function AvatarInfo({
+	profile,
+	isVerified
+}: {
+	profile?: IPFSData
+	isVerified?: boolean
+}) {
+	const AvatarWithBadge = isVerified ? withBadge(Avatar) : Avatar
 
 	return (
-		<div className='m-5'>
-			<Avatar
+		<div className='m-5 text-center'>
+			<AvatarWithBadge
 				className='mb-3 h-[150px] w-[150px]'
 				size='lg'
 				showFallback
@@ -34,5 +48,6 @@ export function AvatarInfo({ cidV0 }: { cidV0?: string }) {
 }
 
 AvatarInfo.defaultProps = {
-	cidV0: ''
+	isVerified: false,
+	profile: undefined
 }
