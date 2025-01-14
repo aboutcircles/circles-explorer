@@ -11,14 +11,10 @@ export const useSearchSync = () => {
 
 	// Update store when query changes (e.g., pasting a URL with `search`)
 	useEffect(() => {
-		if (location.search) {
-			const searchParameters = new URLSearchParams(location.search)
-			const searchQuery = searchParameters.get('search')
+		const searchParameters = new URLSearchParams(location.search)
+		const searchQuery = searchParameters.get('search')
 
-			if (searchQuery) {
-				updateSearch(searchQuery)
-			}
-		}
+		updateSearch(searchQuery ?? '')
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [location.search])
 
