@@ -1,5 +1,5 @@
 import { Button, Input } from '@nextui-org/react'
-import debounce from 'lodash/debounce'
+import debounce from 'lodash.debounce'
 import type React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchProfileByName, type Profile } from 'services/circlesIndex'
@@ -121,6 +121,16 @@ export function SearchBox({
 		}
 	}, [handleSubmit, search, outerSearch])
 
+	const handleKeyDown = useCallback(
+		(event_: React.KeyboardEvent<HTMLInputElement>) => {
+			if (event_.key === 'Enter') {
+				event_.preventDefault()
+				handleSubmit(search)
+			}
+		},
+		[handleSubmit, search]
+	)
+
 	return (
 		<div className='relative flex'>
 			<div className='flex'>
@@ -144,6 +154,7 @@ export function SearchBox({
 					onChange={onChange}
 					onMouseOver={() => setIsOpen(true)}
 					value={search}
+					onKeyDown={handleKeyDown}
 					startContent={
 						<img
 							src='/icons/search.svg'
@@ -159,7 +170,7 @@ export function SearchBox({
 					className='ml-2 disabled:cursor-not-allowed'
 					color='primary'
 					variant='faded'
-					isDisabled={!isAddress(search) && !isHash(search) && !search}
+					isDisabled={!isAddress(search) && !isHash(search)}
 				>
 					{outerSearch && outerSearch === search ? (
 						<img
