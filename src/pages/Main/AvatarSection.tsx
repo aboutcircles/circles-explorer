@@ -5,12 +5,10 @@ import {
 	getProfileForAddress,
 	type CirclesAvatarFromEnvio
 } from 'services/envio/indexer'
+import logger from 'services/logger'
 
 import { AvatarInfo } from './AvatarInfo'
 import { AvatarStats } from './AvatarStats'
-
-// todo
-// - total supply
 
 export function AvatarSection({ address }: { address?: Address }) {
 	const [avatar, setAvatar] = useState<CirclesAvatarFromEnvio>()
@@ -21,7 +19,7 @@ export function AvatarSection({ address }: { address?: Address }) {
 
 			setAvatar(avatarInfo)
 
-			console.log({ avatarInfo })
+			logger.log({ avatarInfo })
 		}
 
 		if (address) {
