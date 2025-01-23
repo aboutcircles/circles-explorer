@@ -97,7 +97,7 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 
 	return (
 		<div className='m-5'>
-			<div className='mb-5 text-center'>
+			<div className='mb-5 text-center md:text-left'>
 				<Card className='mb-2 mr-2 inline-flex w-[240px] flex-row p-4 text-center'>
 					<b>Last mint</b>:
 					<span className='pl-1'>
@@ -110,7 +110,7 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 						<Tooltip
 							content={`${crcTotalSupply.v1} : ${crcV1Stopped ? 'stopped' : 'active'}`}
 						>
-							<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center'>
+							<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
 								<b>Total CRC supply (V1)</b>:
 								<span className='pl-1'>{crcTotalSupply.v1.toFixed(TWO)}</span>
 							</Card>
@@ -123,7 +123,7 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 						<Tooltip
 							content={`${crcTotalSupply.v2} : ${crcV2Stopped ? 'stopped' : 'active'}`}
 						>
-							<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center'>
+							<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
 								<b>Total CRC supply (V2)</b>:
 								<span className='pl-1'>{crcTotalSupply.v2.toFixed(TWO)}</span>
 							</Card>
@@ -132,8 +132,8 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 				) : null}
 
 				{avatar.invitedBy && !isDeadAddress(avatar.invitedBy) ? (
-					<Card className='mb-2 mr-2 inline p-4 text-center'>
-						Invited by:{' '}
+					<Card className='mb-2 mr-2 inline-table p-4 text-center'>
+						<b>Invited by: </b>
 						<RouterLink
 							className='inline text-primary'
 							to={`?search=${avatar.invitedBy}`}
@@ -144,7 +144,7 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 				) : null}
 
 				{avatar.avatarType ? (
-					<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center'>
+					<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
 						<b>Avatar type</b>: {avatarType}
 					</Card>
 				) : null}

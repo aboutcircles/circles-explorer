@@ -1,8 +1,9 @@
 import { Button } from '@nextui-org/react'
 import { useCallback } from 'react'
 
-import { SearchBox } from 'components/SearchBox'
 import { useFilterStore } from 'stores/useFilterStore'
+
+import { SearchBox } from './SearchBox'
 
 export function Search({
 	onOpen,

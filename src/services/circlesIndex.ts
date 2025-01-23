@@ -10,12 +10,25 @@ import type {
 import { hexToNumber, isAddress, isHash } from 'viem'
 import type { Hex, Address } from 'viem'
 
-import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
+import {
+	CIRCLES_INDEXER_URL,
+	MINUS_ONE,
+	ONE,
+	CIRCLES_PROFILE_SERVICE_URL
+} from 'constants/common'
 import type { CirclesEventsResponse, Event } from 'types/events'
 import type { StatsResponse } from 'types/stats'
 import logger from 'services/logger'
 import { circlesData } from 'services/circlesData'
 import { useStatsStore } from 'stores/useStatsStore'
+
+export interface Profile {
+	address: string
+	name: string
+	description: string
+	CID: string
+	lastUpdatedAt: number
+}
 
 const getEventKey = (transactionHash: string, logIndex: number) =>
 	`${transactionHash}-${logIndex}`
@@ -258,4 +271,32 @@ export const useFetchCrcV2TokenStopped = (address: Address): UseQueryResult =>
 				throw new Error('Failed to query circles crc v2 token stopped status')
 			}
 		}
+	})
+
+// query
+const CIRCLES_PROFILES_SEARCH_BY_NAME = 'circlesProfilesSearchByName'
+export const useSearchProfileByName = (name: string): UseQueryResult =>
+	useQuery({
+		queryKey: [CIRCLES_PROFILES_SEARCH_BY_NAME, name],
+		queryFn: async () => {
+			try {
+				const response = await axios.get<StatsResponse>(
+					`${CIRCLES_PROFILE_SERVICE_URL}/search?name=${name}`
+				)
+
+				logger.log('[service][circles] queried circles profile by name', {
+					name,
+					response: response.data
+				})
+
+				return response.data
+			} catch (error) {
+				logger.error(
+					'[service][circles] Failed to query circles profile by name',
+					error
+				)
+				throw new Error('Failed to query circles profile by name')
+			}
+		},
+		enabled: Boolean(name)
 	})
