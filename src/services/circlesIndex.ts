@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import axios from 'axios'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { CirclesEventType } from '@circles-sdk/data'
+import type { Profile as SDKProfile } from '@circles-sdk/profiles'
 import type {
 	UseQueryResult,
 	QueryClient,
@@ -10,16 +11,11 @@ import type {
 import { hexToNumber, isAddress, isHash } from 'viem'
 import type { Hex, Address } from 'viem'
 
-import {
-	CIRCLES_INDEXER_URL,
-	MINUS_ONE,
-	ONE,
-	CIRCLES_PROFILE_SERVICE_URL
-} from 'constants/common'
+import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
 import type { CirclesEventsResponse, Event } from 'types/events'
 import type { StatsResponse } from 'types/stats'
 import logger from 'services/logger'
-import { circlesData } from 'services/circlesData'
+import { circlesData, circlesProfiles } from 'services/circlesData'
 import { useStatsStore } from 'stores/useStatsStore'
 
 export interface Profile {
@@ -275,21 +271,21 @@ export const useFetchCrcV2TokenStopped = (address: Address): UseQueryResult =>
 
 // query
 const CIRCLES_PROFILES_SEARCH_BY_NAME = 'circlesProfilesSearchByName'
-export const useSearchProfileByName = (name: string): UseQueryResult =>
+export const useSearchProfileByName = (
+	name: string
+): UseQueryResult<SDKProfile[]> =>
 	useQuery({
 		queryKey: [CIRCLES_PROFILES_SEARCH_BY_NAME, name],
 		queryFn: async () => {
 			try {
-				const response = await axios.get<StatsResponse>(
-					`${CIRCLES_PROFILE_SERVICE_URL}/search?name=${name}`
-				)
+				const results = await circlesProfiles.searchByName(name)
 
 				logger.log('[service][circles] queried circles profile by name', {
 					name,
-					response: response.data
+					results
 				})
 
-				return response.data
+				return results
 			} catch (error) {
 				logger.error(
 					'[service][circles] Failed to query circles profile by name',
