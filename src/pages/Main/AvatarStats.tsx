@@ -101,7 +101,11 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 				<Card className='mb-2 mr-2 inline-flex w-[240px] flex-row p-4 text-center'>
 					<b>Last mint</b>:
 					<span className='pl-1'>
-						<Timestamp value={Number(avatar.lastMint)} />
+						{avatar.lastMint ? (
+							<Timestamp value={Number(avatar.lastMint)} />
+						) : (
+							'n/a'
+						)}
 					</span>
 				</Card>
 
