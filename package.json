@@ -23,9 +23,9 @@
 		"validate": "run-p lint test:ci test:e2e:headless"
 	},
 	"dependencies": {
-		"@circles-sdk/adapter-ethers": "^0.15.1",
-		"@circles-sdk/data": "^0.15.1",
-		"@circles-sdk/profiles": "^0.15.1",
+		"@circles-sdk/adapter-ethers": "^0.15.2",
+		"@circles-sdk/data": "^0.15.2",
+		"@circles-sdk/profiles": "^0.15.2",
 		"@nextui-org/react": "^2.6.11",
 		"@tanstack/react-query": "5.29.2",
 		"@tanstack/react-table": "^8.20.6",

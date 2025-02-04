@@ -11,14 +11,14 @@ importers:
   .:
     dependencies:
       '@circles-sdk/adapter-ethers':
-        specifier: ^0.15.1
-        version: 0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^0.15.2
+        version: 0.15.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@circles-sdk/data':
-        specifier: ^0.15.1
-        version: 0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^0.15.2
+        version: 0.15.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@circles-sdk/profiles':
-        specifier: ^0.15.1
-        version: 0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+        specifier: ^0.15.2
+        version: 0.15.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       '@nextui-org/react':
         specifier: ^2.6.11
         version: 2.6.11(@types/react@18.2.76)(framer-motion@11.5.4(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.2.3)(typescript@5.4.5)))
@@ -1172,34 +1172,34 @@ packages:
       }
     engines: { node: '>=6.9.0' }
 
-  '@circles-sdk/adapter-ethers@0.15.1':
+  '@circles-sdk/adapter-ethers@0.15.2':
     resolution:
       {
-        integrity: sha512-jyLObJvGQ1uSLWW2+0JKEuk+uHgLHutVTdVXzIHUGW5xLOondoWrFbAnk51qNknsOSjE6AsChBOr3fHj3/YlLg==
+        integrity: sha512-W01dnI+/gRUKLdr/uh29NKkIJDKgRCDWLwzytRvaPZ9aMVytSHOlUkEfn6ESr4NNw3+3A6iVcuarsW7Q5BmSCw==
       }
 
-  '@circles-sdk/adapter@0.15.1':
+  '@circles-sdk/adapter@0.15.2':
     resolution:
       {
-        integrity: sha512-xGhB2jHFmBHyuxv1ohr0MP11yylsNrq+2IFSlM8FZTTlAXFFveOSl1WQINjUC1JKtHiDybqFPdsxmraywtqY1w==
+        integrity: sha512-PD5Bg4FfPR39fnUEMZq4hG2Q6VNOGncoaERpmhIU2RWThhQhXYF2Cmc+OxkJuV6OqVg3QEUa3d/yPNB9Hgikjw==
       }
 
-  '@circles-sdk/data@0.15.1':
+  '@circles-sdk/data@0.15.2':
     resolution:
       {
-        integrity: sha512-fxZJnqMz4r4A00e98LQ+w65JUFdHtsbovGlqKH7P3UYHDRboyzRgb/SOzDjw+uPaCq58ugxaefZBy/QcJ/+Irw==
+        integrity: sha512-IN+/3aCYlzOof+xiWpy5iaJdnJB+9BqXs7lzkc4tnIFuPM++UewnKrteyWZdSe3tOlxFDmDEKzmo9IjHsMGR5g==
       }
 
-  '@circles-sdk/profiles@0.15.1':
+  '@circles-sdk/profiles@0.15.2':
     resolution:
       {
-        integrity: sha512-I7bTrC1V4ZHwk8VWHNep0jZzDqo3TJAlC8ybFAxkH7FY8PpDLNiQyILt/pQ/MRPp1LDmmh49PiiuI5LOlvcsrw==
+        integrity: sha512-8Wka4BI1DRDgE17JiJdemQOzjCqjKMcyaZH2k/TWOy3zh561AgVPMr/cwjypRHQeEfRigtnlo3x3O5CSkMh4pA==
       }
 
-  '@circles-sdk/utils@0.15.1':
+  '@circles-sdk/utils@0.15.2':
     resolution:
       {
-        integrity: sha512-w+rI/OocXwOuUayZVCPMhliXPWkUe+nsXZTNjIc0vM2Fy6ZzOPDfocVrfgHnX9Qs0s861l4B/fTCwdbHjXxWqA==
+        integrity: sha512-GR4tO7Pb3F1IMmFrKj83Y5FtIpprwTNvQQeKXIFfFTqxgPxjrO5XLtW8Gp/HXrq0B/z5HixG8uwgPj8aejwJYg==
       }
 
   '@colors/colors@1.5.0':
@@ -11070,32 +11070,32 @@ snapshots:
       '@babel/helper-validator-identifier': 7.22.20
       to-fast-properties: 2.0.0
 
-  '@circles-sdk/adapter-ethers@0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
+  '@circles-sdk/adapter-ethers@0.15.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
     dependencies:
-      '@circles-sdk/adapter': 0.15.1
-      '@circles-sdk/utils': 0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      '@circles-sdk/adapter': 0.15.2
+      '@circles-sdk/utils': 0.15.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       ethers: 6.13.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@circles-sdk/adapter@0.15.1': {}
+  '@circles-sdk/adapter@0.15.2': {}
 
-  '@circles-sdk/data@0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
+  '@circles-sdk/data@0.15.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
     dependencies:
-      '@circles-sdk/utils': 0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      '@circles-sdk/utils': 0.15.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@circles-sdk/profiles@0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
+  '@circles-sdk/profiles@0.15.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
     dependencies:
-      '@circles-sdk/utils': 0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      '@circles-sdk/utils': 0.15.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@circles-sdk/utils@0.15.1(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
+  '@circles-sdk/utils@0.15.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)':
     dependencies:
       bignumber.js: 9.1.2
       ethers: 6.13.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
