@@ -1,23 +1,27 @@
 import {
-	Card,
-	ListboxItem,
-	Listbox,
 	Accordion,
 	AccordionItem,
-	Tooltip,
-	Badge
+	Badge,
+	Card,
+	Listbox,
+	ListboxItem,
+	Tooltip
 } from '@nextui-org/react'
-import { useMemo, useState } from 'react'
+import { toBigInt } from 'ethers'
+import { useMemo } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { formatUnits, type Address } from 'viem'
 
-import type { CirclesAvatarFromEnvio } from 'services/envio/indexer'
-import { isDeadAddress, truncateHex } from 'utils/eth'
 import { Timestamp } from 'components/Timestamp'
 import { CRC_TOKEN_DECIMALS, TWO } from 'constants/common'
-import { getCrcV1TokenStopped } from 'services/viemClient'
-import { useFetchCrcV2TokenStopped } from 'services/circlesIndex'
-import logger from 'services/logger'
+import {
+	useFetchCrcV2TokenStopped,
+	useFetchCrcV1TotalSupply,
+	useFetchCrcV2TotalSupply
+} from 'services/circlesIndex'
+import type { CirclesAvatarFromEnvio } from 'services/envio/indexer'
+import { useCrcV1TokenStopped } from 'services/viemClient'
+import { isDeadAddress, truncateHex } from 'utils/eth'
 
 interface TrustStat {
 	label: string
@@ -39,47 +43,18 @@ const trustStats: TrustStat[] = [
 ]
 
 export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
-	const [crcV1Stopped, setCrcV1Stopped] = useState<boolean | null>(null)
-
-	const { data } = useFetchCrcV2TokenStopped(avatar.id)
+	const { data: crcV2TokenStoppedData } = useFetchCrcV2TokenStopped(avatar.id)
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-expect-error
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	const crcV2Stopped = Boolean(data?.rows?.length)
+	const crcV2Stopped = Boolean(crcV2TokenStoppedData?.rows?.length)
 
-	const crcTotalSupply = useMemo(() => {
-		const crcBalanceV2 = avatar.balances.find(
-			(balance) => balance.token.tokenType === 'RegisterHuman'
-		)
-		const crcBalanceV1 = avatar.balances.find(
-			(balance) => balance.token.tokenType === 'Signup'
-		)
+	const { data: crcV1TotalSupply } = useFetchCrcV1TotalSupply(avatar.id)
+	const { data: crcV2TotalSupply } = useFetchCrcV2TotalSupply(avatar.id)
 
-		if (crcBalanceV1) {
-			getCrcV1TokenStopped(crcBalanceV1.token.id as Address)
-				.then((stopped) => setCrcV1Stopped(stopped as boolean))
-				.catch((error: unknown) => logger.error(error))
-		}
-
-		return {
-			v1: crcBalanceV1
-				? Number(
-						formatUnits(
-							BigInt(crcBalanceV1.token.totalSupply),
-							CRC_TOKEN_DECIMALS
-						)
-					)
-				: null,
-			v2: crcBalanceV2
-				? Number(
-						formatUnits(
-							BigInt(crcBalanceV2.token.totalSupply),
-							CRC_TOKEN_DECIMALS
-						)
-					)
-				: null
-		}
-	}, [avatar])
+	const { data: crcV1TokenStoppedData } = useCrcV1TokenStopped(
+		crcV1TotalSupply?.tokenAddress as Address
+	)
 
 	const avatarType = useMemo(() => {
 		switch (avatar.avatarType) {
@@ -109,27 +84,44 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 					</span>
 				</Card>
 
-				{crcTotalSupply.v1 ? (
-					<Badge color={crcV1Stopped ? 'danger' : 'success'} content=' '>
+				{crcV1TotalSupply ? (
+					<Badge
+						color={crcV1TokenStoppedData ? 'danger' : 'success'}
+						content=' '
+					>
 						<Tooltip
-							content={`${crcTotalSupply.v1} : ${crcV1Stopped ? 'stopped' : 'active'}`}
+							content={`${crcV1TotalSupply.totalSupply} : ${crcV1TokenStoppedData ? 'stopped' : 'active'}`}
 						>
 							<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
 								<b>Total CRC supply (V1)</b>:
-								<span className='pl-1'>{crcTotalSupply.v1.toFixed(TWO)}</span>
+								<span className='pl-1'>
+									{Number(
+										formatUnits(
+											toBigInt(crcV1TotalSupply.totalSupply),
+											CRC_TOKEN_DECIMALS
+										)
+									).toFixed(TWO)}
+								</span>
 							</Card>
 						</Tooltip>
 					</Badge>
 				) : null}
 
-				{crcTotalSupply.v2 ? (
+				{crcV2TotalSupply ? (
 					<Badge color={crcV2Stopped ? 'danger' : 'success'} content=' '>
 						<Tooltip
-							content={`${crcTotalSupply.v2} : ${crcV2Stopped ? 'stopped' : 'active'}`}
+							content={`${crcV2TotalSupply.totalSupply} : ${crcV2Stopped ? 'stopped' : 'active'}`}
 						>
 							<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
 								<b>Total CRC supply (V2)</b>:
-								<span className='pl-1'>{crcTotalSupply.v2.toFixed(TWO)}</span>
+								<span className='pl-1'>
+									{Number(
+										formatUnits(
+											toBigInt(crcV2TotalSupply.totalSupply),
+											CRC_TOKEN_DECIMALS
+										)
+									).toFixed(TWO)}
+								</span>
 							</Card>
 						</Tooltip>
 					</Badge>

@@ -1,22 +1,92 @@
-import { useMemo } from 'react'
-import axios from 'axios'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { CirclesEventType } from '@circles-sdk/data'
 import type { Profile as SDKProfile } from '@circles-sdk/profiles'
 import type {
-	UseQueryResult,
 	QueryClient,
-	QueryKey
+	QueryKey,
+	UseQueryResult
 } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
+import { useMemo } from 'react'
+import type { Address, Hex } from 'viem'
 import { hexToNumber, isAddress, isHash } from 'viem'
-import type { Hex, Address } from 'viem'
 
 import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
-import type { CirclesEventsResponse, Event } from 'types/events'
-import type { StatsResponse } from 'types/stats'
-import logger from 'services/logger'
 import { circlesData, circlesProfiles } from 'services/circlesData'
+import logger from 'services/logger'
 import { useStatsStore } from 'stores/useStatsStore'
+import type { CirclesEventsResponse, Event } from 'types/events'
+import type { StatsResult } from 'types/stats'
+
+interface TableResponse {
+	columns: string[]
+	rows: string[][]
+}
+
+function mapTableResponse<T extends { [K in keyof T]: string }>(
+	response: TableResponse
+): T[] {
+	return response.rows.map((row) => {
+		const mappedRow = {} as T
+		for (const [index, column] of response.columns.entries()) {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
+			mappedRow[column] = row[index] as T[keyof T]
+		}
+		return mappedRow
+	})
+}
+
+interface CirclesQueryFilter {
+	Type: 'Conjunction' | 'FilterPredicate'
+	FilterType?: 'Equals' | 'In'
+	ConjunctionType?: 'Or'
+	Column?: string
+	Value?: unknown[]
+	Predicates?: CirclesQueryFilter[]
+}
+
+interface CirclesQueryParameters {
+	namespace: string
+	table: string
+	columns: string[]
+	filter?: CirclesQueryFilter[]
+	order?: unknown[]
+	limit?: number
+}
+
+async function makeCirclesQuery(
+	parameters: CirclesQueryParameters
+): Promise<TableResponse> {
+	try {
+		const response = await axios.post<{ result: TableResponse }>(
+			CIRCLES_INDEXER_URL,
+			{
+				method: 'circles_query',
+				params: [
+					{
+						Namespace: parameters.namespace,
+						Table: parameters.table,
+						Columns: parameters.columns,
+						Filter: parameters.filter ?? [],
+						Order: parameters.order ?? [],
+						Limit: parameters.limit
+					}
+				]
+			}
+		)
+
+		logger.log('[service][circles] queried circles data', {
+			params: parameters,
+			response: response.data.result
+		})
+
+		return response.data.result
+	} catch (error) {
+		logger.error('[service][circles] Failed to query circles data', error)
+		throw new Error(`Failed to query circles ${parameters.table}`)
+	}
+}
 
 export interface Profile {
 	address: string
@@ -187,34 +257,20 @@ export const useFetchCirclesEvents = (
 
 // query
 const CIRCLES_STATS_QUERY_KEY = 'circlesStats'
-export const useFetchCirclesStats = (): UseQueryResult<Event[]> => {
+export const useFetchCirclesStats = (): UseQueryResult<StatsResult> => {
 	const setStats = useStatsStore.use.setStats()
 
 	return useQuery({
 		queryKey: [CIRCLES_STATS_QUERY_KEY],
 		queryFn: async () => {
-			try {
-				const response = await axios.post<StatsResponse>(CIRCLES_INDEXER_URL, {
-					method: 'circles_query',
-					params: [
-						{
-							Namespace: 'V_Crc',
-							Table: 'Stats',
-							Columns: []
-						}
-					]
-				})
+			const result = await makeCirclesQuery({
+				namespace: 'V_Crc',
+				table: 'Stats',
+				columns: ['measure', 'value']
+			})
 
-				logger.log('[service][circles] queried circles stats', {
-					response: response.data.result
-				})
-				setStats(response.data.result)
-
-				return response.data.result
-			} catch (error) {
-				logger.error('[service][circles] Failed to query circles stats', error)
-				throw new Error('Failed to query circles stats')
-			}
+			setStats(result as StatsResult)
+			return result
 		}
 	})
 }
@@ -223,50 +279,108 @@ export const useFetchCirclesStats = (): UseQueryResult<Event[]> => {
 const CIRCLES_CRC_V2_TOKEN_STOPPED = 'circlesCrcV2TokenStopped'
 export const useFetchCrcV2TokenStopped = (address: Address): UseQueryResult =>
 	useQuery({
-		queryKey: [CIRCLES_CRC_V2_TOKEN_STOPPED],
-		queryFn: async () => {
-			try {
-				const response = await axios.post<StatsResponse>(CIRCLES_INDEXER_URL, {
-					method: 'circles_query',
-					params: [
-						{
-							Namespace: 'CrcV2',
-							Table: 'Stopped',
-							Columns: [],
-							Filter: [
-								{
-									Type: 'Conjunction',
-									ConjunctionType: 'Or',
-									Predicates: [
-										{
-											Type: 'FilterPredicate',
-											FilterType: 'Equals',
-											Column: 'avatar',
-											Value: [address]
-										}
-									]
-								}
-							]
-						}
-					]
-				})
-
-				logger.log(
-					'[service][circles] queried circles crc v2 token stopped status',
+		queryKey: [CIRCLES_CRC_V2_TOKEN_STOPPED, address],
+		queryFn: async () =>
+			makeCirclesQuery({
+				namespace: 'CrcV2',
+				table: 'Stopped',
+				columns: ['avatar'],
+				filter: [
 					{
-						response: response.data.result
+						Type: 'Conjunction',
+						ConjunctionType: 'Or',
+						Predicates: [
+							{
+								Type: 'FilterPredicate',
+								FilterType: 'Equals',
+								Column: 'avatar',
+								Value: [address.toLowerCase()]
+							}
+						]
 					}
-				)
+				]
+			}),
+		enabled: Boolean(address)
+	})
 
-				return response.data.result
-			} catch (error) {
-				logger.error(
-					'[service][circles] Failed to query crc v2 token stopped status',
-					error
-				)
-				throw new Error('Failed to query circles crc v2 token stopped status')
-			}
-		}
+interface TotalSupplyV1Row {
+	tokenAddress: string
+	user: string
+	totalSupply: string
+}
+
+// V1 Total Supply Query
+const CIRCLES_CRC_V1_TOTAL_SUPPLY = 'circlesCrcV1TotalSupply'
+export const useFetchCrcV1TotalSupply = (
+	address: Address
+): UseQueryResult<TotalSupplyV1Row> =>
+	useQuery({
+		queryKey: [CIRCLES_CRC_V1_TOTAL_SUPPLY, address],
+		queryFn: async () => {
+			const result = await makeCirclesQuery({
+				namespace: 'V_CrcV1',
+				table: 'TotalSupply',
+				columns: ['tokenAddress', 'user', 'totalSupply'],
+				filter: [
+					{
+						Type: 'Conjunction',
+						ConjunctionType: 'Or',
+						Predicates: [
+							{
+								Type: 'FilterPredicate',
+								FilterType: 'Equals',
+								Column: 'user',
+								Value: [address.toLowerCase()]
+							}
+						]
+					}
+				],
+				limit: ONE
+			})
+
+			return mapTableResponse<TotalSupplyV1Row>(result)[0]
+		},
+		enabled: Boolean(address)
+	})
+
+interface TotalSupplyV2Row {
+	tokenAddress: string
+	tokenId: string
+	totalSupply: string
+}
+
+// V2 Total Supply Query
+const CIRCLES_CRC_V2_TOTAL_SUPPLY = 'circlesCrcV2TotalSupply'
+export const useFetchCrcV2TotalSupply = (
+	address: Address
+): UseQueryResult<TotalSupplyV2Row> =>
+	useQuery({
+		queryKey: [CIRCLES_CRC_V2_TOTAL_SUPPLY, address],
+		queryFn: async () => {
+			const result = await makeCirclesQuery({
+				namespace: 'V_CrcV2',
+				table: 'TotalSupply',
+				columns: ['tokenAddress', 'tokenId', 'totalSupply'],
+				filter: [
+					{
+						Type: 'Conjunction',
+						ConjunctionType: 'Or',
+						Predicates: [
+							{
+								Type: 'FilterPredicate',
+								FilterType: 'Equals',
+								Column: 'tokenAddress',
+								Value: [address.toLowerCase()]
+							}
+						]
+					}
+				],
+				limit: ONE
+			})
+
+			return mapTableResponse<TotalSupplyV2Row>(result)[0]
+		},
+		enabled: Boolean(address)
 	})
 
 // query
