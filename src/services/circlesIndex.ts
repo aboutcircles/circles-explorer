@@ -284,7 +284,7 @@ export const useFetchCrcV2TokenStopped = (address: Address): UseQueryResult =>
 			makeCirclesQuery({
 				namespace: 'CrcV2',
 				table: 'Stopped',
-				columns: ['stopped'],
+				columns: ['avatar'],
 				filter: [
 					{
 						Type: 'Conjunction',
@@ -294,7 +294,7 @@ export const useFetchCrcV2TokenStopped = (address: Address): UseQueryResult =>
 								Type: 'FilterPredicate',
 								FilterType: 'Equals',
 								Column: 'avatar',
-								Value: [address]
+								Value: [address.toLowerCase()]
 							}
 						]
 					}
