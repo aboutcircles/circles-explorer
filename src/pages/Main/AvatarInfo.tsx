@@ -12,11 +12,13 @@ export function AvatarInfo({ profile }: { profile?: IPFSData }) {
 				src={profile?.previewImageUrl ?? profile?.imageUrl}
 			/>
 
-			<h1 className='mt-3 max-w-[200px] break-words'>
+			<h1 className='mt-3 h-[100px] max-w-[200px] overflow-auto break-words'>
 				{profile?.name ?? 'Avatar Name'}
 			</h1>
 
-			<div className='max-w-[200px] break-words'>{profile?.description}</div>
+			<div className='h-[100px] max-w-[200px] overflow-auto break-words text-sm'>
+				{profile?.description}
+			</div>
 		</div>
 	)
 }
