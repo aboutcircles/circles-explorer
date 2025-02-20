@@ -6,15 +6,17 @@ export function AvatarInfo({ profile }: { profile?: IPFSData }) {
 	return (
 		<div className='m-5 text-center'>
 			<Avatar
-				className='mb-3 h-[150px] w-[150px]'
+				className='m-auto h-[150px] w-[150px]'
 				size='lg'
 				showFallback
 				src={profile?.previewImageUrl ?? profile?.imageUrl}
 			/>
 
-			<h1>{profile?.name ?? 'Avatar Name'}</h1>
+			<h1 className='mt-3 max-w-[200px] break-words'>
+				{profile?.name ?? 'Avatar Name'}
+			</h1>
 
-			<div>{profile?.description}</div>
+			<div className='max-w-[200px] break-words'>{profile?.description}</div>
 		</div>
 	)
 }
