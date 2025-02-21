@@ -1,8 +1,8 @@
 import type { CirclesEventType } from '@circles-sdk/data'
-import { useCallback } from 'react'
-import { useCirclesStats } from 'hooks/useCirclesStats'
 import { StatCard } from 'components/StatCard'
 import { TWO } from 'constants/common'
+import { useCirclesStats } from 'hooks/useCirclesStats'
+import { useCallback, useMemo } from 'react'
 import { useFilterStore } from 'stores/useFilterStore'
 
 interface Stat {
@@ -77,13 +77,22 @@ const STATS_MOBILE_NUMBER_IN_ROW = 3
 
 export function Stats() {
 	const { isLoading, ...statsValues } = useCirclesStats()
-	const updateEventTypes = useFilterStore.use.updateEventTypes()
+	const selectedEventTypes = useFilterStore.use.eventTypes()
+	const updateEventTypesBatch = useFilterStore.use.updateEventTypesBatch()
+
+	const isStatHighlighted = useMemo(
+		() => (events: CirclesEventType[]) => {
+			if (events.length === 0) return false
+			return events.every((event) => selectedEventTypes.has(event))
+		},
+		[selectedEventTypes]
+	)
 
 	const onCardClick = useCallback(
 		(events: CirclesEventType[]) => {
-			for (const event of events) updateEventTypes(event)
+			updateEventTypesBatch(events)
 		},
-		[updateEventTypes]
+		[updateEventTypesBatch]
 	)
 
 	return (
@@ -94,6 +103,7 @@ export function Stats() {
 						key={stat.label}
 						label={stat.label}
 						handleClick={() => onCardClick(stat.events)}
+						isHighlighted={isStatHighlighted(stat.events)}
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-expect-error
 						value={(statsValues[stat.key] ?? 0) + (statsValues[stat.key2] ?? 0)}
@@ -116,6 +126,7 @@ export function Stats() {
 							key={stat.label}
 							label={stat.label}
 							handleClick={() => onCardClick(stat.events)}
+							isHighlighted={isStatHighlighted(stat.events)}
 							value={
 								// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 								// @ts-expect-error
@@ -140,6 +151,7 @@ export function Stats() {
 								key={stat.label}
 								label={stat.label}
 								handleClick={() => onCardClick(stat.events)}
+								isHighlighted={isStatHighlighted(stat.events)}
 								value={
 									// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 									// @ts-expect-error
@@ -162,6 +174,7 @@ export function Stats() {
 							key={stat.label}
 							label={stat.label}
 							handleClick={() => onCardClick(stat.events)}
+							isHighlighted={isStatHighlighted(stat.events)}
 							value={
 								// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 								// @ts-expect-error

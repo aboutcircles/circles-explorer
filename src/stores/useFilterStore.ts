@@ -1,7 +1,7 @@
 import type { CirclesEventType } from '@circles-sdk/data'
+import { isNil } from 'utils/isNil'
 import { isAddress } from 'viem'
 import { create } from 'zustand'
-import { isNil } from 'utils/isNil'
 
 import { EVENTS } from 'constants/events'
 import { ONE } from '../constants/common'
@@ -37,6 +37,7 @@ interface State {
 
 interface Action {
 	updateEventTypes: (event: CirclesEventType) => void
+	updateEventTypesBatch: (events: CirclesEventType[]) => void
 	updatePeriod: (period: PeriodKey) => void
 	updateEventTypesAmount: (
 		eventTypesAmount: Map<CirclesEventType, number>
@@ -128,6 +129,37 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 				newEventTypes = state.eventTypes.has(event)
 					? new Set([...state.eventTypes].filter((event_) => event_ !== event))
 					: new Set([...state.eventTypes, event])
+			}
+
+			const newState = {
+				...state,
+				eventTypes: newEventTypes
+			}
+
+			updateURL(newState)
+			return newState
+		}),
+	updateEventTypesBatch: (events: CirclesEventType[]) =>
+		set((state) => {
+			if (events.length === 0) return state
+
+			let newEventTypes: Set<CirclesEventType>
+			const allEventsSelected = events.every((event) =>
+				state.eventTypes.has(event)
+			)
+
+			if (allEventsSelected) {
+				// If all events in batch are selected, remove them
+				newEventTypes = new Set(
+					[...state.eventTypes].filter((event) => !events.includes(event))
+				)
+				// If removing these events would make the set empty, select all events
+				if (newEventTypes.size === 0) {
+					newEventTypes = new Set(EVENTS)
+				}
+			} else {
+				// If not all events in batch are selected, select them all
+				newEventTypes = new Set([...state.eventTypes, ...events])
 			}
 
 			const newState = {
