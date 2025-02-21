@@ -40,7 +40,7 @@ export function Search({
 					/>
 				) : (
 					<Button
-						onPress={onOpen}
+						onPressEnd={onOpen}
 						isIconOnly
 						className='ml-2 disabled:cursor-not-allowed'
 						color='primary'

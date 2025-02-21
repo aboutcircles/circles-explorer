@@ -41,7 +41,9 @@ export const V2_EVENTS: CirclesEventType[] = [
 	'CrcV2_CollateralLockedBatch'
 ]
 
-export const EVENTS = [...V1_EVENTS, ...V2_EVENTS]
+export const UNKNOWN_EVENTS: CirclesEventType[] = ['Crc_UnknownEvent']
+
+export const EVENTS = [...V1_EVENTS, ...V2_EVENTS, ...UNKNOWN_EVENTS]
 
 export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV1_HubTransfer: 'Hub Transfer',
@@ -79,5 +81,7 @@ export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV2_InviteHuman: 'Invite Human',
 	CrcV2_DiscountCost: 'Discount Cost',
 	CrcV2_CollateralLockedSingle: 'Collateral Locked Single',
-	CrcV2_CollateralLockedBatch: 'Collateral Locked Batch'
+	CrcV2_CollateralLockedBatch: 'Collateral Locked Batch',
+
+	Crc_UnknownEvent: 'Unknown Event'
 }

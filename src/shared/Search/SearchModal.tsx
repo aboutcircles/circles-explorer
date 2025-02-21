@@ -27,7 +27,7 @@ export function SearchModal({
 			size='full'
 			hideCloseButton
 		>
-			<ModalContent>
+			<ModalContent className='overflow-auto'>
 				{(onClose) => (
 					<>
 						<ModalHeader className='mb-2 flex flex-col gap-1' />
