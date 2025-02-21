@@ -92,7 +92,6 @@ const updateURL = (state: State) => {
 	const url = new URL(window.location.href)
 
 	if (state.search) {
-		console.log(state.search)
 		url.searchParams.set('search', state.search)
 	} else {
 		url.searchParams.delete('search')

@@ -135,7 +135,7 @@ const watchEventUpdates = async (
 	address: string | null
 ) => {
 	const avatarEvents = await (address
-		? circlesData.subscribeToEvents(address)
+		? circlesData.subscribeToEvents(address as Address)
 		: circlesData.subscribeToEvents())
 
 	avatarEvents.subscribe((event) => {
