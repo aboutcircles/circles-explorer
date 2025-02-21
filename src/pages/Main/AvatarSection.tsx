@@ -29,7 +29,7 @@ export function AvatarSection({ address }: { address?: Address }) {
 
 	return (
 		<div className='flex flex-col items-center md:flex-row md:items-start'>
-			<AvatarInfo profile={avatar?.profile} isVerified={avatar?.isVerified} />
+			<AvatarInfo profile={avatar?.profile} />
 
 			{avatar ? <AvatarStats avatar={avatar} /> : null}
 		</div>
