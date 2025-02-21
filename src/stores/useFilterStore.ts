@@ -1,6 +1,7 @@
 import type { CirclesEventType } from '@circles-sdk/data'
 import { isAddress } from 'viem'
 import { create } from 'zustand'
+import { isNil } from 'utils/isNil'
 
 import { EVENTS } from 'constants/events'
 import { ONE } from '../constants/common'
@@ -41,7 +42,10 @@ interface Action {
 		eventTypesAmount: Map<CirclesEventType, number>
 	) => void
 	updateSearch: (search: string) => void
-	syncWithUrl: (parameters: { search?: string; filter?: string }) => void
+	syncWithUrl: (parameters: {
+		search?: string | null
+		filter?: string | null
+	}) => void
 }
 
 const TWELVE = 12
@@ -150,10 +154,12 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 		})
 	},
 	syncWithUrl: (parameters) => {
-		if (parameters.search) {
+		if (!isNil(parameters.search)) {
 			set({ search: parameters.search })
 		}
-		if (parameters.filter) {
+		if (!isNil(parameters.filter)) {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
 			const selectedEvents = parameters.filter.split(',') as CirclesEventType[]
 			set({ eventTypes: new Set(selectedEvents) })
 		}
