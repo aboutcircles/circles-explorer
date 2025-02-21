@@ -50,7 +50,7 @@ const stats: Stat[] = [
 			'CrcV1_Transfer',
 			'CrcV2_TransferSingle',
 			'CrcV2_TransferBatch',
-			'CrcV2_StreamCompleted'
+			'CrcV2_Erc20WrapperTransfer'
 		]
 	},
 	{
@@ -63,13 +63,18 @@ const stats: Stat[] = [
 		label: 'Tokens',
 		key: 'tokenCountV1',
 		key2: 'tokenCountV2',
-		events: []
+		events: [
+			'CrcV1_Signup',
+			'CrcV2_RegisterHuman',
+			'CrcV2_RegisterGroup',
+			'CrcV2_ERC20WrapperDeployed'
+		]
 	},
 	{
 		label: 'Transitive Transfers',
 		key: 'transitiveTransferCountV1',
 		key2: 'transitiveTransferCountV2',
-		events: []
+		events: ['CrcV1_HubTransfer', 'CrcV2_StreamCompleted']
 	}
 ]
 
