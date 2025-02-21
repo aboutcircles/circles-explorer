@@ -28,7 +28,9 @@ export function StatCard({
 		<div onClick={handleClick}>
 			{isMobile ? (
 				<div
-					className={`hover:cursor-pointer ${isHighlighted ? 'bg-primary-50' : ''}`}
+					className={`hover:cursor-pointer ${
+						isHighlighted ? 'border-l-4 border-primary pl-1' : ''
+					}`}
 				>
 					<p className='text-sm font-medium text-gray-500'>{label}</p>
 					{isLoading ? (
