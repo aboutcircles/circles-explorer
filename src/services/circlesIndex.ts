@@ -150,7 +150,12 @@ const watchEventUpdates = async (
 				events: Event[]
 				eventTypesAmount: Map<CirclesEventType, number>
 			}) => {
-				if (!cacheData) return [event]
+				if (!cacheData)
+					return [
+						{
+							events: [event]
+						}
+					]
 
 				const updatedData = [...cacheData.events]
 
