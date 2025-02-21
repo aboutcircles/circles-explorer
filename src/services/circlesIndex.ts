@@ -135,7 +135,7 @@ const watchEventUpdates = async (
 	address: string | null
 ) => {
 	const avatarEvents = await (address
-		? circlesData.subscribeToEvents(address)
+		? circlesData.subscribeToEvents(address as Address)
 		: circlesData.subscribeToEvents())
 
 	avatarEvents.subscribe((event) => {
@@ -150,7 +150,12 @@ const watchEventUpdates = async (
 				events: Event[]
 				eventTypesAmount: Map<CirclesEventType, number>
 			}) => {
-				if (!cacheData) return [event]
+				if (!cacheData)
+					return [
+						{
+							events: [event]
+						}
+					]
 
 				const updatedData = [...cacheData.events]
 

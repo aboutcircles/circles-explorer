@@ -19,7 +19,7 @@ export default function Main(): ReactElement {
 	useEffect(() => {
 		syncWithUrl({
 			search: searchParameters.get('search') ?? '',
-			filter: searchParameters.get('filter') ?? ''
+			filter: searchParameters.get('filter') ?? null
 		})
 	}, [searchParameters]) // eslint-disable-line react-hooks/exhaustive-deps
 
