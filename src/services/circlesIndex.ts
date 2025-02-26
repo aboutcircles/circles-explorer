@@ -338,7 +338,7 @@ export const useFetchCrcV1TotalSupply = (
 				limit: ONE
 			})
 
-			return mapTableResponse<TotalSupplyV1Row>(result)[0]
+			return mapTableResponse<TotalSupplyV1Row>(result)[0] ?? null
 		},
 		enabled: Boolean(address)
 	})
@@ -378,7 +378,7 @@ export const useFetchCrcV2TotalSupply = (
 				limit: ONE
 			})
 
-			return mapTableResponse<TotalSupplyV2Row>(result)[0]
+			return mapTableResponse<TotalSupplyV2Row>(result)[0] ?? null
 		},
 		enabled: Boolean(address)
 	})

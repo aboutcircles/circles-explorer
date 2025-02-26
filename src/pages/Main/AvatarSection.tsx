@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Address } from 'viem'
 
+import { useProfiles } from 'hooks/useProfiles'
 import {
 	getProfileForAddress,
 	type CirclesAvatarFromEnvio
@@ -12,20 +13,38 @@ import { AvatarStats } from './AvatarStats'
 
 export function AvatarSection({ address }: { address?: Address }) {
 	const [avatar, setAvatar] = useState<CirclesAvatarFromEnvio>()
+	const { fetchProfiles } = useProfiles()
 
 	useEffect(() => {
 		const loadAvatarInfo = async (address_: Address) => {
 			const avatarInfo = await getProfileForAddress(address_)
 
 			setAvatar(avatarInfo)
-
 			logger.log({ avatarInfo })
+
+			// use Set to avoid duplicates and later check for cached profiles
+			const addresses = new Set()
+
+			if (avatarInfo.invitedBy) {
+				addresses.add(avatarInfo.invitedBy.toLowerCase())
+			}
+
+			for (const trustRelation of avatarInfo.trustsGiven) {
+				addresses.add(trustRelation.trustee_id.toLowerCase())
+			}
+			for (const trustRelation of avatarInfo.trustsReceived) {
+				addresses.add(trustRelation.truster_id.toLowerCase())
+			}
+
+			if (addresses.size > 0) {
+				void fetchProfiles([...addresses] as string[])
+			}
 		}
 
 		if (address) {
 			void loadAvatarInfo(address)
 		}
-	}, [address])
+	}, [address, fetchProfiles])
 
 	return (
 		<div className='flex flex-col items-center md:flex-row md:items-start'>

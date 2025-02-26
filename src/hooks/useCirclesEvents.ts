@@ -1,11 +1,12 @@
-import { useMemo, useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import { ONE } from 'constants/common'
 import { useBlockNumber } from 'hooks/useBlockNumber'
+import { useProfiles } from 'hooks/useProfiles'
 import { useFetchCirclesEvents } from 'services/circlesIndex'
-import { getDateRange } from 'utils/time'
-import { useFilterStore, periods } from 'stores/useFilterStore'
+import { periods, useFilterStore } from 'stores/useFilterStore'
 import type { Event } from 'types/events'
+import { getDateRange } from 'utils/time'
 
 export const useCirclesEvents = (page: number) => {
 	const eventTypes = useFilterStore.use.eventTypes()
@@ -50,6 +51,36 @@ export const useCirclesEvents = (page: number) => {
 
 		return events.filter((event: Event): boolean => eventTypes.has(event.event))
 	}, [events, eventTypes])
+
+	// Prefetch profiles for all addresses in the events
+	const { fetchProfiles } = useProfiles()
+
+	useEffect(() => {
+		if (filteredEvents.length === 0) return
+
+		// Extract all addresses from events
+		const addresses: string[] = []
+		for (const event of filteredEvents) {
+			// Use type assertions to check if properties exist
+			// These properties are added dynamically based on the event type
+			if ('from' in event && event.from)
+				addresses.push(String(event.from).toLowerCase())
+			if ('to' in event && event.to)
+				addresses.push(String(event.to).toLowerCase())
+			if ('truster' in event && event.truster)
+				addresses.push(String(event.truster).toLowerCase())
+			if ('trustee' in event && event.trustee)
+				addresses.push(String(event.trustee).toLowerCase())
+			if ('canSendTo' in event && event.canSendTo)
+				addresses.push(String(event.canSendTo).toLowerCase())
+			if ('user' in event && event.user)
+				addresses.push(String(event.user).toLowerCase())
+		}
+
+		if (addresses.length > 0) {
+			void fetchProfiles(addresses)
+		}
+	}, [filteredEvents, fetchProfiles])
 
 	return {
 		events: filteredEvents,
