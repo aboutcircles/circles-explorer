@@ -38,6 +38,7 @@ interface State {
 interface Action {
 	updateEventTypes: (event: CirclesEventType) => void
 	updateEventTypesBatch: (events: CirclesEventType[]) => void
+	toggleAllEvents: () => void
 	updatePeriod: (period: PeriodKey) => void
 	updateEventTypesAmount: (
 		eventTypesAmount: Map<CirclesEventType, number>
@@ -173,6 +174,18 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 	updatePeriod: (period: PeriodKey) => set(() => ({ period })),
 	updateEventTypesAmount: (eventTypesAmount: Map<CirclesEventType, number>) =>
 		set(() => ({ eventTypesAmount })),
+	toggleAllEvents: () =>
+		set((state) => {
+			const newEventTypes =
+				state.eventTypes.size === EVENTS.length
+					? new Set<CirclesEventType>()
+					: new Set(EVENTS)
+
+			return {
+				...state,
+				eventTypes: newEventTypes
+			}
+		}),
 	updateSearch: (search: string) => {
 		set((state) => {
 			const newState = {
