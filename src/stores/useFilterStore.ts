@@ -1,4 +1,5 @@
 import type { CirclesEventType } from '@circles-sdk/data'
+import { isNil } from 'utils/isNil'
 import { isAddress } from 'viem'
 import { create } from 'zustand'
 
@@ -36,12 +37,16 @@ interface State {
 
 interface Action {
 	updateEventTypes: (event: CirclesEventType) => void
+	updateEventTypesBatch: (events: CirclesEventType[]) => void
 	updatePeriod: (period: PeriodKey) => void
 	updateEventTypesAmount: (
 		eventTypesAmount: Map<CirclesEventType, number>
 	) => void
 	updateSearch: (search: string) => void
-	syncWithUrl: (parameters: { search?: string; filter?: string }) => void
+	syncWithUrl: (parameters: {
+		search?: string | null
+		filter?: string | null
+	}) => void
 }
 
 const TWELVE = 12
@@ -92,7 +97,6 @@ const updateURL = (state: State) => {
 	const url = new URL(window.location.href)
 
 	if (state.search) {
-		console.log(state.search)
 		url.searchParams.set('search', state.search)
 	} else {
 		url.searchParams.delete('search')
@@ -135,6 +139,37 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 			updateURL(newState)
 			return newState
 		}),
+	updateEventTypesBatch: (events: CirclesEventType[]) =>
+		set((state) => {
+			if (events.length === 0) return state
+
+			let newEventTypes: Set<CirclesEventType>
+			const allEventsSelected = events.every((event) =>
+				state.eventTypes.has(event)
+			)
+
+			if (allEventsSelected) {
+				// If all events in batch are selected, remove them
+				newEventTypes = new Set(
+					[...state.eventTypes].filter((event) => !events.includes(event))
+				)
+				// If removing these events would make the set empty, select all events
+				if (newEventTypes.size === 0) {
+					newEventTypes = new Set(EVENTS)
+				}
+			} else {
+				// If not all events in batch are selected, select them all
+				newEventTypes = new Set([...state.eventTypes, ...events])
+			}
+
+			const newState = {
+				...state,
+				eventTypes: newEventTypes
+			}
+
+			updateURL(newState)
+			return newState
+		}),
 	updatePeriod: (period: PeriodKey) => set(() => ({ period })),
 	updateEventTypesAmount: (eventTypesAmount: Map<CirclesEventType, number>) =>
 		set(() => ({ eventTypesAmount })),
@@ -151,10 +186,12 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 		})
 	},
 	syncWithUrl: (parameters) => {
-		if (parameters.search) {
+		if (!isNil(parameters.search)) {
 			set({ search: parameters.search })
 		}
-		if (parameters.filter) {
+		if (!isNil(parameters.filter)) {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
 			const selectedEvents = parameters.filter.split(',') as CirclesEventType[]
 			set({ eventTypes: new Set(selectedEvents) })
 		}

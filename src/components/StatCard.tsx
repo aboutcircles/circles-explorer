@@ -1,4 +1,4 @@
-import { Card, CardHeader, CardBody, Spinner, Tooltip } from '@nextui-org/react'
+import { Card, CardBody, CardHeader, Spinner } from '@nextui-org/react'
 
 import { prettifyNumber } from 'utils/number'
 
@@ -9,9 +9,9 @@ interface StatCardProperties {
 	progressValue1?: number
 	progressValue2?: number
 	isMobile?: boolean
+	isHighlighted?: boolean
+	handleClick: () => void
 }
-
-// const PERCENTAGE = 100
 
 export function StatCard({
 	label,
@@ -19,14 +19,19 @@ export function StatCard({
 	isLoading,
 	progressValue1 = 0,
 	progressValue2 = 0,
-	isMobile = false
+	isMobile = false,
+	isHighlighted = false,
+	handleClick
 }: StatCardProperties) {
 	return (
-		<Tooltip
-			content={`${prettifyNumber(progressValue2)} V2 / ${prettifyNumber(progressValue1)} V1`}
-		>
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
+		<div onClick={handleClick}>
 			{isMobile ? (
-				<div>
+				<div
+					className={`hover:cursor-pointer ${
+						isHighlighted ? 'border-l-4 border-primary pl-1' : ''
+					}`}
+				>
 					<p className='text-sm font-medium text-gray-500'>{label}</p>
 					{isLoading ? (
 						<Spinner />
@@ -37,7 +42,11 @@ export function StatCard({
 					)}
 				</div>
 			) : (
-				<Card className='m-2 mt-8 w-[165px] border-1 sm:w-[200px] md:w-[305px]'>
+				<Card
+					className={`m-2 mt-8 w-[165px] border-1 hover:cursor-pointer sm:w-[200px] md:w-[305px] ${
+						isHighlighted ? 'border-primary bg-primary-50' : ''
+					}`}
+				>
 					<CardHeader className='flex pb-1 pl-3 pt-3'>
 						<div className='text-sm text-grayText'>{label}</div>
 					</CardHeader>
@@ -45,23 +54,23 @@ export function StatCard({
 						{isLoading ? (
 							<Spinner />
 						) : (
-							<p className='flex text-3xl'>{prettifyNumber(value)}</p>
+							<>
+								<p className='flex text-3xl'>{prettifyNumber(value)}</p>
+								<span className='text-xs'>
+									{prettifyNumber(progressValue2)} V2 /
+									{` ${prettifyNumber(progressValue1)}`} V1
+								</span>
+							</>
 						)}
 					</CardBody>
 				</Card>
 			)}
-		</Tooltip>
+		</div>
 	)
 }
 
-// <Progress
-// 	size='sm'
-// 	color='primary'
-// 	aria-label='Loading V2'
-// 	value={(progressValue2 / progressValue1) * PERCENTAGE}
-// />
-
 StatCard.defaultProps = {
+	isHighlighted: false,
 	isMobile: false,
 	progressValue1: 0,
 	progressValue2: 0
