@@ -1,5 +1,8 @@
 import type { CirclesEventType } from '@circles-sdk/data'
-import type { Profile as SDKProfile } from '@circles-sdk/profiles'
+import type {
+	Profile as SDKProfile,
+	SearchResultProfile
+} from '@circles-sdk/profiles'
 import type {
 	QueryClient,
 	QueryKey,
@@ -88,13 +91,7 @@ async function makeCirclesQuery(
 	}
 }
 
-export interface Profile {
-	address: string
-	name: string
-	description: string
-	CID: string
-	lastUpdatedAt: number
-}
+export type Profile = SearchResultProfile
 
 const getEventKey = (transactionHash: string, logIndex: number) =>
 	`${transactionHash}-${logIndex}`
@@ -397,7 +394,9 @@ export const useSearchProfileByName = (
 		queryKey: [CIRCLES_PROFILES_SEARCH_BY_NAME, name],
 		queryFn: async () => {
 			try {
-				const results = await circlesProfiles.searchByName(name)
+				const results = await circlesProfiles.searchByName(name, {
+					fetchComplete: true
+				})
 
 				logger.log('[service][circles] queried circles profile by name', {
 					name,
