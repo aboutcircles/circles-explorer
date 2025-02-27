@@ -9,19 +9,19 @@ import {
 } from '@nextui-org/react'
 import { toBigInt } from 'ethers'
 import { useMemo } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
 import { formatUnits, type Address } from 'viem'
 
 import { Timestamp } from 'components/Timestamp'
 import { CRC_TOKEN_DECIMALS, TWO } from 'constants/common'
 import {
-	useFetchCrcV2TokenStopped,
 	useFetchCrcV1TotalSupply,
+	useFetchCrcV2TokenStopped,
 	useFetchCrcV2TotalSupply
 } from 'services/circlesIndex'
 import type { CirclesAvatarFromEnvio } from 'services/envio/indexer'
 import { useCrcV1TokenStopped } from 'services/viemClient'
-import { isDeadAddress, truncateHex } from 'utils/eth'
+import { AvatarAddressLink } from 'shared/AvatarAddress'
+import { isDeadAddress } from 'utils/eth'
 
 interface TrustStat {
 	label: string
@@ -128,14 +128,15 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 				) : null}
 
 				{avatar.invitedBy && !isDeadAddress(avatar.invitedBy) ? (
-					<Card className='mb-2 mr-2 inline-table p-4 text-center'>
+					<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center align-middle'>
 						<b>Invited by: </b>
-						<RouterLink
-							className='inline text-primary'
-							to={`?search=${avatar.invitedBy}`}
-						>
-							{truncateHex(avatar.invitedBy)}
-						</RouterLink>
+						<span className='ml-2 inline'>
+							<AvatarAddressLink
+								address={avatar.invitedBy}
+								size='sm'
+								className='inline'
+							/>
+						</span>
 					</Card>
 				) : null}
 
@@ -170,13 +171,9 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 											key={trust.truster_id + trust.trustee_id + trust.version}
 											textValue={`(v${trust.version}) - ${trust[stat.addressField]}`}
 										>
-											<RouterLink
-												className='text-primary'
-												to={`?search=${trust[stat.addressField]}`}
-											>
-												(v{trust.version}) -{' '}
-												{truncateHex(trust[stat.addressField])}
-											</RouterLink>
+											<div className='flex items-center'>
+												<AvatarAddressLink address={trust[stat.addressField]} />
+											</div>
 										</ListboxItem>
 									))}
 								</Listbox>

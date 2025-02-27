@@ -3,14 +3,15 @@ import { Code, Link, Snippet } from '@nextui-org/react'
 import { useCallback } from 'react'
 import { formatUnits } from 'viem'
 
-import type { Key, Row } from 'components/VirtualizedTable'
 import { Timestamp } from 'components/Timestamp'
+import type { Key, Row } from 'components/VirtualizedTable'
 import {
 	CRC_TOKEN_DECIMALS,
 	CRC_TOKEN_SYMBOL,
 	EXPLORER_URL
 } from 'constants/common'
 import { LABELS_MAPPER } from 'constants/events'
+import { AvatarAddress } from 'shared/AvatarAddress'
 import { EyePopoverDetails } from 'shared/EyePopoverDetails'
 import { useFilterStore } from 'stores/useFilterStore'
 import { truncateHex } from 'utils/eth'
@@ -76,29 +77,22 @@ export const useRenderCell = () => {
 				}
 				case 'details': {
 					if ((item.truster && item.trustee) || (item.canSendTo && item.user)) {
+						const trusterAddress = String(item.truster || item.canSendTo)
+						const trusteeAddress = String(item.trustee || item.user)
+
 						return (
 							<div className='flex items-center justify-start'>
-								<Code
-									className='mr-0 cursor-pointer rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-sm md:mr-2'
-									// eslint-disable-next-line react/jsx-no-bind
-									onClick={applyAvatarSearch.bind(
-										null,
-										String(item.truster || item.canSendTo)
-									)}
-								>
-									{truncateHex(String(item.truster || item.canSendTo))}
-								</Code>
+								<AvatarAddress
+									address={trusterAddress}
+									onClick={applyAvatarSearch}
+									className='mr-0 md:mr-2'
+								/>
 								{' -> '}
-								<Code
-									className='ml-0 cursor-pointer rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-sm md:ml-2'
-									// eslint-disable-next-line react/jsx-no-bind
-									onClick={applyAvatarSearch.bind(
-										null,
-										String(item.trustee || item.user)
-									)}
-								>
-									{truncateHex(String(item.trustee || item.user))}
-								</Code>
+								<AvatarAddress
+									address={trusteeAddress}
+									onClick={applyAvatarSearch}
+									className='ml-0 md:ml-2'
+								/>
 							</div>
 						)
 					}
@@ -109,24 +103,23 @@ export const useRenderCell = () => {
 						(item.tokenAddress || item.id) &&
 						(item.amount || item.value)
 					) {
+						const fromAddress = String(item.from)
+						const toAddress = String(item.to)
+
 						return (
 							<div className='flex flex-row items-center justify-start md:w-[400px]'>
-								<div>
-									<Code
-										className='cursor-pointer rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-sm'
-										// eslint-disable-next-line react/jsx-no-bind
-										onClick={applyAvatarSearch.bind(null, String(item.from))}
-									>
-										{truncateHex(String(item.from))}
-									</Code>
+								<div className='flex items-center'>
+									<AvatarAddress
+										address={fromAddress}
+										onClick={applyAvatarSearch}
+										className='mr-2'
+									/>
 									{' -> '}
-									<Code
-										className='mr-2 cursor-pointer rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-sm'
-										// eslint-disable-next-line react/jsx-no-bind
-										onClick={applyAvatarSearch.bind(null, String(item.to))}
-									>
-										{truncateHex(String(item.to))}
-									</Code>
+									<AvatarAddress
+										address={toAddress}
+										onClick={applyAvatarSearch}
+										className='ml-2 mr-2'
+									/>
 								</div>
 
 								<div>

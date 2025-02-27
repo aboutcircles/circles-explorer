@@ -44,7 +44,7 @@ export function StatCard({
 			) : (
 				<Card
 					className={`m-2 mt-8 w-[165px] border-1 hover:cursor-pointer sm:w-[200px] md:w-[305px] ${
-						isHighlighted ? 'border-primary bg-primary-50' : ''
+						isHighlighted ? 'border-primary' : ''
 					}`}
 				>
 					<CardHeader className='flex pb-1 pl-3 pt-3'>

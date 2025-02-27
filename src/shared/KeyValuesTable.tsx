@@ -1,7 +1,6 @@
-import { Link as RouterLink } from 'react-router-dom'
-
 import { type Column, type Key, type Row, Table } from 'components/Table'
 import { Timestamp } from 'components/Timestamp'
+import { AvatarAddressLink } from 'shared/AvatarAddress'
 import { isDeadAddress } from 'utils/eth'
 
 const eventDetailsColumns: Column[] = [
@@ -25,7 +24,8 @@ const avatarFields = new Set([
 	'avatar',
 	'truster',
 	'trustee',
-	'operator'
+	'operator',
+	'human'
 ])
 
 const keyValuesRenderCell = (item: Row, columnKey: Key) => {
@@ -39,11 +39,7 @@ const keyValuesRenderCell = (item: Row, columnKey: Key) => {
 		columnKey === 'value' &&
 		!isDeadAddress(cellValue as string)
 	) {
-		return (
-			<RouterLink className='text-primary' to={`?search=${cellValue}`}>
-				{cellValue}
-			</RouterLink>
-		)
+		return <AvatarAddressLink address={cellValue as string} size='sm' />
 	}
 	if (item.key === 'timestamp' && columnKey === 'value') {
 		return <Timestamp value={cellValue as number} />

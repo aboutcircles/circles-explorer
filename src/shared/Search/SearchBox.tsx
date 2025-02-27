@@ -1,4 +1,4 @@
-import { Button, Input } from '@nextui-org/react'
+import { Avatar, Button, Input } from '@nextui-org/react'
 import debounce from 'lodash.debounce'
 import type React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -204,7 +204,20 @@ export function SearchBox({
 									className='w-full cursor-pointer rounded p-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800'
 									onClick={() => handleSelectProfile(profile)}
 								>
-									<div className='font-medium'>{profile.name}</div>
+									<div className='flex flex-row items-center'>
+										{profile.previewImageUrl ? (
+											<Avatar className='mr-2' src={profile.previewImageUrl} />
+										) : (
+											<Avatar
+												className='mr-2'
+												src='/icons/avatar.svg'
+												classNames={{
+													base: 'p-1'
+												}}
+											/>
+										)}
+										<div className='font-medium'>{profile.name}</div>
+									</div>
 									<div className='truncate text-sm text-gray-500'>
 										{profile.address}
 									</div>
