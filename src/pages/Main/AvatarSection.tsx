@@ -19,6 +19,10 @@ export function AvatarSection({ address }: { address?: Address }) {
 		const loadAvatarInfo = async (address_: Address) => {
 			const avatarInfo = await getProfileForAddress(address_)
 
+			// todo: check 0x9484fcaa4c39d68798e3c1b7f4a3d9dc2adc69cd, it has no profile
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+			if (!avatarInfo) return
+
 			setAvatar(avatarInfo)
 			logger.log({ avatarInfo })
 

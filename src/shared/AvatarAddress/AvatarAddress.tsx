@@ -9,7 +9,6 @@ import { truncateHex } from 'utils/eth'
 
 interface AvatarAddressProperties {
 	address: string
-	hasAvatar?: boolean
 	size?: 'lg' | 'md' | 'sm'
 	onClick?: (address: string) => void
 	className?: string
@@ -30,7 +29,6 @@ const textSizeMap = {
 
 export function AvatarAddress({
 	address,
-	hasAvatar = true,
 	size = 'sm',
 	onClick,
 	className = ''
@@ -68,16 +66,24 @@ export function AvatarAddress({
 				tabIndex={0}
 				aria-label={`Address ${truncateHex(address)}`}
 			>
-				{hasAvatar && profile?.previewImageUrl ? (
+				{profile?.previewImageUrl ? (
 					<Avatar
 						className={`mr-2 ${avatarSizeMap[size]}`}
 						size={size}
 						src={profile.previewImageUrl}
-						showFallback
 					/>
-				) : null}
+				) : (
+					<Avatar
+						className={`mr-2 ${avatarSizeMap[size]}`}
+						size={size}
+						src='/icons/avatar.svg'
+						classNames={{
+							base: 'p-1'
+						}}
+					/>
+				)}
 				<Code
-					className={`rounded-md border border-gray-200 bg-gray-50 px-2 py-1 ${textSizeMap[size]}`}
+					className={`rounded-md border border-gray-200 bg-gray-50 px-2 py-1 ${textSizeMap[size]} max-w-[100px] overflow-hidden text-ellipsis whitespace-nowrap`}
 				>
 					{displayName}
 				</Code>
@@ -88,7 +94,6 @@ export function AvatarAddress({
 
 AvatarAddress.defaultProps = {
 	className: '',
-	hasAvatar: true,
 	onClick: undefined,
 	size: 'sm'
 }
@@ -96,18 +101,12 @@ AvatarAddress.defaultProps = {
 // Create a link version that uses react-router
 export function AvatarAddressLink({
 	address,
-	hasAvatar = true,
 	size = 'sm',
 	className = ''
 }: Omit<AvatarAddressProperties, 'onClick'>) {
 	return (
 		<RouterLink to={`?search=${address}`} className='no-underline'>
-			<AvatarAddress
-				address={address}
-				hasAvatar={hasAvatar}
-				size={size}
-				className={className}
-			/>
+			<AvatarAddress address={address} size={size} className={className} />
 		</RouterLink>
 	)
 }

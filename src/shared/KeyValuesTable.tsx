@@ -24,7 +24,8 @@ const avatarFields = new Set([
 	'avatar',
 	'truster',
 	'trustee',
-	'operator'
+	'operator',
+	'human'
 ])
 
 const keyValuesRenderCell = (item: Row, columnKey: Key) => {

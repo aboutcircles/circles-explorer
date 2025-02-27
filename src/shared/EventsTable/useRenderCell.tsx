@@ -108,30 +108,29 @@ export const useRenderCell = () => {
 
 						return (
 							<div className='flex flex-row items-center justify-start md:w-[400px]'>
-								<div>
-									<div className='flex items-center'>
-										<AvatarAddress
-											address={fromAddress}
-											onClick={applyAvatarSearch}
-										/>
-										{' -> '}
-										<AvatarAddress
-											address={toAddress}
-											onClick={applyAvatarSearch}
-											className='mr-2'
-										/>
-									</div>
+								<div className='flex items-center'>
+									<AvatarAddress
+										address={fromAddress}
+										onClick={applyAvatarSearch}
+										className='mr-2'
+									/>
+									{' -> '}
+									<AvatarAddress
+										address={toAddress}
+										onClick={applyAvatarSearch}
+										className='ml-2 mr-2'
+									/>
+								</div>
 
-									<div>
-										{Number(
-											formatUnits(
-												BigInt(item.amount || item.value),
-												CRC_TOKEN_DECIMALS
-											)
-											// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-										).toFixed(4)}{' '}
-										{CRC_TOKEN_SYMBOL}
-									</div>
+								<div>
+									{Number(
+										formatUnits(
+											BigInt(item.amount || item.value),
+											CRC_TOKEN_DECIMALS
+										)
+										// eslint-disable-next-line @typescript-eslint/no-magic-numbers
+									).toFixed(4)}{' '}
+									{CRC_TOKEN_SYMBOL}
 								</div>
 							</div>
 						)
