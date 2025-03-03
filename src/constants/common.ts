@@ -20,3 +20,8 @@ export const CRC_TOKEN_ADDRESS = '0x208204e9797f09B540460013afbf5F6d8b5c9F98'
 export const CRC_TOKEN_DECIMALS = 18
 export const CRC_TOKEN_SYMBOL = 'CRC'
 export const INDIVIDUAL_TOKEN_SYMBOL = 'RING'
+
+// Constants for profile fetching
+export const DEFAULT_BATCH_SIZE = 999
+export const MIN_BATCH_SIZE = 1
+export const DECIMAL_RADIX = 10
