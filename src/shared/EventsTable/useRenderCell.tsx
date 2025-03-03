@@ -138,13 +138,33 @@ export const useRenderCell = () => {
 
 					if ((item.event as string).toLowerCase().includes('mint')) {
 						return (
-							<div>
-								{Number(
-									formatUnits(BigInt(item.amount), CRC_TOKEN_DECIMALS)
-									// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-								).toFixed(4)}{' '}
-								{CRC_TOKEN_SYMBOL}
+							<div className='flex flex-row'>
+								<AvatarAddress
+									address={String(item.human)}
+									onClick={applyAvatarSearch}
+									className='ml-0 mr-2 md:ml-2'
+								/>
+								<div className='min-w-[100px]'>
+									{Number(
+										formatUnits(BigInt(item.amount), CRC_TOKEN_DECIMALS)
+										// eslint-disable-next-line @typescript-eslint/no-magic-numbers
+									).toFixed(4)}{' '}
+									{CRC_TOKEN_SYMBOL}
+								</div>
 							</div>
+						)
+					}
+
+					if (item.user || item.avatar || item.organization || item.group) {
+						return (
+							<AvatarAddress
+								address={String(
+									// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+									item.user ?? item.avatar ?? item.organization ?? item.group
+								)}
+								onClick={applyAvatarSearch}
+								className='ml-0 mr-2 md:ml-2'
+							/>
 						)
 					}
 
