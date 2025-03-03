@@ -6,6 +6,60 @@ import type { SearchResultProfile } from '@circles-sdk/profiles'
 import { circlesProfiles } from 'services/circlesData'
 import logger from 'services/logger'
 import { useProfileStore } from 'stores/useProfileStore'
+import {
+	DEFAULT_BATCH_SIZE,
+	MIN_BATCH_SIZE,
+	DECIMAL_RADIX,
+	ONE
+} from 'constants/common'
+
+const processBatches = async (
+	addressList: string[],
+	currentBatchSize: number
+): Promise<SearchResultProfile[][]> => {
+	// Split addresses into batches
+	const addressBatches: Address[][] = []
+	for (let index = 0; index < addressList.length; index += currentBatchSize) {
+		addressBatches.push(
+			addressList.slice(index, index + currentBatchSize) as Address[]
+		)
+	}
+
+	try {
+		// Create an array of promises for each batch
+		const batchPromises = addressBatches.map(async (batch) => {
+			logger.log(`Fetching profiles batch of ${batch.length} addresses`)
+			return circlesProfiles.searchByAddresses(batch, {
+				fetchComplete: true
+			})
+		})
+
+		// Execute all batch requests in parallel
+		return await Promise.all(batchPromises)
+	} catch (error) {
+		// Check if the error is about exceeding the maximum number of addresses
+		const errorMessage = String(error)
+		const limitMatch = errorMessage.match(
+			/Maximum number of addresses exceeded\. Limit is (\d+)/
+		)
+
+		if (limitMatch?.[ONE]) {
+			// Extract the limit from the error message and subtract MIN_BATCH_SIZE for safety
+			const newBatchSize = Math.max(
+				MIN_BATCH_SIZE,
+				Number.parseInt(limitMatch[ONE], DECIMAL_RADIX) - MIN_BATCH_SIZE
+			)
+			logger.log(`Adjusting batch size to ${newBatchSize} based on API limit`)
+
+			// Retry with the new batch size
+			return processBatches(addressList, newBatchSize)
+		}
+
+		logger.error('Failed to fetch profiles:', error)
+	}
+
+	return []
+}
 
 export function useProfiles() {
 	const setProfile = useProfileStore.use.setProfile()
@@ -48,19 +102,17 @@ export function useProfiles() {
 
 			if (addressesToFetch.length === 0) return
 
-			try {
-				const results = await circlesProfiles.searchByAddresses(
-					addressesToFetch as Address[],
-					{ fetchComplete: true }
-				)
+			const batchResults = await processBatches(
+				addressesToFetch,
+				DEFAULT_BATCH_SIZE
+			)
 
+			for (const results of batchResults) {
 				for (const profile of results) {
 					if (profile.address) {
 						setProfile(profile.address, profile)
 					}
 				}
-			} catch (error) {
-				logger.error('Failed to fetch profiles:', error)
 			}
 		},
 		[getProfile, setProfile]
