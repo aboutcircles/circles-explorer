@@ -11,5 +11,6 @@ export const avatarFields = new Set([
 	'organization',
 	'group',
 	'inviter',
-	'invited'
+	'invited',
+	'account'
 ])
