@@ -163,12 +163,24 @@ export const useRenderCell = () => {
 						)
 					}
 
-					if (item.user || item.avatar || item.organization || item.group) {
+					if (
+						item.user ||
+						item.avatar ||
+						item.organization ||
+						item.group ||
+						item.account ||
+						item.operator
+					) {
 						return (
 							<AvatarAddress
 								address={String(
 									// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-									item.user ?? item.avatar ?? item.organization ?? item.group
+									item.user ??
+										item.avatar ??
+										item.organization ??
+										item.group ??
+										item.account ??
+										item.operator
 								)}
 								onClick={applyAvatarSearch}
 								className='ml-0 mr-2'
