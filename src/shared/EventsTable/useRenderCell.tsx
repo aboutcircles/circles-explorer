@@ -142,7 +142,7 @@ export const useRenderCell = () => {
 								<AvatarAddress
 									address={String(item.human)}
 									onClick={applyAvatarSearch}
-									className='ml-0 mr-2 md:ml-2'
+									className='ml-0 mr-2'
 								/>
 								<div className='min-w-[100px]'>
 									{Number(
@@ -163,7 +163,7 @@ export const useRenderCell = () => {
 									item.user ?? item.avatar ?? item.organization ?? item.group
 								)}
 								onClick={applyAvatarSearch}
-								className='ml-0 mr-2 md:ml-2'
+								className='ml-0 mr-2'
 							/>
 						)
 					}
