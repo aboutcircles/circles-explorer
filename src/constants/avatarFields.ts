@@ -9,5 +9,7 @@ export const avatarFields = new Set([
 	'operator',
 	'human',
 	'organization',
-	'group'
+	'group',
+	'inviter',
+	'invited'
 ])

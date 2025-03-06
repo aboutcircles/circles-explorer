@@ -76,9 +76,17 @@ export const useRenderCell = () => {
 					)
 				}
 				case 'details': {
-					if ((item.truster && item.trustee) || (item.canSendTo && item.user)) {
-						const trusterAddress = String(item.truster || item.canSendTo)
-						const trusteeAddress = String(item.trustee || item.user)
+					if (
+						(item.truster && item.trustee) ||
+						(item.canSendTo && item.user) ||
+						(item.inviter && item.invited)
+					) {
+						const trusterAddress = String(
+							item.truster || item.canSendTo || item.inviter
+						)
+						const trusteeAddress = String(
+							item.trustee || item.user || item.invited
+						)
 
 						return (
 							<div className='flex items-center justify-start'>
