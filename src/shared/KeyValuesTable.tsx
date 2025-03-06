@@ -2,6 +2,7 @@ import { type Column, type Key, type Row, Table } from 'components/Table'
 import { Timestamp } from 'components/Timestamp'
 import { AvatarAddressLink } from 'shared/AvatarAddress'
 import { isDeadAddress } from 'utils/eth'
+import { avatarFields } from 'constants/avatarFields'
 
 const eventDetailsColumns: Column[] = [
 	{
@@ -15,18 +16,6 @@ const eventDetailsColumns: Column[] = [
 ]
 
 const hiddenEventDetails = new Set(['key', 'values'])
-
-const avatarFields = new Set([
-	'from',
-	'to',
-	'canSendTo',
-	'user',
-	'avatar',
-	'truster',
-	'trustee',
-	'operator',
-	'human'
-])
 
 const keyValuesRenderCell = (item: Row, columnKey: Key) => {
 	const cellValue =

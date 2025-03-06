@@ -76,9 +76,17 @@ export const useRenderCell = () => {
 					)
 				}
 				case 'details': {
-					if ((item.truster && item.trustee) || (item.canSendTo && item.user)) {
-						const trusterAddress = String(item.truster || item.canSendTo)
-						const trusteeAddress = String(item.trustee || item.user)
+					if (
+						(item.truster && item.trustee) ||
+						(item.canSendTo && item.user) ||
+						(item.inviter && item.invited)
+					) {
+						const trusterAddress = String(
+							item.truster || item.canSendTo || item.inviter
+						)
+						const trusteeAddress = String(
+							item.trustee || item.user || item.invited
+						)
 
 						return (
 							<div className='flex items-center justify-start'>
@@ -138,13 +146,33 @@ export const useRenderCell = () => {
 
 					if ((item.event as string).toLowerCase().includes('mint')) {
 						return (
-							<div>
-								{Number(
-									formatUnits(BigInt(item.amount), CRC_TOKEN_DECIMALS)
-									// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-								).toFixed(4)}{' '}
-								{CRC_TOKEN_SYMBOL}
+							<div className='flex flex-row'>
+								<AvatarAddress
+									address={String(item.human)}
+									onClick={applyAvatarSearch}
+									className='ml-0 mr-2'
+								/>
+								<div className='min-w-[100px]'>
+									{Number(
+										formatUnits(BigInt(item.amount), CRC_TOKEN_DECIMALS)
+										// eslint-disable-next-line @typescript-eslint/no-magic-numbers
+									).toFixed(4)}{' '}
+									{CRC_TOKEN_SYMBOL}
+								</div>
 							</div>
+						)
+					}
+
+					if (item.user || item.avatar || item.organization || item.group) {
+						return (
+							<AvatarAddress
+								address={String(
+									// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+									item.user ?? item.avatar ?? item.organization ?? item.group
+								)}
+								onClick={applyAvatarSearch}
+								className='ml-0 mr-2'
+							/>
 						)
 					}
 

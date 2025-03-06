@@ -7,6 +7,7 @@ import { useFetchCirclesEvents } from 'services/circlesIndex'
 import { periods, useFilterStore } from 'stores/useFilterStore'
 import type { Event } from 'types/events'
 import { getDateRange } from 'utils/time'
+import { avatarFields } from 'constants/avatarFields'
 
 export const useCirclesEvents = (page: number) => {
 	const eventTypes = useFilterStore.use.eventTypes()
@@ -61,20 +62,16 @@ export const useCirclesEvents = (page: number) => {
 		// Extract all addresses from events
 		const addresses: string[] = []
 		for (const event of filteredEvents) {
-			// Use type assertions to check if properties exist
-			// These properties are added dynamically based on the event type
-			if ('from' in event && event.from)
-				addresses.push(String(event.from).toLowerCase())
-			if ('to' in event && event.to)
-				addresses.push(String(event.to).toLowerCase())
-			if ('truster' in event && event.truster)
-				addresses.push(String(event.truster).toLowerCase())
-			if ('trustee' in event && event.trustee)
-				addresses.push(String(event.trustee).toLowerCase())
-			if ('canSendTo' in event && event.canSendTo)
-				addresses.push(String(event.canSendTo).toLowerCase())
-			if ('user' in event && event.user)
-				addresses.push(String(event.user).toLowerCase())
+			// Check if the event has the avatar field
+			for (const field of avatarFields) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-expect-error
+				if (field in event && event[field]) {
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-expect-error
+					addresses.push(String(event[field]).toLowerCase())
+				}
+			}
 		}
 
 		if (addresses.length > 0) {
