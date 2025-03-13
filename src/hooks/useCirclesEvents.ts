@@ -59,8 +59,8 @@ export const useCirclesEvents = (page: number) => {
 	useEffect(() => {
 		if (filteredEvents.length === 0) return
 
-		// Extract all addresses from events
-		const addresses: string[] = []
+		// Extract all addresses from events using a Set to deduplicate
+		const addresses = new Set<string>()
 		for (const event of filteredEvents) {
 			// Check if the event has the avatar field
 			for (const field of avatarFields) {
@@ -69,13 +69,13 @@ export const useCirclesEvents = (page: number) => {
 				if (field in event && event[field]) {
 					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-expect-error
-					addresses.push(String(event[field]).toLowerCase())
+					addresses.add(String(event[field]).toLowerCase())
 				}
 			}
 		}
 
-		if (addresses.length > 0) {
-			void fetchProfiles(addresses)
+		if (addresses.size > 0) {
+			void fetchProfiles([...addresses])
 		}
 	}, [filteredEvents, fetchProfiles])
 

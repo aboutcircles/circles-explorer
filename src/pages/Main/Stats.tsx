@@ -1,6 +1,7 @@
 import type { CirclesEventType } from '@circles-sdk/data'
 import { StatCard } from 'components/StatCard'
 import { TWO } from 'constants/common'
+import useBreakpoint from 'hooks/useBreakpoint'
 import { useCirclesStats } from 'hooks/useCirclesStats'
 import { useCallback, useMemo } from 'react'
 import { useFilterStore } from 'stores/useFilterStore'
@@ -100,34 +101,14 @@ export function Stats() {
 		[updateEventTypesBatch]
 	)
 
+	const { isSmScreen } = useBreakpoint()
+
 	return (
 		<>
-			<div className='mb-4 hidden flex-row flex-wrap justify-center sm:flex'>
-				{stats.map((stat) => (
-					<StatCard
-						key={stat.label}
-						label={stat.label}
-						handleClick={() => onCardClick(stat.events)}
-						isHighlighted={isStatHighlighted(stat.events)}
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-						// @ts-expect-error
-						value={(statsValues[stat.key] ?? 0) + (statsValues[stat.key2] ?? 0)}
-						isLoading={isLoading}
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-						// @ts-expect-error
-						progressValue1={statsValues[stat.key]}
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-						// @ts-expect-error
-						progressValue2={statsValues[stat.key2]}
-					/>
-				))}
-			</div>
-
-			<div className='mb-4 divide-y divide-gray-200 sm:hidden'>
-				<div className='grid grid-cols-3 gap-y-6 py-4 text-center'>
-					{stats.slice(0, STATS_MOBILE_NUMBER_IN_ROW).map((stat) => (
+			{isSmScreen ? (
+				<div className='mb-4 flex flex-row flex-wrap justify-center'>
+					{stats.map((stat) => (
 						<StatCard
-							isMobile
 							key={stat.label}
 							label={stat.label}
 							handleClick={() => onCardClick(stat.events)}
@@ -147,10 +128,12 @@ export function Stats() {
 						/>
 					))}
 				</div>
-				<div className='grid grid-cols-3 gap-y-6 py-4 text-center'>
-					{stats
-						.slice(STATS_MOBILE_NUMBER_IN_ROW, STATS_MOBILE_NUMBER_IN_ROW * TWO)
-						.map((stat) => (
+			) : null}
+
+			{!isSmScreen && (
+				<div className='mb-4 divide-y divide-gray-200'>
+					<div className='grid grid-cols-3 gap-y-6 py-4 text-center'>
+						{stats.slice(0, STATS_MOBILE_NUMBER_IN_ROW).map((stat) => (
 							<StatCard
 								isMobile
 								key={stat.label}
@@ -171,31 +154,60 @@ export function Stats() {
 								progressValue2={statsValues[stat.key2]}
 							/>
 						))}
-				</div>
-				<div className='grid grid-cols-3 gap-y-6 py-4 text-center'>
-					{stats.slice(STATS_MOBILE_NUMBER_IN_ROW * TWO).map((stat) => (
-						<StatCard
-							isMobile
-							key={stat.label}
-							label={stat.label}
-							handleClick={() => onCardClick(stat.events)}
-							isHighlighted={isStatHighlighted(stat.events)}
-							value={
+					</div>
+					<div className='grid grid-cols-3 gap-y-6 py-4 text-center'>
+						{stats
+							.slice(
+								STATS_MOBILE_NUMBER_IN_ROW,
+								STATS_MOBILE_NUMBER_IN_ROW * TWO
+							)
+							.map((stat) => (
+								<StatCard
+									isMobile
+									key={stat.label}
+									label={stat.label}
+									handleClick={() => onCardClick(stat.events)}
+									isHighlighted={isStatHighlighted(stat.events)}
+									value={
+										// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+										// @ts-expect-error
+										(statsValues[stat.key] ?? 0) + (statsValues[stat.key2] ?? 0)
+									}
+									isLoading={isLoading}
+									// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+									// @ts-expect-error
+									progressValue1={statsValues[stat.key]}
+									// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+									// @ts-expect-error
+									progressValue2={statsValues[stat.key2]}
+								/>
+							))}
+					</div>
+					<div className='grid grid-cols-3 gap-y-6 py-4 text-center'>
+						{stats.slice(STATS_MOBILE_NUMBER_IN_ROW * TWO).map((stat) => (
+							<StatCard
+								isMobile
+								key={stat.label}
+								label={stat.label}
+								handleClick={() => onCardClick(stat.events)}
+								isHighlighted={isStatHighlighted(stat.events)}
+								value={
+									// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+									// @ts-expect-error
+									(statsValues[stat.key] ?? 0) + (statsValues[stat.key2] ?? 0)
+								}
+								isLoading={isLoading}
 								// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 								// @ts-expect-error
-								(statsValues[stat.key] ?? 0) + (statsValues[stat.key2] ?? 0)
-							}
-							isLoading={isLoading}
-							// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-							// @ts-expect-error
-							progressValue1={statsValues[stat.key]}
-							// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-							// @ts-expect-error
-							progressValue2={statsValues[stat.key2]}
-						/>
-					))}
+								progressValue1={statsValues[stat.key]}
+								// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+								// @ts-expect-error
+								progressValue2={statsValues[stat.key2]}
+							/>
+						))}
+					</div>
 				</div>
-			</div>
+			)}
 		</>
 	)
 }

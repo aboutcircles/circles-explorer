@@ -80,8 +80,9 @@ async function makeCirclesQuery(
 		)
 
 		logger.log('[service][circles] queried circles data', {
-			params: parameters,
-			response: response.data.result
+			namespace: parameters.namespace,
+			table: parameters.table,
+			rowCount: response.data.result.rows.length
 		})
 
 		return response.data.result
@@ -243,8 +244,7 @@ export const useFetchCirclesEvents = (
 
 				logger.log(
 					'[service][circles] queried circles events',
-					response.data.result,
-					{ events }
+					`Event count: ${events.length}`
 				)
 
 				return { events, eventTypesAmount }
@@ -400,7 +400,7 @@ export const useSearchProfileByName = (
 
 				logger.log('[service][circles] queried circles profile by name', {
 					name,
-					results
+					resultCount: results.length
 				})
 
 				return results

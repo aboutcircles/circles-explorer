@@ -1,6 +1,7 @@
 import { Button } from '@nextui-org/react'
 import { useCallback } from 'react'
 
+import useBreakpoint from 'hooks/useBreakpoint'
 import { useFilterStore } from 'stores/useFilterStore'
 
 import { SearchBox } from './SearchBox'
@@ -25,35 +26,41 @@ export function Search({
 		[onSubmit, updateSearch]
 	)
 
+	const { isSmScreen } = useBreakpoint()
+
 	return (
 		<>
-			<div className='hidden justify-center sm:flex'>
-				<SearchBox handleSubmit={handleSubmit} outerSearch={search} />
-			</div>
+			{isSmScreen ? (
+				<div className='flex justify-center'>
+					<SearchBox handleSubmit={handleSubmit} outerSearch={search} />
+				</div>
+			) : null}
 
-			<div className='sm:hidden'>
-				{isSearchBox ? (
-					<SearchBox
-						className='w-full'
-						handleSubmit={handleSubmit}
-						outerSearch={search}
-					/>
-				) : (
-					<Button
-						onPressEnd={onOpen}
-						isIconOnly
-						className='ml-2 disabled:cursor-not-allowed'
-						color='primary'
-						variant='faded'
-					>
-						<img
-							src='/icons/search.svg'
-							alt='Submit'
-							className='h-5 w-5 invert filter'
+			{!isSmScreen && (
+				<div>
+					{isSearchBox ? (
+						<SearchBox
+							className='w-full'
+							handleSubmit={handleSubmit}
+							outerSearch={search}
 						/>
-					</Button>
-				)}
-			</div>
+					) : (
+						<Button
+							onPressEnd={onOpen}
+							isIconOnly
+							className='ml-2 disabled:cursor-not-allowed'
+							color='primary'
+							variant='faded'
+						>
+							<img
+								src='/icons/search.svg'
+								alt='Submit'
+								className='h-5 w-5 invert filter'
+							/>
+						</Button>
+					)}
+				</div>
+			)}
 		</>
 	)
 }
