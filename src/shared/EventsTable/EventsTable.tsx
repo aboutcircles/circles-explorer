@@ -9,10 +9,10 @@ import useBreakpoint from 'hooks/useBreakpoint'
 import { useCirclesEvents } from 'hooks/useCirclesEvents'
 import { useFilterStore } from 'stores/useFilterStore'
 
-import { EventCards } from './EventCards'
 import { Periods } from './Periods'
 import { TotalLabel } from './TotalLabel'
 import { useRenderCell } from './useRenderCell'
+import { VirtualizedEventCards } from './VirtualizedEventCards'
 
 // each page - 1h/12h/1d (filtered by amount of blocks)
 const TOTAL_PAGES = 30
@@ -114,7 +114,12 @@ export function EventsTable({
 							/>
 						</div>
 
-						<EventCards events={events} renderCell={renderCell} />
+						<VirtualizedEventCards
+							events={events}
+							renderCell={renderCell}
+							isLoading={isEventsLoading}
+							height={500}
+						/>
 
 						<div className='fixed bottom-2 z-10'>{pagination}</div>
 					</div>

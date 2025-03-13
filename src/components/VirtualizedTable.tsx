@@ -5,18 +5,19 @@ import {
 	useReactTable,
 	type ColumnDef
 } from '@tanstack/react-table'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import type { ReactElement } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef } from 'react'
 
+import { useVirtualScroll } from 'hooks/useVirtualScroll'
 import { TableCell } from './TableCell'
-import { MILLISECONDS_IN_A_SECOND } from '../constants/time'
 
+// Constants for table virtualization
 const ROW_HEIGHT = 56
-const MIN_OVERSCAN_COUNT = 5
-const MAX_OVERSCAN_COUNT = 10
-const SCROLL_SPEED_THRESHOLD = 100 // pixels per second
-const LAST_ELEMENT_INDEX = -1
+const TABLE_MIN_OVERSCAN = 5
+const TABLE_MAX_OVERSCAN = 10
+const TABLE_CONTAINER_HEIGHT = 600
+
+const estimateSize = () => ROW_HEIGHT
 
 export interface Column {
 	key: string
@@ -47,11 +48,6 @@ export function VirtualizedTable({
 	bottomContent
 }: TableProperties): ReactElement {
 	const tableContainerReference = useRef<HTMLDivElement>(null)
-	const [overscanCount, setOverscanCount] = useState(MIN_OVERSCAN_COUNT)
-	const lastScrollTime = useRef<{ time: number; position: number }>({
-		time: 0,
-		position: 0
-	})
 
 	// Memoize data and column definitions
 	const tableColumns = useMemo<ColumnDef<Row>[]>(
@@ -65,39 +61,6 @@ export function VirtualizedTable({
 		[columns]
 	)
 
-	// Dynamic overscan based on scroll speed
-	const handleScroll = useCallback((event: Event) => {
-		const target = event.target as HTMLDivElement
-		const currentTime = performance.now()
-		const currentPosition = target.scrollTop
-
-		if (lastScrollTime.current.time) {
-			const timeDiff = currentTime - lastScrollTime.current.time
-			const positionDiff = Math.abs(
-				currentPosition - lastScrollTime.current.position
-			)
-			const scrollSpeed = (positionDiff / timeDiff) * MILLISECONDS_IN_A_SECOND
-
-			setOverscanCount(
-				scrollSpeed > SCROLL_SPEED_THRESHOLD
-					? MAX_OVERSCAN_COUNT
-					: MIN_OVERSCAN_COUNT
-			)
-		}
-
-		lastScrollTime.current = { time: currentTime, position: currentPosition }
-	}, [])
-
-	useEffect(() => {
-		const element = tableContainerReference.current
-		if (!element) {
-			return void 0
-		}
-
-		element.addEventListener('scroll', handleScroll)
-		return () => element.removeEventListener('scroll', handleScroll)
-	}, [handleScroll])
-
 	const table = useReactTable({
 		data: rows,
 		columns: tableColumns,
@@ -106,20 +69,15 @@ export function VirtualizedTable({
 
 	const { rows: tableRows } = table.getRowModel()
 
-	const rowVirtualizer = useVirtualizer({
-		count: tableRows.length,
-		getScrollElement: () => tableContainerReference.current,
-		estimateSize: useCallback(() => ROW_HEIGHT, []),
-		overscan: overscanCount
+	const { virtualItems, paddingTop, paddingBottom } = useVirtualScroll({
+		containerRef: tableContainerReference,
+		itemCount: tableRows.length,
+		estimateSize,
+		overscanConfig: {
+			min: TABLE_MIN_OVERSCAN,
+			max: TABLE_MAX_OVERSCAN
+		}
 	})
-
-	const virtualRows = rowVirtualizer.getVirtualItems()
-	const totalSize = rowVirtualizer.getTotalSize()
-	const paddingTop = virtualRows.length > 0 ? virtualRows[0]?.start ?? 0 : 0
-	const paddingBottom =
-		virtualRows.length > 0
-			? totalSize - (virtualRows.at(LAST_ELEMENT_INDEX)?.end ?? 0)
-			: 0
 
 	return (
 		<div className='w-full'>
@@ -128,7 +86,7 @@ export function VirtualizedTable({
 			<div
 				ref={tableContainerReference}
 				className='relative mt-4 w-full overflow-auto'
-				style={{ height: '600px' }} // Adjust based on your needs
+				style={{ height: `${TABLE_CONTAINER_HEIGHT}px` }}
 				role='region'
 				aria-label={`${String(ariaLabel)} scrollable content`}
 			>
@@ -185,7 +143,7 @@ export function VirtualizedTable({
 								)
 							}
 
-							if (virtualRows.length === 0) {
+							if (virtualItems.length === 0) {
 								return (
 									<tr>
 										<td
@@ -199,7 +157,7 @@ export function VirtualizedTable({
 								)
 							}
 
-							return virtualRows.map((virtualRow) => {
+							return virtualItems.map((virtualRow) => {
 								const row = tableRows[virtualRow.index]
 								return (
 									<tr
