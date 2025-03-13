@@ -1,6 +1,6 @@
 import { Avatar, Code, Tooltip } from '@nextui-org/react'
 import type { KeyboardEvent } from 'react'
-import { useCallback } from 'react'
+import { memo, useCallback } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { isAddress } from 'viem'
 
@@ -27,7 +27,7 @@ const textSizeMap = {
 	lg: 'text-base'
 }
 
-export function AvatarAddress({
+function AvatarAddressBase({
 	address,
 	size = 'sm',
 	onClick,
@@ -92,7 +92,9 @@ export function AvatarAddress({
 	)
 }
 
-AvatarAddress.defaultProps = {
+export const AvatarAddress = memo(AvatarAddressBase)
+
+AvatarAddressBase.defaultProps = {
 	className: '',
 	onClick: undefined,
 	size: 'sm'

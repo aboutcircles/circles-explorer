@@ -114,7 +114,7 @@ const updateURL = (state: State) => {
 
 const useFilterStoreBase = create<Action & State>((set) => ({
 	eventTypes: new Set(EVENTS),
-	period: '1H' as PeriodKey,
+	period: '12H' as PeriodKey,
 	eventTypesAmount: new Map(),
 	search: null,
 
@@ -192,7 +192,7 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 				...state,
 				search,
 				eventTypes: new Set(EVENTS),
-				period: isAddress(search) ? '1W' : ('1H' as PeriodKey)
+				period: isAddress(search) ? '1W' : ('12H' as PeriodKey)
 			}
 			updateURL(newState)
 			return newState
