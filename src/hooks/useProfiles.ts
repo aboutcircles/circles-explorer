@@ -67,12 +67,14 @@ export function useProfiles() {
 	const profiles = useProfileStore.use.profiles()
 
 	const fetchProfile = useCallback(
-		async (address: string): Promise<SearchResultProfile | undefined> => {
+		async (
+			address: string
+		): Promise<SearchResultProfile | null | undefined> => {
 			if (!isAddress(address)) return undefined
 
-			// Check cache first
+			// Check cache first (including null profiles)
 			const cachedProfile = getProfile(address.toLowerCase())
-			if (cachedProfile) return cachedProfile
+			if (cachedProfile !== undefined) return cachedProfile
 
 			try {
 				const results = await circlesProfiles.searchByAddress(address, {
@@ -82,7 +84,9 @@ export function useProfiles() {
 					setProfile(address, results[0])
 					return results[0]
 				}
-				return undefined
+				// Profile not found - cache as null
+				setProfile(address, null)
+				return null
 			} catch (error) {
 				logger.error('Failed to fetch profile:', error)
 				return undefined
@@ -95,9 +99,9 @@ export function useProfiles() {
 		async (addresses: string[]): Promise<void> => {
 			if (addresses.length === 0) return
 
-			// Filter out addresses that are already in cache or not valid
+			// Filter out addresses that are already in cache (including null profiles) or not valid
 			const addressesToFetch = addresses.filter(
-				(address) => !getProfile(address.toLowerCase())
+				(address) => getProfile(address.toLowerCase()) === undefined
 			)
 
 			if (addressesToFetch.length === 0) return
@@ -107,12 +111,25 @@ export function useProfiles() {
 				DEFAULT_BATCH_SIZE
 			)
 
+			// Create a map of addresses that were fetched
+			const fetchedAddresses = new Set(
+				addressesToFetch.map((addr) => addr.toLowerCase())
+			)
+
+			// Process successful results
 			for (const results of batchResults) {
 				for (const profile of results) {
 					if (profile.address) {
 						setProfile(profile.address, profile)
+						// Remove from the set of fetched addresses
+						fetchedAddresses.delete(profile.address.toLowerCase())
 					}
 				}
+			}
+
+			// For any addresses that were fetched but not found in results, set them to null
+			for (const address of fetchedAddresses) {
+				setProfile(address, null)
 			}
 		},
 		[getProfile, setProfile]
