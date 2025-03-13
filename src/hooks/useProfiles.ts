@@ -71,7 +71,7 @@ export function useProfiles() {
 			if (!isAddress(address)) return undefined
 
 			// Check cache first
-			const cachedProfile = getProfile(address)
+			const cachedProfile = getProfile(address.toLowerCase())
 			if (cachedProfile) return cachedProfile
 
 			try {
@@ -97,7 +97,7 @@ export function useProfiles() {
 
 			// Filter out addresses that are already in cache or not valid
 			const addressesToFetch = addresses.filter(
-				(address) => isAddress(address) && !getProfile(address)
+				(address) => !getProfile(address.toLowerCase())
 			)
 
 			if (addressesToFetch.length === 0) return

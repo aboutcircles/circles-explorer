@@ -35,7 +35,7 @@ function AvatarAddressBase({
 }: AvatarAddressProperties) {
 	const { getProfile } = useProfiles()
 
-	const profile = getProfile(address)
+	const profile = getProfile(address.toLowerCase())
 
 	const handleClick = useCallback(() => {
 		if (onClick) {
