@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Address } from 'viem'
 
+import useBreakpoint from 'hooks/useBreakpoint'
 import { useProfiles } from 'hooks/useProfiles'
 import {
 	getProfileForAddress,
@@ -50,8 +51,12 @@ export function AvatarSection({ address }: { address?: Address }) {
 		}
 	}, [address, fetchProfiles])
 
+	const { isMdScreen } = useBreakpoint()
+
 	return (
-		<div className='flex flex-col items-center md:flex-row md:items-start'>
+		<div
+			className={`flex ${isMdScreen ? 'flex-row items-start' : 'flex-col items-center'}`}
+		>
 			<AvatarInfo profile={avatar?.profile} />
 
 			{avatar ? <AvatarStats avatar={avatar} /> : null}

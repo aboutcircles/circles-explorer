@@ -1,3 +1,4 @@
+import useBreakpoint from 'hooks/useBreakpoint'
 import type { ReactElement } from 'react'
 import { useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -31,6 +32,8 @@ export default function Main(): ReactElement {
 		[search]
 	)
 
+	const { isSmScreen } = useBreakpoint()
+
 	return (
 		<div className='flex flex-col'>
 			{isSearchAddress ? (
@@ -39,9 +42,11 @@ export default function Main(): ReactElement {
 				<Stats />
 			)}
 
-			<div className='hidden sm:block'>
-				<Filter />
-			</div>
+			{isSmScreen ? (
+				<div>
+					<Filter />
+				</div>
+			) : null}
 
 			<EventsTable address={isSearchAddress ? search : null} />
 		</div>

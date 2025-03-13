@@ -1,17 +1,18 @@
-import { useState } from 'react'
-import type { ReactElement } from 'react'
 import { Pagination } from '@nextui-org/react'
+import type { ReactElement } from 'react'
+import { useState } from 'react'
 
 import type { Column, Row } from 'components/VirtualizedTable'
 import { VirtualizedTable } from 'components/VirtualizedTable'
 import { ONE } from 'constants/common'
+import useBreakpoint from 'hooks/useBreakpoint'
 import { useCirclesEvents } from 'hooks/useCirclesEvents'
 import { useFilterStore } from 'stores/useFilterStore'
 
-import { useRenderCell } from './useRenderCell'
-import { TotalLabel } from './TotalLabel'
-import { Periods } from './Periods'
 import { EventCards } from './EventCards'
+import { Periods } from './Periods'
+import { TotalLabel } from './TotalLabel'
+import { useRenderCell } from './useRenderCell'
 
 // each page - 1h/12h/1d (filtered by amount of blocks)
 const TOTAL_PAGES = 30
@@ -67,51 +68,58 @@ export function EventsTable({
 		/>
 	)
 
+	const { isSmScreen } = useBreakpoint()
+
 	return (
 		<>
-			<div className='hidden sm:block'>
-				<VirtualizedTable
-					ariaLabel='Circles Events'
-					columns={columns}
-					rows={isEventsLoading ? [] : (events as unknown as Row[])}
-					renderCell={renderCell}
-					isLoading={isEventsLoading}
-					topContent={
-						<div className='flex w-full justify-between'>
-							<div className='flex flex-row'>
-								<Periods address={address} />
+			{isSmScreen ? (
+				<div>
+					<VirtualizedTable
+						ariaLabel='Circles Events'
+						columns={columns}
+						rows={isEventsLoading ? [] : (events as unknown as Row[])}
+						renderCell={renderCell}
+						isLoading={isEventsLoading}
+						topContent={
+							<div className='flex w-full justify-between'>
+								<div className='flex flex-row'>
+									<Periods address={address} />
 
-								<TotalLabel
-									eventsLength={events.length}
-									dateRange={dateRange}
-									period={period}
-								/>
+									<TotalLabel
+										eventsLength={events.length}
+										dateRange={dateRange}
+										period={period}
+									/>
+								</div>
+
+								{pagination}
 							</div>
-
-							{pagination}
-						</div>
-					}
-				/>
-			</div>
-			<div className='mb-9 sm:hidden'>
-				<div className='flex flex-col items-center justify-center'>
-					<div className='mb-2'>
-						<Periods address={address} />
-					</div>
-
-					<div className='mb-2'>
-						<TotalLabel
-							eventsLength={events.length}
-							dateRange={dateRange}
-							period={period}
-						/>
-					</div>
-
-					<EventCards events={events} renderCell={renderCell} />
-
-					<div className='fixed bottom-2 z-10'>{pagination}</div>
+						}
+					/>
 				</div>
-			</div>
+			) : null}
+
+			{!isSmScreen && (
+				<div className='mb-9'>
+					<div className='flex flex-col items-center justify-center'>
+						<div className='mb-2'>
+							<Periods address={address} />
+						</div>
+
+						<div className='mb-2'>
+							<TotalLabel
+								eventsLength={events.length}
+								dateRange={dateRange}
+								period={period}
+							/>
+						</div>
+
+						<EventCards events={events} renderCell={renderCell} />
+
+						<div className='fixed bottom-2 z-10'>{pagination}</div>
+					</div>
+				</div>
+			)}
 		</>
 	)
 }
