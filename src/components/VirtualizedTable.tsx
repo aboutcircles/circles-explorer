@@ -13,8 +13,8 @@ import { TableCell } from './TableCell'
 
 // Constants for table virtualization
 const ROW_HEIGHT = 56
-const TABLE_MIN_OVERSCAN = 5
-const TABLE_MAX_OVERSCAN = 10
+const TABLE_MIN_OVERSCAN = 50
+const TABLE_MAX_OVERSCAN = 100
 const TABLE_CONTAINER_HEIGHT = 600
 
 const estimateSize = () => ROW_HEIGHT
@@ -36,6 +36,7 @@ interface TableProperties {
 	isLoading: boolean
 	topContent?: ReactElement
 	bottomContent?: ReactElement
+	onLoadMore?: () => void
 }
 
 export function VirtualizedTable({
@@ -45,7 +46,8 @@ export function VirtualizedTable({
 	renderCell,
 	isLoading,
 	topContent,
-	bottomContent
+	bottomContent,
+	onLoadMore
 }: TableProperties): ReactElement {
 	const tableContainerReference = useRef<HTMLDivElement>(null)
 
@@ -76,7 +78,8 @@ export function VirtualizedTable({
 		overscanConfig: {
 			min: TABLE_MIN_OVERSCAN,
 			max: TABLE_MAX_OVERSCAN
-		}
+		},
+		onReachEnd: onLoadMore
 	})
 
 	return (
@@ -213,5 +216,6 @@ export function VirtualizedTable({
 
 VirtualizedTable.defaultProps = {
 	bottomContent: undefined,
+	onLoadMore: undefined,
 	topContent: undefined
 }

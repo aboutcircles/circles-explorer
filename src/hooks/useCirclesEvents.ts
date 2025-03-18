@@ -1,45 +1,153 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { ONE } from 'constants/common'
+import { avatarFields } from 'constants/avatarFields'
+import {
+	DEFAULT_BLOCK_RANGE,
+	MAX_BLOCK_RANGE,
+	RANGE_MULTIPLIER
+} from 'constants/blockRange'
 import { useBlockNumber } from 'hooks/useBlockNumber'
 import { useProfiles } from 'hooks/useProfiles'
 import { useFetchCirclesEvents } from 'services/circlesIndex'
-import { periods, useFilterStore } from 'stores/useFilterStore'
+import logger from 'services/logger'
+import { useFilterStore } from 'stores/useFilterStore'
 import type { Event } from 'types/events'
-import { getDateRange } from 'utils/time'
-import { avatarFields } from 'constants/avatarFields'
 
-export const useCirclesEvents = (page: number) => {
+// Constants for retry logic
+const MAX_RETRY_COUNT = 3
+const RETRY_INCREMENT = 1
+
+export const useCirclesEvents = () => {
 	const eventTypes = useFilterStore.use.eventTypes()
 	const search = useFilterStore.use.search()
 	const updateEventTypesAmount = useFilterStore.use.updateEventTypesAmount()
-	const period = periods[useFilterStore.use.period()]
+	const startBlock = useFilterStore.use.startBlock()
+	const updateStartBlock = useFilterStore.use.updateStartBlock()
 
 	const blockNumber = useBlockNumber()
+	const isInitialized = useRef(false)
 
-	const dateRange = useMemo(
-		() => getDateRange(page, period.value, period.unit),
-		[period, page]
-	)
-	const startBlock = useMemo(
-		() => (blockNumber ? Number(blockNumber) - page * period.blocks : 0),
-		[period, page, blockNumber]
-	)
-	const endBlock = useMemo(
-		() => startBlock + period.blocks,
-		[period, startBlock]
-	)
+	// State for block range management
+	const [currentRange, setCurrentRange] = useState(DEFAULT_BLOCK_RANGE)
+	const [hasFoundEvents, setHasFoundEvents] = useState(false)
+	const [hasMoreEvents, setHasMoreEvents] = useState(true)
+	const [isLoadingMore, setIsLoadingMore] = useState(false)
+	const [isRecursivelyFetching, setIsRecursivelyFetching] = useState(false)
+	const [retryCount, setRetryCount] = useState(0)
+
+	// Initialize block range when block number is available
+	useEffect(() => {
+		if (blockNumber && !isInitialized.current && startBlock === 0) {
+			// Start from the latest block and go back by DEFAULT_BLOCK_RANGE
+			const newStartBlock = Math.max(0, blockNumber - DEFAULT_BLOCK_RANGE)
+			updateStartBlock(newStartBlock)
+			isInitialized.current = true
+		}
+	}, [blockNumber, startBlock, updateStartBlock])
 
 	const {
 		data: { events, eventTypesAmount } = {},
-		isLoading: isEventsLoading
+		isLoading: isEventsLoading,
+		refetch
 	} = useFetchCirclesEvents(
 		startBlock,
-		endBlock,
-		Boolean(blockNumber),
-		page === ONE && !search,
+		null,
+		Boolean(blockNumber) && startBlock > 0,
+		!search,
 		search
 	)
+
+	// Recursive fetching with doubling range until we find events
+	const loadMoreEvents = useCallback(() => {
+		console.log({ hasMoreEvents, isLoadingMore, isRecursivelyFetching })
+
+		if (!hasMoreEvents || isLoadingMore || isRecursivelyFetching) return
+
+		setIsLoadingMore(true)
+		setIsRecursivelyFetching(true)
+
+		console.log({ hasFoundEvents })
+
+		// If we've already found events, just load more by going back by currentRange
+		if (hasFoundEvents) {
+			const newStartBlock = Math.max(0, startBlock - currentRange)
+
+			// If we've reached block 0, there are no more events to load
+			if (newStartBlock === 0) {
+				setHasMoreEvents(false)
+				setIsLoadingMore(false)
+				setIsRecursivelyFetching(false)
+				return
+			}
+
+			logger.log(
+				'[hooks][useCirclesEvents] Loading more events from block',
+				newStartBlock
+			)
+			updateStartBlock(newStartBlock)
+			setIsLoadingMore(false)
+			setIsRecursivelyFetching(false)
+			return
+		}
+
+		// If we haven't found events yet, double the range and try again
+		// But don't exceed MAX_BLOCK_RANGE
+		const newRange = Math.min(currentRange * RANGE_MULTIPLIER, MAX_BLOCK_RANGE)
+		const newStartBlock = Math.max(0, blockNumber ? blockNumber - newRange : 0)
+
+		console.log({ newStartBlock })
+
+		// If we've reached MAX_BLOCK_RANGE or block 0 and still no events, stop trying
+		if (newRange === MAX_BLOCK_RANGE || newStartBlock === 0) {
+			if (retryCount >= MAX_RETRY_COUNT) {
+				setHasMoreEvents(false)
+				setIsLoadingMore(false)
+				setIsRecursivelyFetching(false)
+				logger.warn(
+					'[hooks][useCirclesEvents] Reached maximum range or block 0, giving up'
+				)
+				return
+			}
+			setRetryCount(retryCount + RETRY_INCREMENT)
+		}
+
+		logger.log(
+			'[hooks][useCirclesEvents] No events found, doubling range and trying again...',
+			{ newRange, newStartBlock }
+		)
+
+		setCurrentRange(newRange)
+		updateStartBlock(newStartBlock)
+
+		setIsLoadingMore(false)
+		setIsRecursivelyFetching(false)
+
+		// Refetch with new range
+		void refetch()
+	}, [
+		hasMoreEvents,
+		isLoadingMore,
+		isRecursivelyFetching,
+		hasFoundEvents,
+		currentRange,
+		startBlock,
+		blockNumber,
+		retryCount,
+		updateStartBlock,
+		refetch
+	])
+
+	// Effect to check if we found events and update state accordingly
+	useEffect(() => {
+		if (events && events.length > 0 && !hasFoundEvents) {
+			logger.log('[hooks][useCirclesEvents] Found events, saving range')
+			setHasFoundEvents(true)
+			setCurrentRange(currentRange)
+			setIsRecursivelyFetching(false)
+		} else if (events?.length === 0) {
+			loadMoreEvents()
+		}
+	}, [loadMoreEvents, events, hasFoundEvents, currentRange])
 
 	useEffect(() => {
 		if (eventTypesAmount) {
@@ -81,7 +189,9 @@ export const useCirclesEvents = (page: number) => {
 
 	return {
 		events: filteredEvents,
-		isEventsLoading,
-		dateRange
+		isEventsLoading: isEventsLoading || isRecursivelyFetching,
+		isLoadingMore,
+		loadMoreEvents,
+		isRecursivelyFetching
 	}
 }

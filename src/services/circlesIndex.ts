@@ -184,7 +184,7 @@ const watchEventUpdates = async (
 const CIRCLES_EVENTS_QUERY_KEY = 'circlesEvents'
 export const useFetchCirclesEvents = (
 	startBlock: number,
-	endBlock: number,
+	endBlock: number | null,
 	enabled: boolean,
 	watch: boolean,
 	search: string | null

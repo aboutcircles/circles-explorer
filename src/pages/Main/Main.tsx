@@ -20,7 +20,8 @@ export default function Main(): ReactElement {
 	useEffect(() => {
 		syncWithUrl({
 			search: searchParameters.get('search') ?? '',
-			filter: searchParameters.get('filter') ?? null
+			filter: searchParameters.get('filter') ?? null,
+			startBlock: searchParameters.get('startBlock') ?? null
 		})
 	}, [searchParameters]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -48,7 +49,7 @@ export default function Main(): ReactElement {
 				</div>
 			) : null}
 
-			<EventsTable address={isSearchAddress ? search : null} />
+			<EventsTable />
 		</div>
 	)
 }
