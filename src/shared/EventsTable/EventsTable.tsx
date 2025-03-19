@@ -1,4 +1,4 @@
-import { Button, Spinner } from '@nextui-org/react'
+import { Button } from '@nextui-org/react'
 import type { ReactElement } from 'react'
 
 import type { Column, Row } from 'components/VirtualizedTable'
@@ -11,10 +11,14 @@ import { useRenderCell } from './useRenderCell'
 import { VirtualizedEventCards } from './VirtualizedEventCards'
 
 // todo:
-// - past link recheck
-// - when recursive fetching more, focus on while till new appear.
 // - clear startBlock and default range on go back or go to search, etc.
-// - refactor useCirclesEvents.ts
+// - when loading more do not hide events, just show scroll in button (then maybe we don't need extra isLoading flag)
+// - do not put startBlock in url if user did not load more yet
+// - add clear startBlock button
+// - more refactor for useCirclesEvents.ts
+
+// - check if double watch happening
+// - past link recheck
 
 const columns: Column[] = [
 	{
@@ -49,29 +53,24 @@ export function EventsTable(): ReactElement {
 		isEventsLoading,
 		isLoadingMore,
 		loadMoreEvents,
-		isRecursivelyFetching
+		isBlockedLoadingMore
 	} = useCirclesEvents()
+
+	console.log({ isBlockedLoadingMore })
 
 	const renderCell = useRenderCell()
 	const { isSmScreen } = useBreakpoint()
 
 	const loadMoreButton = (
 		<div className='my-4 flex justify-center'>
-			{isRecursivelyFetching ? (
-				<div className='text-center'>
-					<Spinner size='sm' className='mr-2' />
-					<span>Searching for events by doubling block range...</span>
-				</div>
-			) : (
-				<Button
-					color='primary'
-					isLoading={isLoadingMore}
-					isDisabled={isLoadingMore || isRecursivelyFetching}
-					onPressEnd={loadMoreEvents}
-				>
-					{isLoadingMore ? 'Loading...' : 'Load More'}
-				</Button>
-			)}
+			<Button
+				color='primary'
+				isLoading={isLoadingMore}
+				isDisabled={isLoadingMore || isBlockedLoadingMore}
+				onPressEnd={loadMoreEvents}
+			>
+				{isLoadingMore ? 'Loading...' : 'Load More'}
+			</Button>
 		</div>
 	)
 

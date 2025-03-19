@@ -1,21 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { avatarFields } from 'constants/avatarFields'
-import {
-	DEFAULT_BLOCK_RANGE,
-	MAX_BLOCK_RANGE,
-	RANGE_MULTIPLIER
-} from 'constants/blockRange'
+import { DEFAULT_BLOCK_RANGE, MAX_BLOCK_RANGE } from 'constants/blockRange'
 import { useBlockNumber } from 'hooks/useBlockNumber'
 import { useProfiles } from 'hooks/useProfiles'
-import { useFetchCirclesEvents } from 'services/circlesIndex'
+import { useFetchCirclesEventsRecursive } from 'services/circlesIndex'
 import logger from 'services/logger'
 import { useFilterStore } from 'stores/useFilterStore'
 import type { Event } from 'types/events'
-
-// Constants for retry logic
-const MAX_RETRY_COUNT = 3
-const RETRY_INCREMENT = 1
 
 export const useCirclesEvents = () => {
 	const eventTypes = useFilterStore.use.eventTypes()
@@ -27,15 +19,12 @@ export const useCirclesEvents = () => {
 	const blockNumber = useBlockNumber()
 	const isInitialized = useRef(false)
 
-	// State for block range management
-	const [currentRange, setCurrentRange] = useState(DEFAULT_BLOCK_RANGE)
-	const [hasFoundEvents, setHasFoundEvents] = useState(false)
+	// State for infinite scroll
 	const [hasMoreEvents, setHasMoreEvents] = useState(true)
 	const [isLoadingMore, setIsLoadingMore] = useState(false)
-	const [isRecursivelyFetching, setIsRecursivelyFetching] = useState(false)
-	const [retryCount, setRetryCount] = useState(0)
+	const [eventsLength, setEventsLength] = useState(0)
 
-	// Initialize block range when block number is available
+	// Initialize block range when block number is available and startBlock is not set
 	useEffect(() => {
 		if (blockNumber && !isInitialized.current && startBlock === 0) {
 			// Start from the latest block and go back by DEFAULT_BLOCK_RANGE
@@ -45,116 +34,71 @@ export const useCirclesEvents = () => {
 		}
 	}, [blockNumber, startBlock, updateStartBlock])
 
+	// Use the recursive query that automatically doubles range until events are found
 	const {
-		data: { events, eventTypesAmount } = {},
+		data: { events, eventTypesAmount, finalRange, finalStartBlock } = {},
 		isLoading: isEventsLoading,
-		refetch
-	} = useFetchCirclesEvents(
+		isSuccess
+	} = useFetchCirclesEventsRecursive(
 		startBlock,
-		null,
 		Boolean(blockNumber) && startBlock > 0,
 		!search,
-		search
+		search,
+		eventsLength
 	)
 
-	// Recursive fetching with doubling range until we find events
-	const loadMoreEvents = useCallback(() => {
-		console.log({ hasMoreEvents, isLoadingMore, isRecursivelyFetching })
+	useEffect(() => {
+		if (events) {
+			setEventsLength(events.length)
+		}
+	}, [events])
 
-		if (!hasMoreEvents || isLoadingMore || isRecursivelyFetching) return
+	useEffect(() => {
+		if (finalStartBlock) updateStartBlock(finalStartBlock)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [finalStartBlock])
+
+	// Load more events by going back by finalRange
+	const loadMoreEvents = useCallback(() => {
+		if (!hasMoreEvents || isLoadingMore || !finalRange) return
 
 		setIsLoadingMore(true)
-		setIsRecursivelyFetching(true)
 
-		console.log({ hasFoundEvents })
+		// Calculate new start block for loading more
+		const newStartBlock = Math.max(0, startBlock - finalRange)
 
-		// If we've already found events, just load more by going back by currentRange
-		if (hasFoundEvents) {
-			const newStartBlock = Math.max(0, startBlock - currentRange)
-
-			// If we've reached block 0, there are no more events to load
-			if (newStartBlock === 0) {
-				setHasMoreEvents(false)
-				setIsLoadingMore(false)
-				setIsRecursivelyFetching(false)
-				return
-			}
-
-			logger.log(
-				'[hooks][useCirclesEvents] Loading more events from block',
-				newStartBlock
-			)
-			updateStartBlock(newStartBlock)
+		// If we've reached block 0, there are no more events to load
+		if (newStartBlock === 0) {
+			setHasMoreEvents(false)
 			setIsLoadingMore(false)
-			setIsRecursivelyFetching(false)
 			return
 		}
 
-		// If we haven't found events yet, double the range and try again
-		// But don't exceed MAX_BLOCK_RANGE
-		const newRange = Math.min(currentRange * RANGE_MULTIPLIER, MAX_BLOCK_RANGE)
-		const newStartBlock = Math.max(0, blockNumber ? blockNumber - newRange : 0)
-
-		console.log({ newStartBlock })
-
-		// If we've reached MAX_BLOCK_RANGE or block 0 and still no events, stop trying
-		if (newRange === MAX_BLOCK_RANGE || newStartBlock === 0) {
-			if (retryCount >= MAX_RETRY_COUNT) {
-				setHasMoreEvents(false)
-				setIsLoadingMore(false)
-				setIsRecursivelyFetching(false)
-				logger.warn(
-					'[hooks][useCirclesEvents] Reached maximum range or block 0, giving up'
-				)
-				return
-			}
-			setRetryCount(retryCount + RETRY_INCREMENT)
-		}
-
 		logger.log(
-			'[hooks][useCirclesEvents] No events found, doubling range and trying again...',
-			{ newRange, newStartBlock }
+			'[hooks][useCirclesEvents] Loading more events from block',
+			newStartBlock
 		)
 
-		setCurrentRange(newRange)
+		// Update start block to trigger a new query
 		updateStartBlock(newStartBlock)
-
 		setIsLoadingMore(false)
-		setIsRecursivelyFetching(false)
+	}, [hasMoreEvents, isLoadingMore, finalRange, startBlock, updateStartBlock])
 
-		// Refetch with new range
-		void refetch()
-	}, [
-		hasMoreEvents,
-		isLoadingMore,
-		isRecursivelyFetching,
-		hasFoundEvents,
-		currentRange,
-		startBlock,
-		blockNumber,
-		retryCount,
-		updateStartBlock,
-		refetch
-	])
-
-	// Effect to check if we found events and update state accordingly
+	// Reset loading state when query completes
 	useEffect(() => {
-		if (events && events.length > 0 && !hasFoundEvents) {
-			logger.log('[hooks][useCirclesEvents] Found events, saving range')
-			setHasFoundEvents(true)
-			setCurrentRange(currentRange)
-			setIsRecursivelyFetching(false)
-		} else if (events?.length === 0) {
-			loadMoreEvents()
+		if (isSuccess && isLoadingMore) {
+			setIsLoadingMore(false)
 		}
-	}, [loadMoreEvents, events, hasFoundEvents, currentRange])
+	}, [isSuccess, isLoadingMore])
 
+	// Update event type amounts when data changes
 	useEffect(() => {
 		if (eventTypesAmount) {
 			updateEventTypesAmount(eventTypesAmount)
 		}
 	}, [updateEventTypesAmount, eventTypesAmount])
 
+	// Filter events by selected event types
 	const filteredEvents = useMemo(() => {
 		if (!events) return []
 
@@ -163,7 +107,6 @@ export const useCirclesEvents = () => {
 
 	// Prefetch profiles for all addresses in the events
 	const { fetchProfiles } = useProfiles()
-
 	useEffect(() => {
 		if (filteredEvents.length === 0) return
 
@@ -189,9 +132,13 @@ export const useCirclesEvents = () => {
 
 	return {
 		events: filteredEvents,
-		isEventsLoading: isEventsLoading || isRecursivelyFetching,
+		isEventsLoading,
 		isLoadingMore,
 		loadMoreEvents,
-		isRecursivelyFetching
+		hasMoreEvents,
+		// Block loading more if the range is too large
+		isBlockedLoadingMore: blockNumber
+			? blockNumber - startBlock > MAX_BLOCK_RANGE
+			: true
 	}
 }
