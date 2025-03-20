@@ -262,8 +262,8 @@ export const useFetchCirclesEventsRecursive = (
 	const queryClient: QueryClient = useQueryClient()
 
 	const queryKey = useMemo(
-		() => [CIRCLES_EVENTS_RECURSIVE_QUERY_KEY, initialBlock, search],
-		[initialBlock, search]
+		() => [CIRCLES_EVENTS_RECURSIVE_QUERY_KEY, search],
+		[search]
 	)
 
 	return useQuery({

@@ -12,6 +12,7 @@ interface State {
 	eventTypesAmount: Map<CirclesEventType, number>
 	search: string | null
 	startBlock: number
+	eventsLength: number
 }
 
 interface Action {
@@ -29,9 +30,11 @@ interface Action {
 		endBlock?: string | null
 	}) => void
 	updateStartBlock: (startBlock: number) => void
+	clearStartBlock: () => void
+	setEventsLength: (eventsLength: number) => void
 }
 
-const updateURL = (state: State) => {
+const updateURLWithPush = (state: State) => {
 	const url = new URL(window.location.href)
 
 	if (state.search) {
@@ -39,6 +42,12 @@ const updateURL = (state: State) => {
 	} else {
 		url.searchParams.delete('search')
 	}
+
+	window.history.pushState({}, '', url.toString())
+}
+
+const updateURL = (state: State) => {
+	const url = new URL(window.location.href)
 
 	if (state.eventTypes.size < EVENTS.length) {
 		url.searchParams.set('filter', [...state.eventTypes].join(','))
@@ -53,7 +62,7 @@ const updateURL = (state: State) => {
 		url.searchParams.delete('startBlock')
 	}
 
-	window.history.pushState({}, '', url.toString())
+	window.history.replaceState({}, '', url.toString())
 }
 
 const useFilterStoreBase = create<Action & State>((set) => ({
@@ -61,6 +70,7 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 	eventTypesAmount: new Map(),
 	search: null,
 	startBlock: 0,
+	eventsLength: 0,
 
 	updateEventTypes: (event: CirclesEventType) =>
 		set((state) => {
@@ -134,9 +144,13 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 			const newState = {
 				...state,
 				search,
-				eventTypes: new Set(EVENTS)
+				eventTypes: new Set(EVENTS),
+				// reset events length when search changes
+				eventsLength: 0
 			}
-			updateURL(newState)
+			// Clear start block when search changes
+			state.clearStartBlock()
+			updateURLWithPush(newState)
 			return newState
 		})
 	},
@@ -149,6 +163,19 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 			updateURL(newState)
 			return newState
 		}),
+	clearStartBlock: () => {
+		set((state) => {
+			const newState = {
+				...state,
+				startBlock: 0
+			}
+			updateURL(newState)
+			return newState
+		})
+	},
+	setEventsLength: (eventsLength: number) => {
+		set(() => ({ eventsLength }))
+	},
 	syncWithUrl: (parameters) => {
 		if (!isNil(parameters.search)) {
 			set({ search: parameters.search })

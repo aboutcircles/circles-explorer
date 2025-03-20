@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { avatarFields } from 'constants/avatarFields'
 import { DEFAULT_BLOCK_RANGE, MAX_BLOCK_RANGE } from 'constants/blockRange'
@@ -16,21 +16,21 @@ export const useCirclesEvents = () => {
 	const startBlock = useFilterStore.use.startBlock()
 	const updateStartBlock = useFilterStore.use.updateStartBlock()
 
+	const eventsLength = useFilterStore.use.eventsLength()
+	const setEventsLength = useFilterStore.use.setEventsLength()
+
 	const blockNumber = useBlockNumber()
-	const isInitialized = useRef(false)
 
 	// State for infinite scroll
 	const [hasMoreEvents, setHasMoreEvents] = useState(true)
 	const [isLoadingMore, setIsLoadingMore] = useState(false)
-	const [eventsLength, setEventsLength] = useState(0)
 
 	// Initialize block range when block number is available and startBlock is not set
 	useEffect(() => {
-		if (blockNumber && !isInitialized.current && startBlock === 0) {
+		if (blockNumber && startBlock === 0) {
 			// Start from the latest block and go back by DEFAULT_BLOCK_RANGE
 			const newStartBlock = Math.max(0, blockNumber - DEFAULT_BLOCK_RANGE)
 			updateStartBlock(newStartBlock)
-			isInitialized.current = true
 		}
 	}, [blockNumber, startBlock, updateStartBlock])
 
@@ -38,7 +38,8 @@ export const useCirclesEvents = () => {
 	const {
 		data: { events, eventTypesAmount, finalRange, finalStartBlock } = {},
 		isLoading: isEventsLoading,
-		isSuccess
+		isSuccess,
+		refetch
 	} = useFetchCirclesEventsRecursive(
 		startBlock,
 		Boolean(blockNumber) && startBlock > 0,
@@ -48,12 +49,15 @@ export const useCirclesEvents = () => {
 	)
 
 	useEffect(() => {
+		// save eventsLength to use for next recursive query to understand when we got new ones
 		if (events) {
 			setEventsLength(events.length)
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [events])
 
 	useEffect(() => {
+		// update start block to reflect changes and show the correct start block
 		if (finalStartBlock) updateStartBlock(finalStartBlock)
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [finalStartBlock])
@@ -79,10 +83,18 @@ export const useCirclesEvents = () => {
 			newStartBlock
 		)
 
-		// Update start block to trigger a new query
 		updateStartBlock(newStartBlock)
 		setIsLoadingMore(false)
-	}, [hasMoreEvents, isLoadingMore, finalRange, startBlock, updateStartBlock])
+		// trigger a new query
+		void refetch()
+	}, [
+		refetch,
+		hasMoreEvents,
+		isLoadingMore,
+		finalRange,
+		startBlock,
+		updateStartBlock
+	])
 
 	// Reset loading state when query completes
 	useEffect(() => {

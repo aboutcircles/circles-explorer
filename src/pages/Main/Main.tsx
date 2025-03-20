@@ -1,7 +1,7 @@
 import useBreakpoint from 'hooks/useBreakpoint'
+import { useNavigationListener } from 'hooks/useNavigationListener'
 import type { ReactElement } from 'react'
-import { useEffect, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useMemo } from 'react'
 import type { Address } from 'viem'
 import { isAddress } from 'viem'
 
@@ -12,18 +12,10 @@ import { AvatarSection } from './AvatarSection'
 import { Stats } from './Stats'
 
 export default function Main(): ReactElement {
-	const [searchParameters] = useSearchParams()
 	const search = useFilterStore.use.search()
-	const syncWithUrl = useFilterStore.use.syncWithUrl()
 
-	// Sync with URL parameters on mount
-	useEffect(() => {
-		syncWithUrl({
-			search: searchParameters.get('search') ?? '',
-			filter: searchParameters.get('filter') ?? null,
-			startBlock: searchParameters.get('startBlock') ?? null
-		})
-	}, [searchParameters]) // eslint-disable-line react-hooks/exhaustive-deps
+	// Use the navigation listener hook to handle browser back/forward events
+	useNavigationListener()
 
 	// it means avatar
 	const { isSearchAddress } = useMemo(

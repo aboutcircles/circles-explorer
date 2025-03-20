@@ -11,6 +11,8 @@ import { useRenderCell } from './useRenderCell'
 import { VirtualizedEventCards } from './VirtualizedEventCards'
 
 // todo:
+// - when search change - nullable previousEventsLength
+// - when load more - load not full range, but diff
 // - clear startBlock and default range on go back or go to search, etc.
 // - when loading more do not hide events, just show scroll in button (then maybe we don't need extra isLoading flag)
 // - do not put startBlock in url if user did not load more yet
@@ -55,8 +57,6 @@ export function EventsTable(): ReactElement {
 		loadMoreEvents,
 		isBlockedLoadingMore
 	} = useCirclesEvents()
-
-	console.log({ isBlockedLoadingMore })
 
 	const renderCell = useRenderCell()
 	const { isSmScreen } = useBreakpoint()
