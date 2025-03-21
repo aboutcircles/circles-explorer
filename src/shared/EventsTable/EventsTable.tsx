@@ -11,13 +11,8 @@ import { useRenderCell } from './useRenderCell'
 import { VirtualizedEventCards } from './VirtualizedEventCards'
 
 // todo:
-// - when loading more do not hide events, just show scroll in button (then maybe we don't need extra isLoading flag)
-// - do not put startBlock in url if user did not load more yet
 // - add clear startBlock button
-// - more refactor for useCirclesEvents.ts
-
 // - check if double watch happening
-// - past link recheck
 
 // todo:
 // write documentation how it works (with some specific details on other things)
@@ -60,7 +55,7 @@ export function EventsTable(): ReactElement {
 		isEventsLoading,
 		isLoadingMore,
 		loadMoreEvents,
-		isBlockedLoadingMore
+		hasMoreEvents
 	} = useCirclesEvents()
 
 	const renderCell = useRenderCell()
@@ -71,7 +66,7 @@ export function EventsTable(): ReactElement {
 			<Button
 				color='primary'
 				isLoading={isLoadingMore}
-				isDisabled={isLoadingMore || isBlockedLoadingMore}
+				isDisabled={isLoadingMore || !hasMoreEvents}
 				onPressEnd={loadMoreEvents}
 			>
 				{isLoadingMore ? 'Loading...' : 'Load More'}
@@ -86,9 +81,13 @@ export function EventsTable(): ReactElement {
 					<VirtualizedTable
 						ariaLabel='Circles Events'
 						columns={columns}
-						rows={isEventsLoading ? [] : (events as unknown as Row[])}
+						rows={
+							isEventsLoading && events.length === 0
+								? []
+								: (events as unknown as Row[])
+						}
 						renderCell={renderCell}
-						isLoading={isEventsLoading}
+						isLoading={events.length === 0 && isEventsLoading}
 						topContent={
 							<div className='flex w-full justify-between'>
 								<div className='flex flex-row'>

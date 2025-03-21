@@ -1,10 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { CirclesEventType } from '@circles-sdk/data'
+import { useCallback, useEffect, useMemo } from 'react'
 
 import { avatarFields } from 'constants/avatarFields'
-import { DEFAULT_BLOCK_RANGE, MAX_BLOCK_RANGE } from 'constants/blockRange'
+import { ONE } from 'constants/common'
+import { DEFAULT_BLOCK_RANGE } from 'constants/blockRange'
 import { useBlockNumber } from 'hooks/useBlockNumber'
 import { useProfiles } from 'hooks/useProfiles'
-import { useFetchCirclesEventsRecursive } from 'services/circlesIndex'
+import {
+	useFetchCirclesEventsInfinite,
+	type EventsInfiniteData
+} from 'services/circlesEvents'
 import logger from 'services/logger'
 import { useFilterStore } from 'stores/useFilterStore'
 import type { Event } from 'types/events'
@@ -18,12 +23,6 @@ export const useCirclesEvents = () => {
 
 	const blockNumber = useBlockNumber()
 
-	// State for infinite scroll
-	const [hasMoreEvents, setHasMoreEvents] = useState(true)
-	const [isLoadingMore, setIsLoadingMore] = useState(false)
-	// endBlock is used to fetch only new events when loading more
-	const [endBlock, setEndBlock] = useState<number | null>(null)
-
 	// Initialize block range when block number is available and startBlock is not set
 	useEffect(() => {
 		if (blockNumber && startBlock === 0) {
@@ -33,74 +32,92 @@ export const useCirclesEvents = () => {
 		}
 	}, [blockNumber, startBlock, updateStartBlock])
 
-	// Use the recursive query that automatically doubles range until events are found
+	// Use the infinite query that automatically fetches and merges pages
 	const {
-		data: { events, eventTypesAmount, finalRange, finalStartBlock } = {},
+		data,
 		isLoading: isEventsLoading,
-		isSuccess
-	} = useFetchCirclesEventsRecursive(
+		isFetchingNextPage: isLoadingMore,
+		fetchNextPage,
+		hasNextPage
+	} = useFetchCirclesEventsInfinite(
 		startBlock,
-		endBlock,
 		Boolean(blockNumber) && startBlock > 0,
 		!search,
 		search
 	)
 
-	useEffect(() => {
-		// update start block to reflect changes and show the correct start block
-		if (finalStartBlock) updateStartBlock(finalStartBlock)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [finalStartBlock])
+	// Extract all events from all pages
+	const allEvents = useMemo(() => {
+		if (!data) return []
 
-	// Load more events by going back by finalRange
-	const loadMoreEvents = useCallback(() => {
-		if (!hasMoreEvents || isLoadingMore || !finalRange) return
+		// Flatten all pages and deduplicate events
+		const eventMap = new Map<string, Event>()
 
-		setIsLoadingMore(true)
+		// Type-safe access to pages
+		const { pages } = data as unknown as EventsInfiniteData
 
-		// Calculate new start block for loading more
-		const newStartBlock = Math.max(0, startBlock - finalRange)
-
-		// If we've reached block 0, there are no more events to load
-		if (newStartBlock === 0) {
-			setHasMoreEvents(false)
-			setIsLoadingMore(false)
-			return
+		for (const page of pages) {
+			for (const event of page.events) {
+				eventMap.set(event.key, event)
+			}
 		}
 
-		logger.log(
-			'[hooks][useCirclesEvents] Loading more events from block',
-			newStartBlock
+		// Convert to array and sort by timestamp
+		return [...eventMap.values()].sort(
+			(a, b) => Number(b.timestamp) - Number(a.timestamp)
 		)
+	}, [data])
 
-		// trigger query by updating startBlock
-		updateStartBlock(newStartBlock)
-		// Set end block to the current start block to fetch only new events
-		setEndBlock(startBlock)
-
-		setIsLoadingMore(false)
-	}, [hasMoreEvents, isLoadingMore, finalRange, startBlock, updateStartBlock])
-
-	// Reset loading state when query completes
+	// Merge all eventTypesAmount maps from all pages
 	useEffect(() => {
-		if (isSuccess && isLoadingMore) {
-			setIsLoadingMore(false)
-		}
-	}, [isSuccess, isLoadingMore])
+		if (!data) return
 
-	// Update event type amounts when data changes
-	useEffect(() => {
-		if (eventTypesAmount) {
-			updateEventTypesAmount(eventTypesAmount)
+		const mergedEventTypes = new Map<CirclesEventType, number>()
+
+		// Type-safe access to pages
+		const { pages } = data as unknown as EventsInfiniteData
+
+		for (const page of pages) {
+			for (const [type, count] of page.eventTypesAmount.entries()) {
+				mergedEventTypes.set(type, (mergedEventTypes.get(type) ?? 0) + count)
+			}
 		}
-	}, [updateEventTypesAmount, eventTypesAmount])
+
+		updateEventTypesAmount(mergedEventTypes)
+	}, [data, updateEventTypesAmount])
+
+	// Extract the latest finalStartBlock from the last page
+	useEffect(() => {
+		if (!data) return
+
+		// Type-safe access to pages
+		const { pages } = data as unknown as EventsInfiniteData
+
+		if (pages.length === 0) return
+
+		// Get the latest page
+		const lastPage = pages[pages.length - ONE]
+
+		if (lastPage.finalStartBlock) updateStartBlock(lastPage.finalStartBlock)
+	}, [updateStartBlock, data, startBlock])
+
+	// Load more events by fetching the next page
+	const loadMoreEvents = useCallback(() => {
+		if (isLoadingMore || !hasNextPage) return
+
+		logger.log('[hooks][useCirclesEvents] Loading more events')
+
+		void fetchNextPage()
+	}, [fetchNextPage, hasNextPage, isLoadingMore])
 
 	// Filter events by selected event types
 	const filteredEvents = useMemo(() => {
-		if (!events) return []
+		if (allEvents.length === 0) return []
 
-		return events.filter((event: Event): boolean => eventTypes.has(event.event))
-	}, [events, eventTypes])
+		return allEvents.filter((event: Event): boolean =>
+			eventTypes.has(event.event)
+		)
+	}, [allEvents, eventTypes])
 
 	// Prefetch profiles for all addresses in the events
 	const { fetchProfiles } = useProfiles()
@@ -132,10 +149,6 @@ export const useCirclesEvents = () => {
 		isEventsLoading,
 		isLoadingMore,
 		loadMoreEvents,
-		hasMoreEvents,
-		// Block loading more if the range is too large
-		isBlockedLoadingMore: blockNumber
-			? blockNumber - startBlock > MAX_BLOCK_RANGE
-			: true
+		hasMoreEvents: hasNextPage
 	}
 }
