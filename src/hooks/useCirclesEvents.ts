@@ -1,61 +1,126 @@
-import { useEffect, useMemo } from 'react'
+import type { CirclesEventType } from '@circles-sdk/data'
+import { useCallback, useEffect, useMemo } from 'react'
 
+import { avatarFields } from 'constants/avatarFields'
 import { ONE } from 'constants/common'
+import { DEFAULT_BLOCK_RANGE } from 'constants/blockRange'
 import { useBlockNumber } from 'hooks/useBlockNumber'
 import { useProfiles } from 'hooks/useProfiles'
-import { useFetchCirclesEvents } from 'services/circlesIndex'
-import { periods, useFilterStore } from 'stores/useFilterStore'
+import {
+	useFetchCirclesEventsInfinite,
+	type EventsInfiniteData
+} from 'services/circlesEvents'
+import logger from 'services/logger'
+import { useFilterStore } from 'stores/useFilterStore'
 import type { Event } from 'types/events'
-import { getDateRange } from 'utils/time'
-import { avatarFields } from 'constants/avatarFields'
 
-export const useCirclesEvents = (page: number) => {
+export const useCirclesEvents = () => {
 	const eventTypes = useFilterStore.use.eventTypes()
 	const search = useFilterStore.use.search()
 	const updateEventTypesAmount = useFilterStore.use.updateEventTypesAmount()
-	const period = periods[useFilterStore.use.period()]
+	const startBlock = useFilterStore.use.startBlock()
+	const updateStartBlock = useFilterStore.use.updateStartBlock()
 
 	const blockNumber = useBlockNumber()
 
-	const dateRange = useMemo(
-		() => getDateRange(page, period.value, period.unit),
-		[period, page]
-	)
-	const startBlock = useMemo(
-		() => (blockNumber ? Number(blockNumber) - page * period.blocks : 0),
-		[period, page, blockNumber]
-	)
-	const endBlock = useMemo(
-		() => startBlock + period.blocks,
-		[period, startBlock]
-	)
+	// Initialize block range when block number is available and startBlock is not set
+	useEffect(() => {
+		if (blockNumber && startBlock === 0) {
+			// Start from the latest block and go back by DEFAULT_BLOCK_RANGE
+			const newStartBlock = Math.max(0, blockNumber - DEFAULT_BLOCK_RANGE)
+			updateStartBlock(newStartBlock)
+		}
+	}, [blockNumber, startBlock, updateStartBlock])
 
+	// Use the infinite query that automatically fetches and merges pages
 	const {
-		data: { events, eventTypesAmount } = {},
-		isLoading: isEventsLoading
-	} = useFetchCirclesEvents(
+		data,
+		isLoading: isEventsLoading,
+		isFetchingNextPage: isLoadingMore,
+		fetchNextPage,
+		hasNextPage
+	} = useFetchCirclesEventsInfinite(
 		startBlock,
-		endBlock,
-		Boolean(blockNumber),
-		page === ONE && !search,
+		Boolean(blockNumber) && startBlock > 0,
+		!search,
 		search
 	)
 
-	useEffect(() => {
-		if (eventTypesAmount) {
-			updateEventTypesAmount(eventTypesAmount)
+	// Extract all events from all pages
+	const allEvents = useMemo(() => {
+		if (!data) return []
+
+		// Flatten all pages and deduplicate events
+		const eventMap = new Map<string, Event>()
+
+		// Type-safe access to pages
+		const { pages } = data as unknown as EventsInfiniteData
+
+		for (const page of pages) {
+			for (const event of page.events) {
+				eventMap.set(event.key, event)
+			}
 		}
-	}, [updateEventTypesAmount, eventTypesAmount])
 
+		// Convert to array and sort by timestamp
+		return [...eventMap.values()].sort(
+			(a, b) => Number(b.timestamp) - Number(a.timestamp)
+		)
+	}, [data])
+
+	// Merge all eventTypesAmount maps from all pages
+	useEffect(() => {
+		if (!data) return
+
+		const mergedEventTypes = new Map<CirclesEventType, number>()
+
+		// Type-safe access to pages
+		const { pages } = data as unknown as EventsInfiniteData
+
+		for (const page of pages) {
+			for (const [type, count] of page.eventTypesAmount.entries()) {
+				mergedEventTypes.set(type, (mergedEventTypes.get(type) ?? 0) + count)
+			}
+		}
+
+		updateEventTypesAmount(mergedEventTypes)
+	}, [data, updateEventTypesAmount])
+
+	// Extract the latest finalStartBlock from the last page
+	useEffect(() => {
+		if (!data) return
+
+		// Type-safe access to pages
+		const { pages } = data as unknown as EventsInfiniteData
+
+		if (pages.length === 0) return
+
+		// Get the latest page
+		const lastPage = pages[pages.length - ONE]
+
+		if (lastPage.finalStartBlock) updateStartBlock(lastPage.finalStartBlock)
+	}, [updateStartBlock, data, startBlock])
+
+	// Load more events by fetching the next page
+	const loadMoreEvents = useCallback(() => {
+		if (isLoadingMore || !hasNextPage) return
+
+		logger.log('[hooks][useCirclesEvents] Loading more events')
+
+		void fetchNextPage()
+	}, [fetchNextPage, hasNextPage, isLoadingMore])
+
+	// Filter events by selected event types
 	const filteredEvents = useMemo(() => {
-		if (!events) return []
+		if (allEvents.length === 0) return []
 
-		return events.filter((event: Event): boolean => eventTypes.has(event.event))
-	}, [events, eventTypes])
+		return allEvents.filter((event: Event): boolean =>
+			eventTypes.has(event.event)
+		)
+	}, [allEvents, eventTypes])
 
 	// Prefetch profiles for all addresses in the events
 	const { fetchProfiles } = useProfiles()
-
 	useEffect(() => {
 		if (filteredEvents.length === 0) return
 
@@ -82,6 +147,8 @@ export const useCirclesEvents = (page: number) => {
 	return {
 		events: filteredEvents,
 		isEventsLoading,
-		dateRange
+		isLoadingMore,
+		loadMoreEvents,
+		hasMoreEvents: hasNextPage
 	}
 }
