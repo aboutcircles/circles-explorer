@@ -12,7 +12,6 @@ interface State {
 	eventTypesAmount: Map<CirclesEventType, number>
 	search: string | null
 	startBlock: number
-	eventsLength: number
 }
 
 interface Action {
@@ -31,7 +30,6 @@ interface Action {
 	}) => void
 	updateStartBlock: (startBlock: number) => void
 	clearStartBlock: () => void
-	setEventsLength: (eventsLength: number) => void
 }
 
 const updateURLWithPush = (state: State) => {
@@ -65,12 +63,11 @@ const updateURL = (state: State) => {
 	window.history.replaceState({}, '', url.toString())
 }
 
-const useFilterStoreBase = create<Action & State>((set) => ({
+const useFilterStoreBase = create<Action & State>((set, get) => ({
 	eventTypes: new Set(EVENTS),
 	eventTypesAmount: new Map(),
 	search: null,
 	startBlock: 0,
-	eventsLength: 0,
 
 	updateEventTypes: (event: CirclesEventType) =>
 		set((state) => {
@@ -141,15 +138,16 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 		}),
 	updateSearch: (search: string) => {
 		set((state) => {
-			const newState = {
-				...state,
-				search,
-				eventTypes: new Set(EVENTS),
-				// reset events length when search changes
-				eventsLength: 0
-			}
 			// Clear start block when search changes
 			state.clearStartBlock()
+			const updatedState = get()
+
+			const newState = {
+				...updatedState,
+				search,
+				eventTypes: new Set(EVENTS)
+			}
+
 			updateURLWithPush(newState)
 			return newState
 		})
@@ -173,12 +171,11 @@ const useFilterStoreBase = create<Action & State>((set) => ({
 			return newState
 		})
 	},
-	setEventsLength: (eventsLength: number) => {
-		set(() => ({ eventsLength }))
-	},
 	syncWithUrl: (parameters) => {
 		if (!isNil(parameters.search)) {
-			set({ search: parameters.search })
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
+			get().updateSearch(parameters.search)
 		}
 		if (!isNil(parameters.filter)) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment

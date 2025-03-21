@@ -11,9 +11,6 @@ import { useRenderCell } from './useRenderCell'
 import { VirtualizedEventCards } from './VirtualizedEventCards'
 
 // todo:
-// - when search change - nullable previousEventsLength
-// - when load more - load not full range, but diff
-// - clear startBlock and default range on go back or go to search, etc.
 // - when loading more do not hide events, just show scroll in button (then maybe we don't need extra isLoading flag)
 // - do not put startBlock in url if user did not load more yet
 // - add clear startBlock button
@@ -21,6 +18,14 @@ import { VirtualizedEventCards } from './VirtualizedEventCards'
 
 // - check if double watch happening
 // - past link recheck
+
+// todo:
+// write documentation how it works (with some specific details on other things)
+// infinite scroll (fetching events)
+// fetching profiles
+// virtualized table
+// virtualized event cards (mobile)
+// filters
 
 const columns: Column[] = [
 	{

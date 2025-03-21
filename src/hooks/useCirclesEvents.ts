@@ -16,14 +16,13 @@ export const useCirclesEvents = () => {
 	const startBlock = useFilterStore.use.startBlock()
 	const updateStartBlock = useFilterStore.use.updateStartBlock()
 
-	const eventsLength = useFilterStore.use.eventsLength()
-	const setEventsLength = useFilterStore.use.setEventsLength()
-
 	const blockNumber = useBlockNumber()
 
 	// State for infinite scroll
 	const [hasMoreEvents, setHasMoreEvents] = useState(true)
 	const [isLoadingMore, setIsLoadingMore] = useState(false)
+	// endBlock is used to fetch only new events when loading more
+	const [endBlock, setEndBlock] = useState<number | null>(null)
 
 	// Initialize block range when block number is available and startBlock is not set
 	useEffect(() => {
@@ -38,23 +37,14 @@ export const useCirclesEvents = () => {
 	const {
 		data: { events, eventTypesAmount, finalRange, finalStartBlock } = {},
 		isLoading: isEventsLoading,
-		isSuccess,
-		refetch
+		isSuccess
 	} = useFetchCirclesEventsRecursive(
 		startBlock,
+		endBlock,
 		Boolean(blockNumber) && startBlock > 0,
 		!search,
-		search,
-		eventsLength
+		search
 	)
-
-	useEffect(() => {
-		// save eventsLength to use for next recursive query to understand when we got new ones
-		if (events) {
-			setEventsLength(events.length)
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [events])
 
 	useEffect(() => {
 		// update start block to reflect changes and show the correct start block
@@ -83,18 +73,13 @@ export const useCirclesEvents = () => {
 			newStartBlock
 		)
 
+		// trigger query by updating startBlock
 		updateStartBlock(newStartBlock)
+		// Set end block to the current start block to fetch only new events
+		setEndBlock(startBlock)
+
 		setIsLoadingMore(false)
-		// trigger a new query
-		void refetch()
-	}, [
-		refetch,
-		hasMoreEvents,
-		isLoadingMore,
-		finalRange,
-		startBlock,
-		updateStartBlock
-	])
+	}, [hasMoreEvents, isLoadingMore, finalRange, startBlock, updateStartBlock])
 
 	// Reset loading state when query completes
 	useEffect(() => {

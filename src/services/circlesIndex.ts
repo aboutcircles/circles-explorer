@@ -248,22 +248,21 @@ const fetchEvents = async (
 const CIRCLES_EVENTS_RECURSIVE_QUERY_KEY = 'circlesEventsRecursive'
 export const useFetchCirclesEventsRecursive = (
 	initialBlock: number,
+	initialEndBlock: number | null,
 	enabled: boolean,
 	watch: boolean,
-	search: string | null,
-	eventCount: number
+	search: string | null
 ): UseQueryResult<{
 	events: Event[]
 	eventTypesAmount: Map<CirclesEventType, number>
 	finalRange: number
 	finalStartBlock: number
-	previousEventCount: number
 }> => {
 	const queryClient: QueryClient = useQueryClient()
 
 	const queryKey = useMemo(
-		() => [CIRCLES_EVENTS_RECURSIVE_QUERY_KEY, search],
-		[search]
+		() => [CIRCLES_EVENTS_RECURSIVE_QUERY_KEY, initialBlock, search],
+		[initialBlock, search]
 	)
 
 	return useQuery({
@@ -272,14 +271,13 @@ export const useFetchCirclesEventsRecursive = (
 			const fetchWithRetry = async (
 				currentRange: number,
 				currentStartBlock: number,
-				tryCount: number,
-				previousEventCount: number
+				currentEndBlock: number | null,
+				tryCount: number
 			): Promise<{
 				events: Event[]
 				eventTypesAmount: Map<CirclesEventType, number>
 				finalRange: number
 				finalStartBlock: number
-				previousEventCount: number
 			}> => {
 				// Base case: reached max retries
 				if (tryCount >= MAX_RETRY_COUNT) {
@@ -287,18 +285,23 @@ export const useFetchCirclesEventsRecursive = (
 						events: [],
 						eventTypesAmount: new Map(),
 						finalRange: currentRange,
-						finalStartBlock: currentStartBlock,
-						previousEventCount
+						finalStartBlock: currentStartBlock
 					}
 				}
 
 				// Fetch events for current range
-				const response = await fetchEvents(currentStartBlock, null, search)
+				const response = await fetchEvents(
+					currentStartBlock,
+					currentEndBlock,
+					search
+				)
 				const newEventCount = response.events.length
-				console.log({ newEventCount, previousEventCount, currentStartBlock })
+				logger.log(
+					`${currentStartBlock} - ${currentEndBlock} - ${newEventCount}`
+				)
 
 				// Success case: found more events than before
-				if (newEventCount > previousEventCount) {
+				if (newEventCount > 0) {
 					// If we found events, set up watch if needed
 					if (watch) {
 						void watchEventUpdates(
@@ -312,8 +315,7 @@ export const useFetchCirclesEventsRecursive = (
 						events: response.events,
 						eventTypesAmount: response.eventTypesAmount,
 						finalRange: currentRange,
-						finalStartBlock: currentStartBlock,
-						previousEventCount: newEventCount
+						finalStartBlock: currentStartBlock
 					}
 				}
 
@@ -322,12 +324,14 @@ export const useFetchCirclesEventsRecursive = (
 					tryCount === 0 ? currentRange : currentRange * RANGE_MULTIPLIER,
 					MAX_BLOCK_RANGE
 				)
+				// range increasing from initial block
 				const nextStartBlock = Math.max(0, initialBlock - nextRange)
+				// nextEndBlock is the current start block (to shift the range)
+				const nextEndBlock = currentStartBlock
 
-				logger.log('[service][circles] Expanded range', {
-					tryCount,
-					blocks: nextRange
-				})
+				logger.log(
+					`[service][circles] Expanded range to ${nextRange} blocks (try ${tryCount})`
+				)
 
 				// Stop if we hit block 0
 				if (nextStartBlock <= 0) {
@@ -335,8 +339,7 @@ export const useFetchCirclesEventsRecursive = (
 						events: [],
 						eventTypesAmount: new Map(),
 						finalRange: nextRange,
-						finalStartBlock: nextStartBlock,
-						previousEventCount: newEventCount
+						finalStartBlock: nextStartBlock
 					}
 				}
 
@@ -344,13 +347,18 @@ export const useFetchCirclesEventsRecursive = (
 				return fetchWithRetry(
 					nextRange,
 					nextStartBlock,
-					tryCount + RETRY_INCREMENT,
-					newEventCount
+					nextEndBlock,
+					tryCount + RETRY_INCREMENT
 				)
 			}
 
 			// Start the recursive fetching
-			return fetchWithRetry(DEFAULT_BLOCK_RANGE, initialBlock, 0, eventCount)
+			return fetchWithRetry(
+				DEFAULT_BLOCK_RANGE,
+				initialBlock,
+				initialEndBlock,
+				0
+			)
 		},
 		enabled
 	})
