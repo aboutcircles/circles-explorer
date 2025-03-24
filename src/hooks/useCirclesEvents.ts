@@ -3,8 +3,7 @@ import { useCallback, useEffect, useMemo } from 'react'
 
 import { avatarFields } from 'constants/avatarFields'
 import { ONE } from 'constants/common'
-import { DEFAULT_BLOCK_RANGE } from 'constants/blockRange'
-import { useBlockNumber } from 'hooks/useBlockNumber'
+import { useBlockNumber } from 'services/viemClient'
 import { useProfiles } from 'hooks/useProfiles'
 import {
 	useFetchCirclesEventsInfinite,
@@ -13,24 +12,16 @@ import {
 import logger from 'services/logger'
 import { useFilterStore } from 'stores/useFilterStore'
 import type { Event } from 'types/events'
+import { useStartBlock } from './useStartBlock'
 
 export const useCirclesEvents = () => {
 	const eventTypes = useFilterStore.use.eventTypes()
 	const search = useFilterStore.use.search()
 	const updateEventTypesAmount = useFilterStore.use.updateEventTypesAmount()
-	const startBlock = useFilterStore.use.startBlock()
+	const { currentStartBlock } = useStartBlock()
 	const updateStartBlock = useFilterStore.use.updateStartBlock()
 
 	const blockNumber = useBlockNumber()
-
-	// Initialize block range when block number is available and startBlock is not set
-	useEffect(() => {
-		if (blockNumber && startBlock === 0) {
-			// Start from the latest block and go back by DEFAULT_BLOCK_RANGE
-			const newStartBlock = Math.max(0, blockNumber - DEFAULT_BLOCK_RANGE)
-			updateStartBlock(newStartBlock)
-		}
-	}, [blockNumber, startBlock, updateStartBlock])
 
 	// Use the infinite query that automatically fetches and merges pages
 	const {
@@ -40,8 +31,8 @@ export const useCirclesEvents = () => {
 		fetchNextPage,
 		hasNextPage
 	} = useFetchCirclesEventsInfinite(
-		startBlock,
-		Boolean(blockNumber) && startBlock > 0,
+		currentStartBlock,
+		Boolean(blockNumber),
 		!search,
 		search
 	)
@@ -86,28 +77,24 @@ export const useCirclesEvents = () => {
 		updateEventTypesAmount(mergedEventTypes)
 	}, [data, updateEventTypesAmount])
 
-	// Extract the latest finalStartBlock from the last page
-	useEffect(() => {
-		if (!data) return
-
-		// Type-safe access to pages
-		const { pages } = data as unknown as EventsInfiniteData
-
-		if (pages.length === 0) return
-
-		// Get the latest page
-		const lastPage = pages[pages.length - ONE]
-
-		if (lastPage.finalStartBlock) updateStartBlock(lastPage.finalStartBlock)
-	}, [updateStartBlock, data, startBlock])
-
 	// Load more events by fetching the next page
-	const loadMoreEvents = useCallback(() => {
+	const loadMoreEvents = useCallback(async () => {
 		if (isLoadingMore || !hasNextPage) return
 
 		logger.log('[hooks][useCirclesEvents] Loading more events')
 
-		void fetchNextPage()
+		const result = await fetchNextPage()
+		const nextPageData: EventsInfiniteData | undefined =
+			result.data as unknown as EventsInfiniteData
+
+		// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+		if (!nextPageData) return
+
+		const { finalStartBlock } =
+			nextPageData.pages[nextPageData.pages.length - ONE]
+
+		updateStartBlock(finalStartBlock)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [fetchNextPage, hasNextPage, isLoadingMore])
 
 	// Filter events by selected event types

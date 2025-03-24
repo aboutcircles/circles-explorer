@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react'
 import type { CirclesEventType } from '@circles-sdk/data'
 import type {
 	QueryClient,
@@ -7,17 +8,17 @@ import type {
 } from '@tanstack/react-query'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { useMemo } from 'react'
 import { type Address, type Hex, hexToNumber, isAddress, isHash } from 'viem'
+import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
+import { useFilterStore } from 'stores/useFilterStore'
+import type { CirclesEventsResponse, Event } from 'types/events'
 import {
 	DEFAULT_BLOCK_RANGE,
 	MAX_BLOCK_RANGE,
 	MAX_RETRY_COUNT,
 	RANGE_MULTIPLIER,
 	RETRY_INCREMENT
-} from '../constants/blockRange'
-import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from '../constants/common'
-import type { CirclesEventsResponse, Event } from '../types/events'
+} from 'constants/blockRange'
 import { circlesData } from './circlesData'
 import logger from './logger'
 
@@ -63,47 +64,46 @@ const watchEventUpdates = async (
 		? circlesData.subscribeToEvents(address as Address)
 		: circlesData.subscribeToEvents())
 
+	console.log('subsctibe')
 	avatarEvents.subscribe((event) => {
 		const key = getEventKey(
 			event.transactionHash ?? `${event.blockNumber}-${event.transactionIndex}`,
 			event.logIndex
 		)
 
-		queryClient.setQueryData(
-			queryKey,
-			(cacheData?: {
-				events: Event[]
-				eventTypesAmount: Map<CirclesEventType, number>
-			}) => {
-				if (!cacheData)
-					return [
-						{
-							events: [event]
-						}
-					]
+		queryClient.setQueryData(queryKey, (cacheData?: EventsInfiniteData) => {
+			if (!cacheData)
+				return [
+					{
+						events: [event]
+					}
+				]
 
-				const updatedData = [...cacheData.events]
+			console.log({ cacheData })
 
-				const eventIndex = updatedData.findIndex(
-					(cacheEvent) => cacheEvent.key === key
-				)
+			const updatedData = [
+				...cacheData.pages[cacheData.pages.length - ONE].events
+			]
 
-				if (eventIndex === MINUS_ONE) {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-expect-error
-					updatedData.unshift({
-						...event,
-						key,
-						event: event.$event
-					})
-				}
+			const eventIndex = updatedData.findIndex(
+				(cacheEvent) => cacheEvent.key === key
+			)
 
-				return {
-					...cacheData,
-					events: updatedData
-				}
+			if (eventIndex === MINUS_ONE) {
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-expect-error
+				updatedData.unshift({
+					...event,
+					key,
+					event: event.$event
+				})
 			}
-		)
+
+			return {
+				...cacheData,
+				events: updatedData
+			}
+		})
 	})
 }
 
@@ -300,6 +300,18 @@ const fetchEventsPage = async ({
 
 // Infinite query for circles events
 const CIRCLES_EVENTS_INFINITE_QUERY_KEY = 'circlesEventsInfinite'
+
+export const useClearEventsCache = () => {
+	const search = useFilterStore.use.search()
+	const queryClient: QueryClient = useQueryClient()
+
+	return useCallback(() => {
+		queryClient.removeQueries({
+			queryKey: [CIRCLES_EVENTS_INFINITE_QUERY_KEY, search]
+		})
+	}, [search, queryClient])
+}
+
 export const useFetchCirclesEventsInfinite = (
 	initialBlock: number,
 	enabled: boolean,

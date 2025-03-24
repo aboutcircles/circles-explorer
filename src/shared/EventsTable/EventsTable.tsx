@@ -11,8 +11,8 @@ import { useRenderCell } from './useRenderCell'
 import { VirtualizedEventCards } from './VirtualizedEventCards'
 
 // todo:
-// - add clear startBlock button
-// - check if double watch happening
+// - check if double watch happening (happens, fix it) + update cached data update from subscription
+// - check if watch unsubscribing after query changed
 
 // todo:
 // write documentation how it works (with some specific details on other things)
@@ -67,6 +67,7 @@ export function EventsTable(): ReactElement {
 				color='primary'
 				isLoading={isLoadingMore}
 				isDisabled={isLoadingMore || !hasMoreEvents}
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises
 				onPressEnd={loadMoreEvents}
 			>
 				{isLoadingMore ? 'Loading...' : 'Load More'}
