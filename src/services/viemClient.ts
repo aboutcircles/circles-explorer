@@ -55,3 +55,13 @@ export const useCrcV1TokenStopped = (tokenAddress: Address): UseQueryResult =>
 		},
 		enabled: Boolean(tokenAddress)
 	})
+
+// query
+export const useBlockNumber = (): number => {
+	const { data } = useQuery({
+		queryKey: ['block_number'],
+		queryFn: async () => viemClient.getBlockNumber()
+	})
+
+	return Number(data)
+}

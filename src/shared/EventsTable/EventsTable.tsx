@@ -1,21 +1,22 @@
-import { Pagination } from '@nextui-org/react'
+import { Button } from '@nextui-org/react'
 import type { ReactElement } from 'react'
-import { useState } from 'react'
 
 import type { Column, Row } from 'components/VirtualizedTable'
 import { VirtualizedTable } from 'components/VirtualizedTable'
-import { ONE } from 'constants/common'
 import useBreakpoint from 'hooks/useBreakpoint'
 import { useCirclesEvents } from 'hooks/useCirclesEvents'
-import { useFilterStore } from 'stores/useFilterStore'
 
-import { Periods } from './Periods'
 import { TotalLabel } from './TotalLabel'
 import { useRenderCell } from './useRenderCell'
 import { VirtualizedEventCards } from './VirtualizedEventCards'
 
-// each page - 1h/12h/1d (filtered by amount of blocks)
-const TOTAL_PAGES = 30
+// todo:
+// write documentation how it works (with some specific details on other things)
+// infinite scroll (fetching events)
+// fetching profiles
+// virtualized table
+// virtualized event cards (mobile)
+// filters
 
 const columns: Column[] = [
 	{
@@ -44,31 +45,31 @@ const columns: Column[] = [
 	}
 ]
 
-export function EventsTable({
-	address
-}: {
-	address: string | null
-}): ReactElement {
-	const [page, setPage] = useState<number>(ONE)
-	const period = useFilterStore.use.period()
-
-	const { events, isEventsLoading, dateRange } = useCirclesEvents(page)
+export function EventsTable(): ReactElement {
+	const {
+		events,
+		isEventsLoading,
+		isLoadingMore,
+		loadMoreEvents,
+		hasMoreEvents
+	} = useCirclesEvents()
 
 	const renderCell = useRenderCell()
-
-	const pagination = (
-		<Pagination
-			isCompact
-			showControls
-			showShadow
-			color='primary'
-			page={page}
-			total={TOTAL_PAGES}
-			onChange={(page_) => setPage(page_)}
-		/>
-	)
-
 	const { isSmScreen } = useBreakpoint()
+
+	const loadMoreButton = (
+		<div className='my-4 flex justify-center'>
+			<Button
+				color='primary'
+				isLoading={isLoadingMore}
+				isDisabled={isLoadingMore || !hasMoreEvents}
+				// eslint-disable-next-line @typescript-eslint/no-misused-promises
+				onPressEnd={loadMoreEvents}
+			>
+				{isLoadingMore ? 'Loading...' : 'Load More'}
+			</Button>
+		</div>
+	)
 
 	return (
 		<>
@@ -77,24 +78,21 @@ export function EventsTable({
 					<VirtualizedTable
 						ariaLabel='Circles Events'
 						columns={columns}
-						rows={isEventsLoading ? [] : (events as unknown as Row[])}
+						rows={
+							isEventsLoading && events.length === 0
+								? []
+								: (events as unknown as Row[])
+						}
 						renderCell={renderCell}
-						isLoading={isEventsLoading}
+						isLoading={events.length === 0 && isEventsLoading}
 						topContent={
 							<div className='flex w-full justify-between'>
 								<div className='flex flex-row'>
-									<Periods address={address} />
-
-									<TotalLabel
-										eventsLength={events.length}
-										dateRange={dateRange}
-										period={period}
-									/>
+									<TotalLabel eventsLength={events.length} />
 								</div>
-
-								{pagination}
 							</div>
 						}
+						bottomContent={loadMoreButton}
 					/>
 				</div>
 			) : null}
@@ -103,15 +101,7 @@ export function EventsTable({
 				<div className='mb-9'>
 					<div className='flex flex-col items-center justify-center'>
 						<div className='mb-2'>
-							<Periods address={address} />
-						</div>
-
-						<div className='mb-2'>
-							<TotalLabel
-								eventsLength={events.length}
-								dateRange={dateRange}
-								period={period}
-							/>
+							<TotalLabel eventsLength={events.length} />
 						</div>
 
 						<VirtualizedEventCards
@@ -121,7 +111,7 @@ export function EventsTable({
 							height={500}
 						/>
 
-						<div className='fixed bottom-2 z-10'>{pagination}</div>
+						<div className='mt-4'>{loadMoreButton}</div>
 					</div>
 				</div>
 			)}

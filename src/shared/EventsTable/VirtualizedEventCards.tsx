@@ -14,6 +14,7 @@ interface VirtualizedEventCardsProperties {
 	renderCell: (row: Row, columnKey: Key) => RenderCellReturnType
 	isLoading?: boolean
 	height?: number
+	onLoadMore?: () => void
 }
 
 // Estimated height of each card
@@ -25,14 +26,16 @@ export function VirtualizedEventCards({
 	events,
 	renderCell,
 	isLoading = false,
-	height = VIRTUALIZATION.DEFAULT_CONTAINER_HEIGHT
+	height = VIRTUALIZATION.DEFAULT_CONTAINER_HEIGHT,
+	onLoadMore
 }: VirtualizedEventCardsProperties): ReactElement {
 	const containerReference = useRef<HTMLDivElement>(null)
 
 	const { virtualItems, paddingTop, paddingBottom } = useVirtualScroll({
 		containerRef: containerReference,
 		itemCount: events.length,
-		estimateSize
+		estimateSize,
+		onReachEnd: onLoadMore
 	})
 
 	return (
@@ -118,5 +121,6 @@ export function VirtualizedEventCards({
 
 VirtualizedEventCards.defaultProps = {
 	height: VIRTUALIZATION.DEFAULT_CONTAINER_HEIGHT,
-	isLoading: false
+	isLoading: false,
+	onLoadMore: undefined
 }
