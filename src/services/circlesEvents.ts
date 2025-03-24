@@ -1,17 +1,12 @@
-import { useCallback, useMemo } from 'react'
 import type { CirclesEventType } from '@circles-sdk/data'
 import type {
+	InfiniteData,
 	QueryClient,
 	QueryKey,
-	UseInfiniteQueryResult,
-	InfiniteData
+	UseInfiniteQueryResult
 } from '@tanstack/react-query'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { type Address, type Hex, hexToNumber, isAddress, isHash } from 'viem'
-import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
-import { useFilterStore } from 'stores/useFilterStore'
-import type { CirclesEventsResponse, Event } from 'types/events'
 import {
 	DEFAULT_BLOCK_RANGE,
 	MAX_BLOCK_RANGE,
@@ -19,6 +14,11 @@ import {
 	RANGE_MULTIPLIER,
 	RETRY_INCREMENT
 } from 'constants/blockRange'
+import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useFilterStore } from 'stores/useFilterStore'
+import type { CirclesEventsResponse, Event } from 'types/events'
+import { type Address, type Hex, hexToNumber, isAddress, isHash } from 'viem'
 import { circlesData } from './circlesData'
 import logger from './logger'
 
@@ -64,35 +64,25 @@ const watchEventUpdates = async (
 		? circlesData.subscribeToEvents(address as Address)
 		: circlesData.subscribeToEvents())
 
-	console.log('subsctibe')
-	avatarEvents.subscribe((event) => {
+	return avatarEvents.subscribe((event) => {
 		const key = getEventKey(
 			event.transactionHash ?? `${event.blockNumber}-${event.transactionIndex}`,
 			event.logIndex
 		)
 
 		queryClient.setQueryData(queryKey, (cacheData?: EventsInfiniteData) => {
-			if (!cacheData)
-				return [
-					{
-						events: [event]
-					}
-				]
+			if (!cacheData) return null
 
-			console.log({ cacheData })
+			const updatedEventsData = [...cacheData.pages[0].events]
 
-			const updatedData = [
-				...cacheData.pages[cacheData.pages.length - ONE].events
-			]
-
-			const eventIndex = updatedData.findIndex(
+			const eventIndex = updatedEventsData.findIndex(
 				(cacheEvent) => cacheEvent.key === key
 			)
 
 			if (eventIndex === MINUS_ONE) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-expect-error
-				updatedData.unshift({
+				updatedEventsData.unshift({
 					...event,
 					key,
 					event: event.$event
@@ -101,7 +91,13 @@ const watchEventUpdates = async (
 
 			return {
 				...cacheData,
-				events: updatedData
+				pages: [
+					{
+						...cacheData.pages[0],
+						events: updatedEventsData
+					},
+					...cacheData.pages
+				]
 			}
 		})
 	})
@@ -195,15 +191,9 @@ const fetchEventsPage = async ({
 	startBlock,
 	endBlock,
 	range,
-	search,
-	watch,
-	queryKey,
-	queryClient
+	search
 }: PageParameter & {
 	search: string | null
-	watch: boolean
-	queryKey: QueryKey
-	queryClient: QueryClient
 }): Promise<PageResult> => {
 	const fetchWithRetry = async (
 		currentRange: number,
@@ -232,15 +222,6 @@ const fetchEventsPage = async ({
 
 		// Success case: found events
 		if (newEventCount > 0) {
-			// If we found events, set up watch if needed
-			if (watch) {
-				void watchEventUpdates(
-					queryKey,
-					queryClient,
-					isAddress(search ?? '') ? search : null
-				)
-			}
-
 			// Calculate next cursor for pagination
 			const nextStartBlock = Math.max(0, currentStartBlock - currentRange)
 			const nextCursor =
@@ -319,12 +300,64 @@ export const useFetchCirclesEventsInfinite = (
 	search: string | null
 ): UseInfiniteQueryResult<PageResult> => {
 	const queryClient: QueryClient = useQueryClient()
+	const subscriptionReference = useRef<(() => void) | null>(null)
 
 	// Query key only depends on search parameter
 	const queryKey = useMemo(
 		() => [CIRCLES_EVENTS_INFINITE_QUERY_KEY, search],
 		[search]
 	)
+
+	// Set up subscription when query is enabled and watch is true
+	useEffect(() => {
+		// Only set up subscription if enabled and watch is true
+		if (!enabled || !watch) {
+			return () => {}
+		}
+
+		// Clean up any existing subscription first
+		if (subscriptionReference.current) {
+			subscriptionReference.current()
+			subscriptionReference.current = null
+		}
+
+		// Flag to track if effect is still active
+		let isActive = true
+
+		// Setup subscription
+		const setupSubscription = async () => {
+			try {
+				const address = isAddress(search ?? '') ? search : null
+				const cleanup = await watchEventUpdates(queryKey, queryClient, address)
+
+				// Store cleanup function only if effect is still active
+				if (isActive) {
+					subscriptionReference.current = cleanup
+				} else {
+					// If effect was cleaned up during async operation, call cleanup directly
+					cleanup()
+				}
+			} catch (error) {
+				logger.error(
+					'[service][circles] Failed to set up event subscription',
+					error
+				)
+			}
+		}
+
+		// Start subscription setup
+		void setupSubscription()
+
+		// Clean up function
+		return function cleanup() {
+			isActive = false
+			if (subscriptionReference.current) {
+				const unsubscribe = subscriptionReference.current
+				subscriptionReference.current = null
+				unsubscribe()
+			}
+		}
+	}, [queryKey, queryClient, enabled, watch, search])
 
 	return useInfiniteQuery<
 		PageResult,
@@ -337,10 +370,7 @@ export const useFetchCirclesEventsInfinite = (
 		queryFn: async ({ pageParam }) =>
 			fetchEventsPage({
 				...pageParam,
-				search,
-				watch,
-				queryKey,
-				queryClient
+				search
 			}),
 		initialPageParam: {
 			startBlock: initialBlock,

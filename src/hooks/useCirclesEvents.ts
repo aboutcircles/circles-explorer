@@ -1,5 +1,6 @@
 import type { CirclesEventType } from '@circles-sdk/data'
 import { useCallback, useEffect, useMemo } from 'react'
+import { isAddress } from 'viem'
 
 import { avatarFields } from 'constants/avatarFields'
 import { ONE } from 'constants/common'
@@ -33,7 +34,7 @@ export const useCirclesEvents = () => {
 	} = useFetchCirclesEventsInfinite(
 		currentStartBlock,
 		Boolean(blockNumber),
-		!search,
+		!search || isAddress(search),
 		search
 	)
 
@@ -53,10 +54,7 @@ export const useCirclesEvents = () => {
 			}
 		}
 
-		// Convert to array and sort by timestamp
-		return [...eventMap.values()].sort(
-			(a, b) => Number(b.timestamp) - Number(a.timestamp)
-		)
+		return [...eventMap.values()]
 	}, [data])
 
 	// Merge all eventTypesAmount maps from all pages

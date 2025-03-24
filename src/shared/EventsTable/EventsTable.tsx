@@ -11,10 +11,6 @@ import { useRenderCell } from './useRenderCell'
 import { VirtualizedEventCards } from './VirtualizedEventCards'
 
 // todo:
-// - check if double watch happening (happens, fix it) + update cached data update from subscription
-// - check if watch unsubscribing after query changed
-
-// todo:
 // write documentation how it works (with some specific details on other things)
 // infinite scroll (fetching events)
 // fetching profiles
