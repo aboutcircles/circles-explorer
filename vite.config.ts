@@ -1,11 +1,34 @@
 /// <reference types="vitest" />
 import eslintPlugin from '@nabla/vite-plugin-eslint'
 import react from '@vitejs/plugin-react'
+import { visualizer } from 'rollup-plugin-visualizer'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig(({ mode }) => ({
+	build: {
+		rollupOptions: {
+			output: {
+				manualChunks: {
+					'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+					'ui-vendor': ['@nextui-org/react', 'framer-motion'],
+					'data-vendor': [
+						'@tanstack/react-query',
+						'@tanstack/react-table',
+						'@tanstack/react-virtual'
+					],
+					'eth-vendor': ['ethers', 'viem'],
+					'circles-sdk': [
+						'@circles-sdk/adapter-ethers',
+						'@circles-sdk/data',
+						'@circles-sdk/profiles'
+					],
+					'rsuite-vendor': ['rsuite']
+				}
+			}
+		}
+	},
 	test: {
 		css: false,
 		include: ['src/**/__tests__/*'],
@@ -32,6 +55,13 @@ export default defineConfig(({ mode }) => ({
 			? []
 			: [
 					eslintPlugin(),
+					mode === 'analyze' &&
+						visualizer({
+							filename: 'stats.html',
+							open: true,
+							gzipSize: true,
+							brotliSize: true
+						}),
 					VitePWA({
 						registerType: 'autoUpdate',
 						includeAssets: [
@@ -58,6 +88,6 @@ export default defineConfig(({ mode }) => ({
 							]
 						}
 					})
-			  ])
+				])
 	]
 }))
