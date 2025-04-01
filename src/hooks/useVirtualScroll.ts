@@ -4,11 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { VIRTUALIZATION } from 'constants/virtualization'
 
-interface VirtualScrollOptions<T extends HTMLElement> {
+interface VirtualScrollOptions {
 	/**
 	 * Reference to the container element
 	 */
-	containerRef: React.RefObject<T>
+	containerRef: React.RefObject<HTMLElement>
 	/**
 	 * Number of items to virtualize
 	 */
@@ -25,6 +25,14 @@ interface VirtualScrollOptions<T extends HTMLElement> {
 		max?: number
 		threshold?: number
 	}
+	/**
+	 * Optional callback for when the user scrolls to the end
+	 */
+	onReachEnd?: () => void
+	/**
+	 * Optional threshold in pixels for when to trigger the onReachEnd callback
+	 */
+	endThreshold?: number
 }
 
 interface VirtualScrollResult {
@@ -51,14 +59,16 @@ interface VirtualScrollResult {
 }
 
 /**
- * Hook to handle virtualized scrolling
+ * Hook to handle virtualized scrolling with infinite scroll support
  */
-export function useVirtualScroll<T extends HTMLElement>({
+export function useVirtualScroll({
 	containerRef,
 	itemCount,
 	estimateSize,
-	overscanConfig
-}: VirtualScrollOptions<T>): VirtualScrollResult {
+	overscanConfig,
+	onReachEnd,
+	endThreshold = VIRTUALIZATION.OVERSCAN.THRESHOLD
+}: VirtualScrollOptions): VirtualScrollResult {
 	// Default overscan values
 	const minOverscan = overscanConfig?.min ?? VIRTUALIZATION.OVERSCAN.MIN
 	const maxOverscan = overscanConfig?.max ?? VIRTUALIZATION.OVERSCAN.MAX
@@ -72,10 +82,20 @@ export function useVirtualScroll<T extends HTMLElement>({
 		position: 0
 	})
 
+	// Initialize virtualizer
+	const virtualizer = useVirtualizer({
+		count: itemCount,
+		getScrollElement: () => containerRef.current,
+		estimateSize,
+		overscan: overscanCount,
+		scrollMargin: 0,
+		scrollPaddingEnd: endThreshold
+	})
+
 	// Dynamic overscan based on scroll speed
 	const handleScroll = useCallback(
 		(event: Event) => {
-			const target = event.target as T
+			const target = event.target as HTMLElement
 			const currentTime = performance.now()
 			const currentPosition = target.scrollTop
 
@@ -107,13 +127,26 @@ export function useVirtualScroll<T extends HTMLElement>({
 		return () => element.removeEventListener('scroll', handleScroll)
 	}, [containerRef, handleScroll])
 
-	// Initialize virtualizer
-	const virtualizer = useVirtualizer({
-		count: itemCount,
-		getScrollElement: () => containerRef.current,
-		estimateSize,
-		overscan: overscanCount
-	})
+	// Set up infinite scroll using scroll event
+	useEffect(() => {
+		if (!onReachEnd || !containerRef.current) return void 0
+
+		const element = containerRef.current
+
+		const handleInfiniteScroll = () => {
+			const { scrollTop, scrollHeight, clientHeight } = element
+			// If we're within endThreshold pixels of the end, trigger the callback
+			if (
+				scrollHeight - scrollTop - clientHeight < endThreshold &&
+				itemCount > 0
+			) {
+				onReachEnd()
+			}
+		}
+
+		element.addEventListener('scroll', handleInfiniteScroll)
+		return () => element.removeEventListener('scroll', handleInfiniteScroll)
+	}, [containerRef, itemCount, onReachEnd, endThreshold])
 
 	// Calculate padding values
 	const virtualItems = virtualizer.getVirtualItems()

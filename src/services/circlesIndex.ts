@@ -1,24 +1,16 @@
-import type { CirclesEventType } from '@circles-sdk/data'
 import type {
 	Profile as SDKProfile,
 	SearchResultProfile
 } from '@circles-sdk/profiles'
-import type {
-	QueryClient,
-	QueryKey,
-	UseQueryResult
-} from '@tanstack/react-query'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import type { UseQueryResult } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
-import { useMemo } from 'react'
-import type { Address, Hex } from 'viem'
-import { hexToNumber, isAddress, isHash } from 'viem'
+import type { Address } from 'viem'
 
-import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
-import { circlesData, circlesProfiles } from 'services/circlesData'
+import { CIRCLES_INDEXER_URL, ONE } from 'constants/common'
+import { circlesProfiles } from 'services/circlesData'
 import logger from 'services/logger'
 import { useStatsStore } from 'stores/useStatsStore'
-import type { CirclesEventsResponse, Event } from 'types/events'
 import type { StatsResult } from 'types/stats'
 
 interface TableResponse {
@@ -93,169 +85,6 @@ async function makeCirclesQuery(
 }
 
 export type Profile = SearchResultProfile
-
-const getEventKey = (transactionHash: string, logIndex: number) =>
-	`${transactionHash}-${logIndex}`
-
-const defineFiltersFromSearch = (search: string | null) => {
-	if (!search || isAddress(search)) return null
-
-	if (isHash(search)) {
-		return [
-			{
-				Type: 'FilterPredicate',
-				FilterType: 'In',
-				Column: 'transactionHash',
-				Value: [search]
-			}
-		]
-	}
-
-	// todo: fix this, getting server error now
-	if (Number.isInteger(Number(search))) {
-		return [
-			{
-				Type: 'FilterPredicate',
-				FilterType: 'In',
-				Column: 'blockNumber',
-				Value: [Number(search)]
-			}
-		]
-	}
-
-	return null
-}
-
-// watcher
-const watchEventUpdates = async (
-	queryKey: QueryKey,
-	queryClient: QueryClient,
-	address: string | null
-) => {
-	const avatarEvents = await (address
-		? circlesData.subscribeToEvents(address as Address)
-		: circlesData.subscribeToEvents())
-
-	avatarEvents.subscribe((event) => {
-		const key = getEventKey(
-			event.transactionHash ?? `${event.blockNumber}-${event.transactionIndex}`,
-			event.logIndex
-		)
-
-		queryClient.setQueryData(
-			queryKey,
-			(cacheData?: {
-				events: Event[]
-				eventTypesAmount: Map<CirclesEventType, number>
-			}) => {
-				if (!cacheData)
-					return [
-						{
-							events: [event]
-						}
-					]
-
-				const updatedData = [...cacheData.events]
-
-				const eventIndex = updatedData.findIndex(
-					(cacheEvent) => cacheEvent.key === key
-				)
-
-				if (eventIndex === MINUS_ONE) {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-					// @ts-expect-error
-					updatedData.unshift({
-						...event,
-						key,
-						event: event.$event
-					})
-				}
-
-				return {
-					...cacheData,
-					events: updatedData
-				}
-			}
-		)
-	})
-}
-
-// query
-const CIRCLES_EVENTS_QUERY_KEY = 'circlesEvents'
-export const useFetchCirclesEvents = (
-	startBlock: number,
-	endBlock: number,
-	enabled: boolean,
-	watch: boolean,
-	search: string | null
-): UseQueryResult<{
-	events: Event[]
-	eventTypesAmount: Map<CirclesEventType, number>
-}> => {
-	const queryClient: QueryClient = useQueryClient()
-
-	const queryKey = useMemo(
-		() => [CIRCLES_EVENTS_QUERY_KEY, startBlock, endBlock, search],
-		[startBlock, endBlock, search]
-	)
-
-	return useQuery({
-		queryKey,
-		queryFn: async () => {
-			try {
-				const address = isAddress(search ?? '') ? search : null
-				const filters = address ? null : defineFiltersFromSearch(search)
-
-				const response = await axios.post<CirclesEventsResponse>(
-					CIRCLES_INDEXER_URL,
-					{
-						method: 'circles_events',
-						params: filters
-							? [null, 0, null, null, filters]
-							: [address, startBlock, endBlock]
-					}
-				)
-
-				if (watch) {
-					void watchEventUpdates(queryKey, queryClient, address)
-				}
-
-				const eventTypesAmount = new Map<CirclesEventType, number>()
-				const events = response.data.result.map((event) => {
-					eventTypesAmount.set(
-						event.event,
-						(eventTypesAmount.get(event.event) ?? 0) + ONE
-					)
-
-					return {
-						...event,
-						...event.values,
-						blockNumber: hexToNumber(event.values.blockNumber as Hex),
-						timestamp: hexToNumber(event.values.timestamp as Hex),
-						logIndex: hexToNumber(event.values.logIndex as Hex),
-						transactionIndex: hexToNumber(event.values.transactionIndex as Hex),
-						values: null,
-						key: getEventKey(
-							event.values.transactionHash,
-							Number(event.values.logIndex)
-						)
-					}
-				})
-
-				logger.log(
-					'[service][circles] queried circles events',
-					`Event count: ${events.length}`
-				)
-
-				return { events, eventTypesAmount }
-			} catch (error) {
-				logger.error('[service][circles] Failed to query circles events', error)
-				throw new Error('Failed to query circles events')
-			}
-		},
-		enabled
-	})
-}
 
 // query
 const CIRCLES_STATS_QUERY_KEY = 'circlesStats'

@@ -34,11 +34,11 @@ export type EventType =
 	| 'CrcV2_WithdrawInflationary'
 
 export interface BaseEventValues {
-	blockNumber: string
-	logIndex: string
-	timestamp: string
+	blockNumber: number | string
+	logIndex: number | string
+	timestamp: number | string
 	transactionHash: string
-	transactionIndex: string
+	transactionIndex: number | string
 }
 
 export interface HubTransferEventValues {
