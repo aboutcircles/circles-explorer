@@ -47,7 +47,7 @@ const updateURLWithPush = (state: State) => {
 const updateURL = (state: State) => {
 	const url = new URL(window.location.href)
 
-	if (state.eventTypes.size < EVENTS.length) {
+	if (state.eventTypes.size < EVENTS.length && state.eventTypes.size > 0) {
 		url.searchParams.set('filter', [...state.eventTypes].join(','))
 	} else {
 		url.searchParams.delete('filter')
@@ -131,10 +131,13 @@ const useFilterStoreBase = create<Action & State>((set, get) => ({
 					? new Set<CirclesEventType>()
 					: new Set(EVENTS)
 
-			return {
+			const newState = {
 				...state,
 				eventTypes: newEventTypes
 			}
+
+			updateURL(newState)
+			return newState
 		}),
 	updateSearch: (search: string) => {
 		set((state) => {
