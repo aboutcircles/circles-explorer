@@ -5,7 +5,8 @@ export const V1_EVENTS: CirclesEventType[] = [
 	'CrcV1_Transfer',
 	'CrcV1_Trust',
 	'CrcV1_OrganizationSignup',
-	'CrcV1_Signup'
+	'CrcV1_Signup',
+	'CrcV1_TransferSummary'
 ]
 
 export const V2_EVENTS: CirclesEventType[] = [
@@ -38,12 +39,27 @@ export const V2_EVENTS: CirclesEventType[] = [
 	'CrcV2_InviteHuman',
 	'CrcV2_DiscountCost',
 	'CrcV2_CollateralLockedSingle',
-	'CrcV2_CollateralLockedBatch'
+	'CrcV2_CollateralLockedBatch',
+	'CrcV2_TransferSummary',
+	'CrcV2_FlowEdgesScopeLastEnded',
+	'CrcV2_FlowEdgesScopeSingleStarted'
+]
+
+export const SAFE_EVENTS: CirclesEventType[] = [
+	'Safe_AddedOwner',
+	'Safe_ProxyCreation',
+	'Safe_RemovedOwner',
+	'Safe_SafeSetup'
 ]
 
 export const UNKNOWN_EVENTS: CirclesEventType[] = ['Crc_UnknownEvent']
 
-export const EVENTS = [...V1_EVENTS, ...V2_EVENTS, ...UNKNOWN_EVENTS]
+export const EVENTS = [
+	...V1_EVENTS,
+	...V2_EVENTS,
+	...SAFE_EVENTS,
+	...UNKNOWN_EVENTS
+]
 
 export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV1_HubTransfer: 'Hub Transfer',
@@ -51,6 +67,7 @@ export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV1_Trust: 'Trust',
 	CrcV1_OrganizationSignup: 'Organization Signup',
 	CrcV1_Signup: 'Signup',
+	CrcV1_TransferSummary: 'Transfer Summary',
 
 	CrcV2_ApprovalForAll: 'Approval For All',
 	CrcV2_CidV0: 'Cid V0',
@@ -82,6 +99,14 @@ export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV2_DiscountCost: 'Discount Cost',
 	CrcV2_CollateralLockedSingle: 'Collateral Locked Single',
 	CrcV2_CollateralLockedBatch: 'Collateral Locked Batch',
+	CrcV2_TransferSummary: 'Transfer Summary',
+	CrcV2_FlowEdgesScopeLastEnded: 'Flow Edges Scope Last Ended',
+	CrcV2_FlowEdgesScopeSingleStarted: 'Flow Edges Scope Single Started',
+
+	Safe_AddedOwner: 'Safe Added Owner',
+	Safe_ProxyCreation: 'Safe Proxy Creation',
+	Safe_RemovedOwner: 'Safe Removed Owner',
+	Safe_SafeSetup: 'Safe Setup',
 
 	Crc_UnknownEvent: 'Unknown Event'
 }

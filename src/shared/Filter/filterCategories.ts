@@ -1,6 +1,11 @@
 import type { CirclesEventType } from '@circles-sdk/data'
 
-import { V1_EVENTS, V2_EVENTS, UNKNOWN_EVENTS } from 'constants/events'
+import {
+	V1_EVENTS,
+	V2_EVENTS,
+	SAFE_EVENTS,
+	UNKNOWN_EVENTS
+} from 'constants/events'
 
 export interface FilterCategory {
 	label: string
@@ -47,7 +52,7 @@ export const FILTER_CATEGORIES: FilterCategory[] = [
 	{
 		label: 'Safe',
 		key: 'safe',
-		events: []
+		events: SAFE_EVENTS
 	},
 	{
 		label: 'Unknown',

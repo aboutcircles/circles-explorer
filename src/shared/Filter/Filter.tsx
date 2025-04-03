@@ -29,6 +29,8 @@ export function Filter({
 		[eventTypesAmount]
 	)
 
+	console.log({ eventTypesAmount })
+
 	const hasAnyEvents = filterOptions.length > 0
 
 	const selectedValues = useMemo(() => {
