@@ -98,7 +98,7 @@ export function VirtualizedTable({
 					role='grid'
 					aria-label={ariaLabel}
 				>
-					<thead className='sticky top-0 z-50 border-b border-gray-200 bg-gray-50'>
+					<thead className='sticky top-0 z-20 border-b border-gray-200 bg-gray-50'>
 						{table.getHeaderGroups().map((headerGroup) => (
 							<tr key={headerGroup.id}>
 								{headerGroup.headers.map((header) => (

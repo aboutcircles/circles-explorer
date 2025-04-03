@@ -74,11 +74,14 @@ const watchEventUpdates = async (
 			if (!cacheData) return null
 
 			const updatedEventsData = [...cacheData.pages[0].events]
+			// eslint-disable-next-line @typescript-eslint/prefer-destructuring
+			const { eventTypesAmount } = cacheData.pages[0]
 
 			const eventIndex = updatedEventsData.findIndex(
 				(cacheEvent) => cacheEvent.key === key
 			)
 
+			// add new event
 			if (eventIndex === MINUS_ONE) {
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-expect-error
@@ -87,6 +90,12 @@ const watchEventUpdates = async (
 					key,
 					event: event.$event
 				})
+
+				// update eventTypesAmount
+				eventTypesAmount.set(
+					event.$event,
+					(eventTypesAmount.get(event.$event) ?? 0) + ONE
+				)
 			}
 
 			return {
@@ -94,9 +103,10 @@ const watchEventUpdates = async (
 				pages: [
 					{
 						...cacheData.pages[0],
-						events: updatedEventsData
+						events: updatedEventsData,
+						eventTypesAmount
 					},
-					...cacheData.pages
+					...cacheData.pages.slice(ONE)
 				]
 			}
 		})
