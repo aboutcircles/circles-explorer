@@ -1,5 +1,8 @@
 import { Button } from '@nextui-org/react'
 import { useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { isAddress } from 'viem'
+import type { Address } from 'viem'
 
 import useBreakpoint from 'hooks/useBreakpoint'
 import { useFilterStore } from 'stores/useFilterStore'
@@ -17,13 +20,21 @@ export function Search({
 }) {
 	const updateSearch = useFilterStore.use.updateSearch()
 	const search = useFilterStore.use.search() ?? ''
+	const navigate = useNavigate()
 
 	const handleSubmit = useCallback(
 		(newSearch: string) => {
-			updateSearch(newSearch)
+			// If search is an address, navigate to the avatar page
+			if (isAddress(newSearch as Address)) {
+				navigate(`/avatar/${newSearch}`)
+			} else {
+				// Otherwise update the search in the filter store
+				updateSearch(newSearch)
+			}
+
 			onSubmit?.()
 		},
-		[onSubmit, updateSearch]
+		[onSubmit, updateSearch, navigate]
 	)
 
 	const { isSmScreen } = useBreakpoint()

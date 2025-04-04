@@ -18,14 +18,6 @@ import { truncateHex } from 'utils/eth'
 
 export const useRenderCell = () => {
 	const updateEventTypes = useFilterStore.use.updateEventTypes()
-	const updateSearch = useFilterStore.use.updateSearch()
-
-	const applyAvatarSearch = useCallback(
-		(address: string) => {
-			updateSearch(address)
-		},
-		[updateSearch]
-	)
 
 	const onEventClick = useCallback(
 		(event: CirclesEventType) => {
@@ -92,13 +84,11 @@ export const useRenderCell = () => {
 							<div className='flex items-center justify-start'>
 								<AvatarAddress
 									address={trusterAddress}
-									onClick={applyAvatarSearch}
 									className='mr-0 md:mr-2'
 								/>
 								{' -> '}
 								<AvatarAddress
 									address={trusteeAddress}
-									onClick={applyAvatarSearch}
 									className='ml-0 md:ml-2'
 								/>
 							</div>
@@ -117,17 +107,9 @@ export const useRenderCell = () => {
 						return (
 							<div className='flex flex-row items-center justify-start md:w-[400px]'>
 								<div className='flex items-center'>
-									<AvatarAddress
-										address={fromAddress}
-										onClick={applyAvatarSearch}
-										className='mr-2'
-									/>
+									<AvatarAddress address={fromAddress} className='mr-2' />
 									{' -> '}
-									<AvatarAddress
-										address={toAddress}
-										onClick={applyAvatarSearch}
-										className='ml-2 mr-2'
-									/>
+									<AvatarAddress address={toAddress} className='ml-2 mr-2' />
 								</div>
 
 								<div>
@@ -149,7 +131,6 @@ export const useRenderCell = () => {
 							<div className='flex flex-row'>
 								<AvatarAddress
 									address={String(item.human)}
-									onClick={applyAvatarSearch}
 									className='ml-0 mr-2'
 								/>
 								<div className='min-w-[100px]'>
@@ -182,7 +163,6 @@ export const useRenderCell = () => {
 										item.account ??
 										item.operator
 								)}
-								onClick={applyAvatarSearch}
 								className='ml-0 mr-2'
 							/>
 						)
@@ -213,6 +193,6 @@ export const useRenderCell = () => {
 				}
 			}
 		},
-		[applyAvatarSearch, onEventClick]
+		[onEventClick]
 	)
 }
