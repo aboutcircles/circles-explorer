@@ -191,7 +191,7 @@ export function SearchBox({
 			{isOpen && nameSearch && searchResults?.length ? (
 				<div
 					ref={dropdownReference}
-					className='absolute left-0 right-0 top-full mt-1 rounded-lg border border-default-200 bg-content1 p-2 shadow-lg'
+					className='absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-default-200 bg-content1 p-2 shadow-lg'
 				>
 					<div className='max-h-[300px] w-full overflow-auto'>
 						{isLoading ? (
