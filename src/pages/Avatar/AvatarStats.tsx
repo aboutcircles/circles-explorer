@@ -1,12 +1,4 @@
-import {
-	Accordion,
-	AccordionItem,
-	Badge,
-	Card,
-	Listbox,
-	ListboxItem,
-	Tooltip
-} from '@nextui-org/react'
+import { Badge, Card, Tooltip } from '@nextui-org/react'
 import { toBigInt } from 'ethers'
 import { useMemo } from 'react'
 import { formatUnits, type Address } from 'viem'
@@ -20,27 +12,8 @@ import {
 } from 'services/circlesIndex'
 import type { CirclesAvatarFromEnvio } from 'services/envio/indexer'
 import { useCrcV1TokenStopped } from 'services/viemClient'
-import { AvatarAddressLink } from 'shared/AvatarAddress'
+import { AvatarAddress } from 'shared/AvatarAddress'
 import { isDeadAddress } from 'utils/eth'
-
-interface TrustStat {
-	label: string
-	arrayField: 'trustsGiven' | 'trustsReceived'
-	addressField: 'trustee_id' | 'truster_id'
-}
-
-const trustStats: TrustStat[] = [
-	{
-		label: 'Trusts given',
-		arrayField: 'trustsGiven',
-		addressField: 'trustee_id'
-	},
-	{
-		label: 'Trusts received',
-		arrayField: 'trustsReceived',
-		addressField: 'truster_id'
-	}
-]
 
 export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 	const { data: crcV2TokenStoppedData } = useFetchCrcV2TokenStopped(avatar.id)
@@ -131,7 +104,7 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 					<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center align-middle'>
 						<b>Invited by: </b>
 						<span className='ml-2 inline'>
-							<AvatarAddressLink
+							<AvatarAddress
 								address={avatar.invitedBy}
 								size='sm'
 								className='inline'
@@ -145,42 +118,6 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 						<b>Avatar type</b>: {avatarType}
 					</Card>
 				) : null}
-			</div>
-
-			<div className='flex flex-wrap justify-center md:justify-start'>
-				{trustStats.map((stat) => (
-					<Card key={stat.label} className='mb-2 mr-2 w-[240px] p-2'>
-						<Accordion>
-							<AccordionItem
-								title={`${stat.label}: ${avatar[stat.arrayField].length}`}
-							>
-								<Listbox
-									className='overflow-auto py-0'
-									variant='light'
-									label={`${stat.label}: ${avatar[stat.arrayField].length}`}
-									isVirtualized
-									virtualization={{
-										// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-										maxListboxHeight: 200,
-										// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-										itemHeight: 40
-									}}
-								>
-									{avatar[stat.arrayField].map((trust) => (
-										<ListboxItem
-											key={trust.truster_id + trust.trustee_id + trust.version}
-											textValue={`(v${trust.version}) - ${trust[stat.addressField]}`}
-										>
-											<div className='flex items-center'>
-												<AvatarAddressLink address={trust[stat.addressField]} />
-											</div>
-										</ListboxItem>
-									))}
-								</Listbox>
-							</AccordionItem>
-						</Accordion>
-					</Card>
-				))}
 			</div>
 		</div>
 	)

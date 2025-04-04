@@ -17,7 +17,7 @@ type BreakpointState = {
 
 export const useBreakpoint = (): BreakpointState => {
 	const [breakpoints, setBreakpoints] = useState<BreakpointState>({
-		isSmScreen: false,
+		isSmScreen: true,
 		isMdScreen: false,
 		isLgScreen: false,
 		isXlScreen: false,
