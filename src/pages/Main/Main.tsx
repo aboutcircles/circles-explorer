@@ -28,7 +28,7 @@ export default function Main(): ReactElement {
 
 	useEffect(() => {
 		if (isSearchAddress) {
-			navigate(`/avatar/${search}`)
+			navigate(`/avatar/${search}/events`)
 		}
 	}, [isSearchAddress, navigate, search])
 

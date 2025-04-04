@@ -1,6 +1,6 @@
 import { Avatar, Code, Tooltip } from '@nextui-org/react'
 import { memo } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
+import { Link as RouterLink, useParams } from 'react-router-dom'
 import { isAddress } from 'viem'
 
 import { useProfiles } from 'hooks/useProfiles'
@@ -31,6 +31,10 @@ function AvatarAddressBase({
 	className = ''
 }: AvatarAddressProperties) {
 	const { getProfile } = useProfiles()
+	const parameters = useParams<{ tab?: string }>()
+
+	// Use current tab or default to 'events'
+	const currentTab = parameters.tab ?? 'events'
 
 	const profile = getProfile(address.toLowerCase())
 
@@ -44,7 +48,10 @@ function AvatarAddressBase({
 		: address
 
 	return (
-		<RouterLink to={`/avatar/${address}`} className='no-underline'>
+		<RouterLink
+			to={`/avatar/${address}/${currentTab}`}
+			className='no-underline'
+		>
 			<Tooltip content={tooltipContent}>
 				<div
 					className={`flex cursor-pointer items-center ${className}`}

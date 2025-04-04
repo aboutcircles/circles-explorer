@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useState, useMemo } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { Tabs, Tab } from '@nextui-org/react'
 import type { Address } from 'viem'
 import { isAddress } from 'viem'
@@ -18,11 +18,34 @@ import { AvatarInfo } from './AvatarInfo'
 import { AvatarStats } from './AvatarStats'
 import { TrustRelations } from './TrustRelations'
 
+// Tab keys must match the URL paths
+const TABS = ['events', 'trust', 'graph'] as const
+type TabKey = (typeof TABS)[number]
+
 export default function Avatar() {
-	const { address } = useParams<{ address: string }>()
+	const { address, tab } = useParams<{ address: string; tab: string }>()
 	const [avatar, setAvatar] = useState<CirclesAvatarFromEnvio>()
 	const { fetchProfiles } = useProfiles()
 	const { isSmScreen } = useBreakpoint()
+	const navigate = useNavigate()
+
+	// Validate tab and default to 'events' if invalid
+	const currentTab = useMemo(
+		() => (TABS.includes(tab as TabKey) ? (tab as TabKey) : 'events'),
+		[tab]
+	)
+
+	// Handle tab change
+	const handleTabChange = (key: React.Key) => {
+		navigate(`/avatar/${address}/${key}`)
+	}
+
+	useEffect(() => {
+		// If tab is invalid, redirect to valid tab
+		if (tab && !TABS.includes(tab as TabKey)) {
+			navigate(`/avatar/${address}/events`, { replace: true })
+		}
+	}, [tab, address, navigate])
 
 	useEffect(() => {
 		const loadAvatarInfo = async (addressToLoad: Address) => {
@@ -71,7 +94,12 @@ export default function Avatar() {
 				{avatar ? <AvatarStats avatar={avatar} /> : null}
 			</div>
 
-			<Tabs aria-label='Avatar tabs' className='mt-4'>
+			<Tabs
+				aria-label='Avatar tabs'
+				className='mt-4'
+				selectedKey={currentTab}
+				onSelectionChange={handleTabChange}
+			>
 				<Tab key='events' title='Events'>
 					{isSmScreen ? (
 						<div>

@@ -24,9 +24,9 @@ export function Search({
 
 	const handleSubmit = useCallback(
 		(newSearch: string) => {
-			// If search is an address, navigate to the avatar page
+			// If search is an address, navigate to the avatar page with events tab
 			if (isAddress(newSearch as Address)) {
-				navigate(`/avatar/${newSearch}`)
+				navigate(`/avatar/${newSearch}/events`)
 			} else {
 				// Otherwise update the search in the filter store
 				updateSearch(newSearch)
