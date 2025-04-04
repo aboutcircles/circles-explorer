@@ -46,7 +46,7 @@ export function TrustRelations({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 						isVirtualized
 						virtualization={{
 							// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-							maxListboxHeight: 300,
+							maxListboxHeight: 400,
 							// eslint-disable-next-line @typescript-eslint/no-magic-numbers
 							itemHeight: 40
 						}}
@@ -58,7 +58,10 @@ export function TrustRelations({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 									textValue={`(v${trust.version}) - ${trust[section.addressField]}`}
 								>
 									<div className='flex items-center'>
-										<AvatarAddress address={trust[section.addressField]} />
+										<AvatarAddress
+											address={trust[section.addressField]}
+											size='md'
+										/>
 									</div>
 								</ListboxItem>
 							))

@@ -42,7 +42,8 @@ function AvatarAddressBase({
 		return <span className={className}>{address}</span>
 	}
 
-	const displayName = profile?.name ?? truncateHex(address)
+	const displayName =
+		profile?.name ?? (size === 'sm' ? truncateHex(address) : address)
 	const tooltipContent = profile?.name
 		? `${profile.name} (${truncateHex(address)})`
 		: address
@@ -76,7 +77,7 @@ function AvatarAddressBase({
 						/>
 					)}
 					<Code
-						className={`rounded-md border border-gray-200 bg-gray-50 px-2 py-1 ${textSizeMap[size]} max-w-[100px] overflow-hidden text-ellipsis whitespace-nowrap`}
+						className={`rounded-md border border-gray-200 bg-gray-50 px-2 py-1 ${textSizeMap[size]} ${size === 'sm' ? 'max-w-[100px]' : 'max-w-[250px]'} overflow-hidden text-ellipsis whitespace-nowrap`}
 					>
 						{displayName}
 					</Code>
