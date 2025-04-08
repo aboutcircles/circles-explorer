@@ -66,18 +66,12 @@ export function Filter({
 
 	return (
 		<RsuiteStyleProvider>
-			<div className='m-4'>
-				<div className='mb-2 flex items-center justify-between'>
+			<div className='my-3'>
+				<div className='flex items-center justify-between'>
 					<div className='text-xl font-bold'>Filter Transaction Types:</div>
-					<FilterCheckBox
-						handleChange={toggleAllEvents}
-						isDefaultSelected={isAllSelected}
-						className='mr-1'
-						label={isAllSelected ? 'Clear All' : 'Select All'}
-					/>
 				</div>
 
-				<div className='mt-4'>
+				<div className='flex items-center'>
 					<TagPicker
 						data={filterOptions}
 						value={selectedValues}
@@ -88,11 +82,23 @@ export function Filter({
 						onSelect={handleSelect}
 						searchable
 						onClean={toggleAllEvents}
+						renderValue={() => (
+							<span className='p-2 text-sm text-gray-500'>
+								Filter Events ({selectedValues.length} selected)
+							</span>
+						)}
 						className={cn(
 							className,
 							'min-w-[140px] overflow-scroll rounded-md'
 						)}
 						groupBy='category'
+					/>
+
+					<FilterCheckBox
+						handleChange={toggleAllEvents}
+						isDefaultSelected={isAllSelected}
+						className='ml-2'
+						label={isAllSelected ? 'Clear All' : 'Select All'}
 					/>
 				</div>
 			</div>
