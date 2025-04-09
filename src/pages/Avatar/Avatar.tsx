@@ -1,9 +1,11 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, lazy, Suspense } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Tabs, Tab } from '@nextui-org/react'
+import { Tabs, Tab, Spinner } from '@nextui-org/react'
 import type { Address } from 'viem'
 import { isAddress } from 'viem'
+import { ErrorBoundary } from 'react-error-boundary'
 
+import { Error } from 'components/Error'
 import { useProfiles } from 'hooks/useProfiles'
 import {
 	getProfileForAddress,
@@ -17,6 +19,19 @@ import useBreakpoint from 'hooks/useBreakpoint'
 import { AvatarInfo } from './AvatarInfo'
 import { AvatarStats } from './AvatarStats'
 import { TrustRelations } from './TrustRelations'
+
+/*
+todo:
+- Loading while profiles are loading
+- Setup correct sizes for graph
+- Try to make it more circles oriented
+- Profiles workaround
+- search for trust lists
+- search for graph
+ */
+
+// Use lazy loading for the SocialGraph component since it's heavy
+const SocialGraph = lazy(async () => import('./SocialGraph'))
 
 // Tab keys must match the URL paths
 const TABS = ['events', 'trust', 'graph'] as const
@@ -112,9 +127,25 @@ export default function Avatar() {
 					{avatar ? <TrustRelations avatar={avatar} /> : null}
 				</Tab>
 				<Tab key='graph' title='Trust Graph'>
-					<div className='p-4 text-center'>
-						Trust Graph visualization is not implemented yet.
-					</div>
+					{avatar ? (
+						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+						// @ts-expect-error
+						<ErrorBoundary FallbackComponent={Error} fallback={<Error />}>
+							<Suspense
+								fallback={
+									<div className='flex h-60 w-full items-center justify-center'>
+										<Spinner size='lg' />
+									</div>
+								}
+							>
+								<SocialGraph avatar={avatar} />
+							</Suspense>
+						</ErrorBoundary>
+					) : (
+						<div className='flex h-60 w-full items-center justify-center'>
+							<Spinner size='lg' />
+						</div>
+					)}
 				</Tab>
 			</Tabs>
 		</div>
