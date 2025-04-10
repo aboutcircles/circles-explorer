@@ -68,6 +68,15 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 	const [showRecursive, setShowRecursive] = useState(false)
 	const [showOnlyWithProfiles, setShowOnlyWithProfiles] = useState(true)
 
+	// Handle toggle of recursive view to refresh graph completely
+	const handleRecursiveToggle = (value: boolean) => {
+		setShowRecursive(value)
+		// Reset graph data to trigger a complete refresh when turning off recursive view
+		if (!value) {
+			setNetworkRelations([])
+		}
+	}
+
 	const { getProfile } = useProfiles()
 
 	// First fetch the network relations to build a more comprehensive graph
@@ -419,7 +428,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 					label='Show Circles'
 					className='mr-2'
 					isDefaultSelected={showRecursive}
-					handleChange={setShowRecursive}
+					handleChange={handleRecursiveToggle}
 				/>
 				<FilterCheckBox
 					label='Show Only With Profiles'

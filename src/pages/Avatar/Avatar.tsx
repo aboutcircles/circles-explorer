@@ -109,7 +109,7 @@ export default function Avatar() {
 
 			<Tabs
 				aria-label='Avatar tabs'
-				className='mt-4'
+				className='justify-center'
 				selectedKey={currentTab}
 				onSelectionChange={handleTabChange}
 			>
