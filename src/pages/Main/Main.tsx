@@ -40,7 +40,7 @@ export default function Main(): ReactElement {
 
 			{isSmScreen ? (
 				<div>
-					<Filter className='max-h-[80px]' />
+					<Filter />
 				</div>
 			) : null}
 
