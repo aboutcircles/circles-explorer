@@ -15,7 +15,7 @@ import { useFilterStore } from 'stores/useFilterStore'
 import type { Event } from 'types/events'
 import { useStartBlock } from './useStartBlock'
 
-export const useCirclesEvents = () => {
+export const useCirclesEvents = (address: string | null = null) => {
 	const eventTypes = useFilterStore.use.eventTypes()
 	const search = useFilterStore.use.search()
 	const updateEventTypesAmount = useFilterStore.use.updateEventTypesAmount()
@@ -34,8 +34,8 @@ export const useCirclesEvents = () => {
 	} = useFetchCirclesEventsInfinite(
 		currentStartBlock,
 		Boolean(blockNumber),
-		!search || isAddress(search),
-		search
+		!search || isAddress(String(address)),
+		search ?? address
 	)
 
 	// Extract all events from all pages

@@ -23,9 +23,12 @@ import { TrustRelations } from './TrustRelations'
 
 /*
 todo:
-- Profiles workaround
+- add loading for circles
+- search by nik
+- Profiles workaround - load from indexer data
 - search for trust lists
 - search for graph
+- Invites list
  */
 
 // Use lazy loading for the SocialGraph component since it's heavy
@@ -119,7 +122,7 @@ export default function Avatar() {
 							<Filter className='max-h-[80px]' />
 						</div>
 					) : null}
-					<EventsTable />
+					{address ? <EventsTable address={address} /> : null}
 				</Tab>
 				<Tab key='trust' title='Trust Relations'>
 					{avatar && !isLoading ? (
