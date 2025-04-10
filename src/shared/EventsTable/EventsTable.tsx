@@ -45,14 +45,14 @@ const columns: Column[] = [
 	}
 ]
 
-export function EventsTable(): ReactElement {
+export function EventsTable({ address }: { address?: string }): ReactElement {
 	const {
 		events,
 		isEventsLoading,
 		isLoadingMore,
 		loadMoreEvents,
 		hasMoreEvents
-	} = useCirclesEvents()
+	} = useCirclesEvents(address)
 
 	const renderCell = useRenderCell()
 	const { isSmScreen } = useBreakpoint()
@@ -117,4 +117,8 @@ export function EventsTable(): ReactElement {
 			)}
 		</>
 	)
+}
+
+EventsTable.defaultProps = {
+	address: ''
 }
