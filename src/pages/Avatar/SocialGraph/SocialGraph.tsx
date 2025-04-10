@@ -6,10 +6,8 @@ import * as d3 from 'd3-force'
 import { useCallback, useMemo } from 'react'
 import ForceGraph2D from 'react-force-graph-2d'
 
-import { ONE, TWO } from 'constants/common'
 import type { GraphData, ProfileNode } from 'types/graph'
 
-const CENTER_NODE_SIZE = 20 // Make center avatar larger
 const NODE_SIZE = 15
 const FONT_SIZE = 12
 

@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo, lazy, Suspense } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Tabs, Tab, Spinner } from '@nextui-org/react'
+import { Tabs, Tab } from '@nextui-org/react'
 import type { Address } from 'viem'
 import { isAddress } from 'viem'
 import { ErrorBoundary } from 'react-error-boundary'
 
 import { Error } from 'components/Error'
+import { Loader } from 'components/Loader'
 import { useProfiles } from 'hooks/useProfiles'
 import {
 	getProfileForAddress,
@@ -40,7 +41,7 @@ type TabKey = (typeof TABS)[number]
 export default function Avatar() {
 	const { address, tab } = useParams<{ address: string; tab: string }>()
 	const [avatar, setAvatar] = useState<CirclesAvatarFromEnvio>()
-	const { fetchProfiles } = useProfiles()
+	const { fetchProfiles, isLoading } = useProfiles()
 	const { isSmScreen } = useBreakpoint()
 	const navigate = useNavigate()
 
@@ -124,27 +125,23 @@ export default function Avatar() {
 					<EventsTable />
 				</Tab>
 				<Tab key='trust' title='Trust Relations'>
-					{avatar ? <TrustRelations avatar={avatar} /> : null}
+					{avatar && !isLoading ? (
+						<TrustRelations avatar={avatar} />
+					) : (
+						<Loader />
+					)}
 				</Tab>
 				<Tab key='graph' title='Trust Graph'>
-					{avatar ? (
+					{avatar && !isLoading ? (
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-expect-error
 						<ErrorBoundary FallbackComponent={Error} fallback={<Error />}>
-							<Suspense
-								fallback={
-									<div className='flex h-60 w-full items-center justify-center'>
-										<Spinner size='lg' />
-									</div>
-								}
-							>
+							<Suspense fallback={<Loader />}>
 								<SocialGraph avatar={avatar} />
 							</Suspense>
 						</ErrorBoundary>
 					) : (
-						<div className='flex h-60 w-full items-center justify-center'>
-							<Spinner size='lg' />
-						</div>
+						<Loader />
 					)}
 				</Tab>
 			</Tabs>
