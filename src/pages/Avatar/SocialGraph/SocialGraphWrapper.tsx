@@ -2,29 +2,30 @@
 // @ts-nocheck
 /* eslint-disable */
 
-import { useRef, useCallback, useState, useEffect, useMemo } from 'react'
-import ForceGraph2D from 'react-force-graph-2d'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { ONE, TWO } from 'constants/common'
+import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { useProfiles } from 'hooks/useProfiles'
 import type { CirclesAvatarFromEnvio } from 'services/envio/indexer'
 import type { GraphData, ProfileNode, TrustLink } from 'types/graph'
 import { truncateHex } from 'utils/eth'
-import { ONE, TWO } from 'constants/common'
-import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
+
+import { SocialGraph } from './SocialGraph'
 
 const CENTER_NODE_SIZE = 20 // Make center avatar larger
 const NODE_SIZE = 15
-const FONT_SIZE = 12
 
-interface SocialGraphProperties {
+interface SocialGraphWrapperProps {
 	avatar: CirclesAvatarFromEnvio
 }
 
-export default function SocialGraph({ avatar }: SocialGraphProperties) {
+export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 	const graphReference = useRef<unknown>()
 	const navigate = useNavigate()
 	const { tab } = useParams<{ tab?: string }>()
+	const containerRef = useRef<HTMLDivElement>(null)
 
 	// State for graph data and UI controls
 	const [graphData, setGraphData] = useState<GraphData>({
@@ -33,6 +34,7 @@ export default function SocialGraph({ avatar }: SocialGraphProperties) {
 	})
 	const [highlightNodes, setHighlightNodes] = useState<Set<unknown>>(new Set())
 	const [highlightLinks, setHighlightLinks] = useState<Set<unknown>>(new Set())
+	const [containerWidth, setContainerWidth] = useState(600)
 
 	const { getProfile } = useProfiles()
 
@@ -134,14 +136,15 @@ export default function SocialGraph({ avatar }: SocialGraphProperties) {
 		setGraphData({ nodes, links })
 	}, [avatar, getProfile])
 
-	// Center the graph on the main avatar
+	// Center the graph on the main avatar with dynamic zoom level
 	useEffect(() => {
 		if (graphReference.current && graphData.nodes.length > 0) {
 			setTimeout(() => {
+				const zoomDuration = Math.min(400 + graphData.nodes.length * 10, 1000)
+
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-expect-error
-				// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-				graphReference.current.zoomToFit(400, 50)
+				graphReference.current.zoomToFit(zoomDuration, 1)
 			}, MILLISECONDS_IN_A_SECOND / TWO)
 		}
 	}, [graphData])
@@ -204,150 +207,35 @@ export default function SocialGraph({ avatar }: SocialGraphProperties) {
 		[avatar.id, navigate, tab]
 	)
 
-	// Custom node rendering with profile images
-	const nodeCanvasObject = useCallback(
-		(node: ProfileNode, context: unknown, globalScale: number) => {
-			// Node base styling
-			const size = node.size ?? NODE_SIZE
-			const fontSize = FONT_SIZE / globalScale
-			const isHighlighted = highlightNodes.has(node)
-			const label = node.name
-
-			// Draw node circle
-			context.beginPath()
-			context.arc(node.x, node.y, size / globalScale, 0, 2 * Math.PI)
-			context.fillStyle = isHighlighted ? '#FF5252' : node.color || '#1976D2'
-			context.fill()
-			context.strokeStyle = 'white'
-			context.lineWidth = 1.5 / globalScale
-			context.stroke()
-
-			// Load and draw profile image
-			const img = new Image()
-			img.src = node.imageUrl
-
-			// Use a circular clipping path for the image
-			if (img.complete) {
-				context.save()
-				context.beginPath()
-				context.arc(node.x, node.y, (size - 2) / globalScale, 0, 2 * Math.PI)
-				context.clip()
-				context.drawImage(
-					img,
-					node.x - size / globalScale,
-					node.y - size / globalScale,
-					(size * 2) / globalScale,
-					(size * 2) / globalScale
-				)
-				context.restore()
-			}
-
-			// Draw node label below the node
-			context.font = `${fontSize}px Sans-Serif`
-			context.textAlign = 'center'
-			context.textBaseline = 'middle'
-			context.fillStyle = 'black'
-
-			// Add a background behind text for readability
-			const textWidth = context.measureText(label).width
-			context.fillStyle = 'rgba(255, 255, 255, 0.8)'
-			context.fillRect(
-				node.x - textWidth / 2 - 2,
-				node.y + size / globalScale + 2,
-				textWidth + 4,
-				fontSize + 4
-			)
-
-			context.fillStyle = '#333'
-			context.fillText(
-				label,
-				node.x,
-				node.y + size / globalScale + fontSize / 2 + 4
-			)
-		},
-		[highlightNodes]
-	)
-
-	// Custom link rendering with varying opacity and width
-	const linkCanvasObject = useCallback(
-		(link: any, context: any, globalScale: number) => {
-			const start = link.source
-			const end = link.target
-
-			// Determine if this link should be highlighted
-			const isHighlighted = highlightLinks.has(link)
-
-			// Draw the link with appropriate styling
-			context.beginPath()
-			context.moveTo(start.x, start.y)
-			context.lineTo(end.x, end.y)
-			context.strokeStyle = link.color || '#999'
-			context.lineWidth =
-				((link.value || 1) / globalScale) * (isHighlighted ? 2 : 1)
-			context.globalAlpha = isHighlighted ? 1 : 0.6
-			context.stroke()
-			context.globalAlpha = 1
-		},
-		[highlightLinks]
-	)
-
-	// Optimization: memoize the graph component configuration
-	const graphConfig = useMemo(
-		() => ({
-			nodeRelSize: 6,
-			nodeId: 'id',
-			nodeVal: 'size',
-			nodeColor: 'color',
-			nodeLabel: 'name',
-			linkSource: 'source',
-			linkTarget: 'target',
-			linkColor: 'color',
-			linkWidth: (link: any) => link.value || 1,
-			d3AlphaDecay: 0.02,
-			d3VelocityDecay: 0.3,
-			warmupTicks: 20,
-			cooldownTicks: 50,
-			cooldownTime: 2000,
-			onNodeClick: handleNodeClick,
-			onNodeHover: handleNodeHover,
-			nodeCanvasObject,
-			linkCanvasObject,
-			// Enable GPU acceleration for better performance
-			nodeCanvasObjectMode: () => 'replace',
-			linkCanvasObjectMode: () => 'replace'
-		}),
-		[handleNodeClick, handleNodeHover, nodeCanvasObject, linkCanvasObject]
-	)
-
-	// Handle errors with D3 force simulation
-	const handleD3Force = useCallback((d3Force: any) => {
-		try {
-			if (d3Force('charge')) d3Force('charge').strength(-120)
-			if (d3Force('link'))
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				d3Force('link').distance((link: unknown) =>
-					link.value ? 100 / link.value : 100
-				)
-			if (d3Force('center')) d3Force('center').strength(0.05)
-		} catch (error) {
-			console.error('Error configuring d3 forces:', error)
+	useEffect(() => {
+		if (containerRef.current) {
+			setContainerWidth(containerRef.current.clientWidth)
 		}
+
+		const handleResize = () => {
+			if (containerRef.current) {
+				setContainerWidth(containerRef.current.clientWidth)
+			}
+		}
+
+		window.addEventListener('resize', handleResize)
+		return () => window.removeEventListener('resize', handleResize)
 	}, [])
 
 	return (
 		<div
 			className='social-graph-container'
-			// style={{ height: '50vh', width: '100%' }}
+			style={{ height: '100%', width: '100%' }}
+			ref={containerRef}
 		>
-			<ForceGraph2D
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-expect-error
-				ref={graphReference}
+			<SocialGraph
+				graphReference={graphReference}
 				graphData={graphData}
-				{...graphConfig}
-				// Additional performance optimizations
-				cooldownTime={3000}
-				d3Force={handleD3Force}
+				highlightNodes={highlightNodes}
+				highlightLinks={highlightLinks}
+				handleNodeHover={handleNodeHover}
+				handleNodeClick={handleNodeClick}
+				width={containerWidth}
 			/>
 		</div>
 	)

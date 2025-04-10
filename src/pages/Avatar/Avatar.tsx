@@ -31,7 +31,7 @@ todo:
  */
 
 // Use lazy loading for the SocialGraph component since it's heavy
-const SocialGraph = lazy(async () => import('./SocialGraph'))
+const SocialGraph = lazy(async () => import('./SocialGraph/index'))
 
 // Tab keys must match the URL paths
 const TABS = ['events', 'trust', 'graph'] as const
