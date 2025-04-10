@@ -65,6 +65,8 @@ export function useProfiles() {
 	const setProfile = useProfileStore.use.setProfile()
 	const getProfile = useProfileStore.use.getProfile()
 	const profiles = useProfileStore.use.profiles()
+	const isLoading = useProfileStore.use.isLoading()
+	const setIsLoading = useProfileStore.use.setIsLoading()
 
 	const fetchProfile = useCallback(
 		async (
@@ -106,39 +108,47 @@ export function useProfiles() {
 
 			if (addressesToFetch.length === 0) return
 
-			const batchResults = await processBatches(
-				addressesToFetch,
-				DEFAULT_BATCH_SIZE
-			)
+			setIsLoading(true)
+			try {
+				const batchResults = await processBatches(
+					addressesToFetch,
+					DEFAULT_BATCH_SIZE
+				)
 
-			// Create a map of addresses that were fetched
-			const fetchedAddresses = new Set(
-				addressesToFetch.map((addr) => addr.toLowerCase())
-			)
+				// Create a map of addresses that were fetched
+				const fetchedAddresses = new Set(
+					addressesToFetch.map((addr) => addr.toLowerCase())
+				)
 
-			// Process successful results
-			for (const results of batchResults) {
-				for (const profile of results) {
-					if (profile.address) {
-						setProfile(profile.address, profile)
-						// Remove from the set of fetched addresses
-						fetchedAddresses.delete(profile.address.toLowerCase())
+				// Process successful results
+				for (const results of batchResults) {
+					for (const profile of results) {
+						if (profile.address) {
+							setProfile(profile.address, profile)
+							// Remove from the set of fetched addresses
+							fetchedAddresses.delete(profile.address.toLowerCase())
+						}
 					}
 				}
-			}
 
-			// For any addresses that were fetched but not found in results, set them to null
-			for (const address of fetchedAddresses) {
-				setProfile(address, null)
+				// For any addresses that were fetched but not found in results, set them to null
+				for (const address of fetchedAddresses) {
+					setProfile(address, null)
+				}
+			} catch (error) {
+				logger.error('Failed to fetch profiles:', error)
+			} finally {
+				setIsLoading(false)
 			}
 		},
-		[getProfile, setProfile]
+		[getProfile, setProfile, setIsLoading]
 	)
 
 	return {
 		profiles,
 		fetchProfile,
 		fetchProfiles,
-		getProfile
+		getProfile,
+		isLoading
 	}
 }

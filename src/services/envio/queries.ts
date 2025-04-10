@@ -34,6 +34,44 @@ export const queries = {
     }
   `,
 
+	GET_TRUST_NETWORK_RELATIONS: `
+    query getTrustNetworkRelations($addresses: [String!]) {
+      TrustRelation(
+        where: {
+          _or: [
+            {truster_id: {_in: $addresses}},
+            {trustee_id: {_in: $addresses}}
+          ],
+          version: {_eq: 2},
+          limit: {_neq: 0},
+          expiryTime: {_neq: 0}
+        }
+      ) {
+        id
+        trustee_id
+        truster_id
+        isMutual
+        version
+        timestamp
+        limit
+        trustee {
+          id
+          profile {
+            name
+            previewImageUrl
+          }
+        }
+        truster {
+          id
+          profile {
+            name
+            previewImageUrl
+          }
+        }
+      }
+    }
+  `,
+
 	ALL_ACCEPTED_INVITES: `
     query allAcceptedInvites($address: String, $limit: Int, $offset: Int) {
       Avatar(

@@ -1,7 +1,6 @@
 import { Avatar, Code, Tooltip } from '@nextui-org/react'
-import type { KeyboardEvent } from 'react'
-import { memo, useCallback } from 'react'
-import { Link as RouterLink } from 'react-router-dom'
+import { memo } from 'react'
+import { Link as RouterLink, useParams } from 'react-router-dom'
 import { isAddress } from 'viem'
 
 import { useProfiles } from 'hooks/useProfiles'
@@ -10,7 +9,6 @@ import { truncateHex } from 'utils/eth'
 interface AvatarAddressProperties {
 	address: string
 	size?: 'lg' | 'md' | 'sm'
-	onClick?: (address: string) => void
 	className?: string
 }
 
@@ -30,65 +28,62 @@ const textSizeMap = {
 function AvatarAddressBase({
 	address,
 	size = 'sm',
-	onClick,
 	className = ''
 }: AvatarAddressProperties) {
 	const { getProfile } = useProfiles()
+	const parameters = useParams<{ tab?: string }>()
+
+	// Use current tab or default to 'events'
+	const currentTab = parameters.tab ?? 'events'
 
 	const profile = getProfile(address.toLowerCase())
-
-	const handleClick = useCallback(() => {
-		if (onClick) {
-			onClick(address)
-		}
-	}, [address, onClick])
 
 	if (!isAddress(address)) {
 		return <span className={className}>{address}</span>
 	}
 
-	const displayName = profile?.name ?? truncateHex(address)
+	const displayName =
+		profile?.name ?? (size === 'sm' ? truncateHex(address) : address)
 	const tooltipContent = profile?.name
 		? `${profile.name} (${truncateHex(address)})`
 		: address
 
 	return (
-		<Tooltip content={tooltipContent}>
-			<div
-				className={`flex cursor-pointer items-center ${className}`}
-				onClick={handleClick}
-				onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
-					if (event.key === 'Enter' || event.key === ' ') {
-						handleClick()
-					}
-				}}
-				role='button'
-				tabIndex={0}
-				aria-label={`Address ${truncateHex(address)}`}
-			>
-				{profile?.previewImageUrl ? (
-					<Avatar
-						className={`mr-2 ${avatarSizeMap[size]}`}
-						size={size}
-						src={profile.previewImageUrl}
-					/>
-				) : (
-					<Avatar
-						className={`mr-2 ${avatarSizeMap[size]}`}
-						size={size}
-						src='/icons/avatar.svg'
-						classNames={{
-							base: 'p-1'
-						}}
-					/>
-				)}
-				<Code
-					className={`rounded-md border border-gray-200 bg-gray-50 px-2 py-1 ${textSizeMap[size]} max-w-[100px] overflow-hidden text-ellipsis whitespace-nowrap`}
+		<RouterLink
+			to={`/avatar/${address}/${currentTab}`}
+			className='no-underline'
+		>
+			<Tooltip content={tooltipContent}>
+				<div
+					className={`flex cursor-pointer items-center ${className}`}
+					role='button'
+					tabIndex={0}
+					aria-label={`Address ${truncateHex(address)}`}
 				>
-					{displayName}
-				</Code>
-			</div>
-		</Tooltip>
+					{profile?.previewImageUrl ? (
+						<Avatar
+							className={`mr-2 ${avatarSizeMap[size]}`}
+							size={size}
+							src={profile.previewImageUrl}
+						/>
+					) : (
+						<Avatar
+							className={`mr-2 ${avatarSizeMap[size]}`}
+							size={size}
+							src='/icons/avatar.svg'
+							classNames={{
+								base: 'p-1'
+							}}
+						/>
+					)}
+					<Code
+						className={`rounded-md border border-gray-200 bg-gray-50 px-2 py-1 ${textSizeMap[size]} ${size === 'sm' ? 'max-w-[100px]' : 'max-w-[250px]'} overflow-hidden text-ellipsis whitespace-nowrap`}
+					>
+						{displayName}
+					</Code>
+				</div>
+			</Tooltip>
+		</RouterLink>
 	)
 }
 
@@ -96,19 +91,5 @@ export const AvatarAddress = memo(AvatarAddressBase)
 
 AvatarAddressBase.defaultProps = {
 	className: '',
-	onClick: undefined,
 	size: 'sm'
-}
-
-// Create a link version that uses react-router
-export function AvatarAddressLink({
-	address,
-	size = 'sm',
-	className = ''
-}: Omit<AvatarAddressProperties, 'onClick'>) {
-	return (
-		<RouterLink to={`?search=${address}`} className='no-underline'>
-			<AvatarAddress address={address} size={size} className={className} />
-		</RouterLink>
-	)
 }

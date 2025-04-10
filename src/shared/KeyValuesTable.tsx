@@ -1,6 +1,6 @@
 import { type Column, type Key, type Row, Table } from 'components/Table'
 import { Timestamp } from 'components/Timestamp'
-import { AvatarAddressLink } from 'shared/AvatarAddress'
+import { AvatarAddress } from 'shared/AvatarAddress'
 import { isDeadAddress } from 'utils/eth'
 import { avatarFields } from 'constants/avatarFields'
 
@@ -28,7 +28,7 @@ const keyValuesRenderCell = (item: Row, columnKey: Key) => {
 		columnKey === 'value' &&
 		!isDeadAddress(cellValue as string)
 	) {
-		return <AvatarAddressLink address={cellValue as string} size='sm' />
+		return <AvatarAddress address={cellValue as string} size='sm' />
 	}
 	if (item.key === 'timestamp' && columnKey === 'value') {
 		return <Timestamp value={cellValue as number} />
