@@ -4,11 +4,17 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import type { Address } from 'viem'
 
+import { FilterCheckBox } from 'components/FilterCheckBox'
 import { ONE, TWO } from 'constants/common'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { useProfiles } from 'hooks/useProfiles'
-import type { CirclesAvatarFromEnvio } from 'services/envio/indexer'
+import type {
+	CirclesAvatarFromEnvio,
+	TrustNetworkRelation
+} from 'services/envio/indexer'
+import { getTrustNetworkRelations } from 'services/envio/indexer'
 import type { GraphData, ProfileNode, TrustLink } from 'types/graph'
 import { truncateHex } from 'utils/eth'
 
@@ -16,6 +22,24 @@ import { SocialGraph } from './SocialGraph'
 
 const CENTER_NODE_SIZE = 20 // Make center avatar larger
 const NODE_SIZE = 15
+const RELATED_NODE_SIZE = 12 // Size for nodes that are not directly connected to center
+
+// Different colors for different circle layers
+const COLORS = {
+	CENTER: '#E91E63', // Center node (current avatar)
+	FIRST_LAYER: {
+		OUTGOING: '#2196F3', // First layer - outgoing trust
+		INCOMING: '#4CAF50', // First layer - incoming trust
+		MUTUAL: '#FF9800' // First layer - mutual trust
+	},
+	SECOND_LAYER: '#9C27B0', // Second layer nodes
+	LINK: {
+		OUTGOING: '#90CAF9', // Outgoing trust link
+		INCOMING: '#A5D6A7', // Incoming trust link
+		MUTUAL: '#FFB74D', // Mutual trust link
+		INDIRECT: '#E1BEE7' // Link between non-center nodes
+	}
+}
 
 interface SocialGraphWrapperProps {
 	avatar: CirclesAvatarFromEnvio
@@ -35,11 +59,64 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 	const [highlightNodes, setHighlightNodes] = useState<Set<unknown>>(new Set())
 	const [highlightLinks, setHighlightLinks] = useState<Set<unknown>>(new Set())
 	const [containerWidth, setContainerWidth] = useState(600)
+	const [isLoading, setIsLoading] = useState(false)
+	const [networkRelations, setNetworkRelations] = useState<
+		TrustNetworkRelation[]
+	>([])
+
+	// Filter controls
+	const [showRecursive, setShowRecursive] = useState(false)
+	const [showOnlyWithProfiles, setShowOnlyWithProfiles] = useState(true)
 
 	const { getProfile } = useProfiles()
 
+	// First fetch the network relations to build a more comprehensive graph
+	useEffect(() => {
+		const fetchNetworkRelations = async () => {
+			setIsLoading(true)
+
+			try {
+				// Collect addresses for first-layer connections
+				const directConnections: Address[] = []
+
+				// Add addresses from trusts given
+				for (const trust of avatar.trustsGiven) {
+					if (trust.trustee_id !== avatar.id) {
+						directConnections.push(trust.trustee_id)
+					}
+				}
+
+				// Add addresses from trusts received
+				for (const trust of avatar.trustsReceived) {
+					if (trust.truster_id !== avatar.id) {
+						directConnections.push(trust.truster_id)
+					}
+				}
+
+				if (directConnections.length > 0) {
+					const relations = await getTrustNetworkRelations(directConnections)
+					setNetworkRelations(relations)
+				} else {
+					// Clear network relations if not showing recursive
+					setNetworkRelations([])
+				}
+			} catch (error) {
+				console.error('Error fetching network relations:', error)
+			} finally {
+				setIsLoading(false)
+			}
+		}
+
+		// Only fetch network relations if showing recursive view
+		if (avatar && showRecursive) {
+			void fetchNetworkRelations()
+		}
+	}, [avatar, showRecursive])
+
 	// Transform avatar trust data into graph data
 	useEffect(() => {
+		if (isLoading) return
+
 		// Create the center node for the current avatar
 		const centerNode: ProfileNode = {
 			id: avatar.id,
@@ -48,7 +125,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 				avatar.profile?.previewImageUrl ??
 				avatar.profile?.imageUrl ??
 				'/icons/avatar.svg',
-			color: '#E91E63', // Highlight the center avatar
+			color: COLORS.CENTER,
 			size: CENTER_NODE_SIZE
 		}
 
@@ -56,10 +133,35 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 		const links: TrustLink[] = []
 		const processedIds = new Set([avatar.id])
 
-		// Process trusts given
+		// Map to track the trust relationship type for first layer connections
+		const firstLayerConnections = new Map<
+			string,
+			{ outgoing: boolean; incoming: boolean }
+		>()
+
+		// Process trusts given (outgoing from center)
 		for (const trust of avatar.trustsGiven) {
 			const trusteeId = trust.trustee_id
+
+			// Skip self-trust
+			if (trusteeId === avatar.id) continue
+
 			const profile = getProfile(trusteeId.toLowerCase())
+
+			// Skip nodes without profiles if filter is active
+			if (showOnlyWithProfiles && !profile) continue
+
+			// Track first layer connection - outgoing
+			if (!firstLayerConnections.has(trusteeId)) {
+				firstLayerConnections.set(trusteeId, {
+					outgoing: true,
+					incoming: false
+				})
+			} else {
+				const connection = firstLayerConnections.get(trusteeId)
+				connection.outgoing = true
+				firstLayerConnections.set(trusteeId, connection)
+			}
 
 			if (!processedIds.has(trusteeId)) {
 				processedIds.add(trusteeId)
@@ -70,7 +172,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 						profile?.previewImageUrl ??
 						profile?.imageUrl ??
 						'/icons/avatar.svg',
-					color: '#2196F3',
+					color: COLORS.FIRST_LAYER.OUTGOING,
 					size: NODE_SIZE
 				})
 			}
@@ -79,14 +181,33 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 				source: avatar.id,
 				target: trusteeId,
 				value: ONE,
-				color: '#90CAF9'
+				color: COLORS.LINK.OUTGOING
 			})
 		}
 
-		// Process trusts received
+		// Process trusts received (incoming to center)
 		for (const trust of avatar.trustsReceived) {
 			const trusterId = trust.truster_id
+
+			// Skip self-trust
+			if (trusterId === avatar.id) continue
+
 			const profile = getProfile(trusterId.toLowerCase())
+
+			// Skip nodes without profiles if filter is active
+			if (showOnlyWithProfiles && !profile) continue
+
+			// Track first layer connection - incoming
+			if (!firstLayerConnections.has(trusterId)) {
+				firstLayerConnections.set(trusterId, {
+					outgoing: false,
+					incoming: true
+				})
+			} else {
+				const connection = firstLayerConnections.get(trusterId)
+				connection.incoming = true
+				firstLayerConnections.set(trusterId, connection)
+			}
 
 			if (!processedIds.has(trusterId)) {
 				processedIds.add(trusterId)
@@ -97,7 +218,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 						profile?.previewImageUrl ??
 						profile?.imageUrl ??
 						'/icons/avatar.svg',
-					color: '#4CAF50',
+					color: COLORS.FIRST_LAYER.INCOMING,
 					size: NODE_SIZE
 				})
 			}
@@ -106,35 +227,100 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 				source: trusterId,
 				target: avatar.id,
 				value: ONE,
-				color: '#A5D6A7'
+				color: COLORS.LINK.INCOMING
 			})
 		}
 
-		// Add connections between nodes when they trust each other (both directions)
-		const trustsGivenSet = new Set(avatar.trustsGiven.map((t) => t.trustee_id))
-		const trustsReceivedSet = new Set(
-			avatar.trustsReceived.map((t) => t.truster_id)
-		)
+		// Update nodes with mutual connections and highlight them
+		for (const [id, connection] of firstLayerConnections.entries()) {
+			if (connection.outgoing && connection.incoming) {
+				// This is a mutual trust connection
+				const node = nodes.find((n) => n.id === id)
+				if (node) {
+					node.color = COLORS.FIRST_LAYER.MUTUAL
+				}
 
-		const mutualTrusts = [...trustsGivenSet].filter((id) =>
-			trustsReceivedSet.has(id)
-		)
+				// Update link colors for mutual trust
+				for (const link of links) {
+					if (
+						(link.source === avatar.id && link.target === id) ||
+						(link.source === id && link.target === avatar.id)
+					) {
+						link.color = COLORS.LINK.MUTUAL
+						link.value = TWO // Make mutual trust links thicker
+					}
+				}
+			}
+		}
 
-		for (const mutualId of mutualTrusts) {
-			// Find existing links and update their style to show mutual trust
-			for (const link of links) {
+		// Process network relations to build second layer connections
+		if (networkRelations.length > 0) {
+			const firstLayerIds = Array.from(firstLayerConnections.keys())
+
+			for (const relation of networkRelations) {
+				const sourceId = relation.truster_id
+				const targetId = relation.trustee_id
+
+				// Skip links that involve the center node (already processed)
+				if (sourceId === avatar.id || targetId === avatar.id) continue
+
+				// Skip nodes without profiles if filter is active
+				const sourceProfile =
+					getProfile(sourceId.toLowerCase()) || relation.truster.profile
+				const targetProfile =
+					getProfile(targetId.toLowerCase()) || relation.trustee?.profile
+
+				if (showOnlyWithProfiles && (!sourceProfile || !targetProfile)) continue
+
+				// We want to include relationships between first layer nodes
+				// and relationships from first layer nodes to new nodes (second layer)
 				if (
-					(link.source === avatar.id && link.target === mutualId) ||
-					(link.source === mutualId && link.target === avatar.id)
+					(firstLayerIds.includes(sourceId) ||
+						firstLayerIds.includes(targetId)) &&
+					sourceId !== targetId // Skip self-trust
 				) {
-					link.color = '#FF9800' // Highlight mutual trust with a different color
-					link.value = TWO // Make mutual trust links thicker
+					// Add any new nodes (second layer)
+					if (!processedIds.has(sourceId)) {
+						processedIds.add(sourceId)
+						const profile =
+							getProfile(sourceId.toLowerCase()) || relation.truster.profile
+
+						nodes.push({
+							id: sourceId,
+							name: profile?.name ?? truncateHex(sourceId),
+							imageUrl: profile?.previewImageUrl ?? '/icons/avatar.svg',
+							color: COLORS.SECOND_LAYER,
+							size: RELATED_NODE_SIZE
+						})
+					}
+
+					if (!processedIds.has(targetId)) {
+						processedIds.add(targetId)
+						const profile =
+							getProfile(targetId.toLowerCase()) || relation.trustee?.profile
+
+						nodes.push({
+							id: targetId,
+							name: profile?.name ?? truncateHex(targetId),
+							imageUrl: profile?.previewImageUrl ?? '/icons/avatar.svg',
+							color: COLORS.SECOND_LAYER,
+							size: RELATED_NODE_SIZE
+						})
+					}
+
+					// Add the link between these nodes
+					links.push({
+						source: sourceId,
+						target: targetId,
+						value: relation.isMutual ? TWO : ONE,
+						color: relation.isMutual ? COLORS.LINK.MUTUAL : COLORS.LINK.INDIRECT
+					})
 				}
 			}
 		}
 
 		setGraphData({ nodes, links })
-	}, [avatar, getProfile])
+	}, [avatar, getProfile, networkRelations, isLoading, showOnlyWithProfiles])
 
 	// Center the graph on the main avatar with dynamic zoom level
 	useEffect(() => {
@@ -228,6 +414,20 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 			style={{ height: '100%', width: '100%' }}
 			ref={containerRef}
 		>
+			<div className='mb-3 flex justify-end gap-3 p-2'>
+				<FilterCheckBox
+					label='Show Circles'
+					className='mr-2'
+					isDefaultSelected={showRecursive}
+					handleChange={setShowRecursive}
+				/>
+				<FilterCheckBox
+					label='Show Only With Profiles'
+					className='mr-2'
+					isDefaultSelected={showOnlyWithProfiles}
+					handleChange={setShowOnlyWithProfiles}
+				/>
+			</div>
 			<SocialGraph
 				graphReference={graphReference}
 				graphData={graphData}

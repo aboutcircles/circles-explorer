@@ -23,9 +23,6 @@ import { TrustRelations } from './TrustRelations'
 
 /*
 todo:
-- Loading while profiles are loading
-- Setup correct sizes for graph
-- Try to make it more circles oriented
 - Profiles workaround
 - search for trust lists
 - search for graph

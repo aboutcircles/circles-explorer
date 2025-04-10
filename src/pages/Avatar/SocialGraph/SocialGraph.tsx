@@ -124,24 +124,95 @@ export function SocialGraph({
 				// Scale charge strength based on node count
 				const nodeCount = graphData.nodes.length
 				const chargeStrength = Math.min(
-					-120 * Math.max(1, nodeCount / 10),
-					-500
+					-140 * Math.max(1, nodeCount / 10),
+					-600
 				)
 
 				// Scale link distance based on node count
-				const baseLinkDistance = Math.max(150, 100 + nodeCount * 5)
+				const baseLinkDistance = Math.max(180, 120 + nodeCount * 6)
 
 				if (d3Force('charge')) d3Force('charge').strength(chargeStrength)
-				if (d3Force('link'))
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					d3Force('link').distance((link: unknown) => {
-						// Adjust distance based on link value and network density
-						const baseDistance = link.value
-							? baseLinkDistance / link.value
-							: baseLinkDistance
-						return baseDistance
-					})
-				if (d3Force('center')) d3Force('center').strength(0.03)
+
+				// Configure link forces for a more circular layout
+				if (d3Force('link')) {
+					d3Force('link')
+						.distance((link: any) => {
+							// Adjust distance based on link value and network density
+							const baseDistance = link.value
+								? baseLinkDistance / link.value
+								: baseLinkDistance
+
+							// Find nodes for this link
+							const sourceNode = graphData.nodes.find(
+								(n) =>
+									n.id ===
+									(typeof link.source === 'string'
+										? link.source
+										: link.source.id)
+							)
+							const targetNode = graphData.nodes.find(
+								(n) =>
+									n.id ===
+									(typeof link.target === 'string'
+										? link.target
+										: link.target.id)
+							)
+
+							// If one node is the center node, make distance shorter to create circle structure
+							if (
+								(sourceNode && sourceNode.size === 20) || // Center node has size 20
+								(targetNode && targetNode.size === 20)
+							) {
+								return baseDistance * 0.8 // Shorter distance for center connections
+							}
+
+							// If nodes are mutual, pull them a bit closer
+							if (link.color === '#FFB74D') {
+								// Mutual link color
+								return baseDistance * 0.9
+							}
+
+							return baseDistance
+						})
+						.strength((link: any) => {
+							// Stronger force for mutual links and center connections
+							// to emphasize the circle structure around the center node
+							if (link.value > 1) return 0.2
+							return 0.1
+						})
+				}
+
+				// Center force pulls nodes toward the middle
+				if (d3Force('center')) {
+					d3Force('center')
+						.strength(0.05) // Increased from 0.03 for more circular structure
+						.x(width / 2)
+						.y(400) // Fixed position for better visualization
+				}
+
+				// Add radial force to organize nodes in circular layers
+				if (!d3Force('radial')) {
+					// Create circle layers based on node types
+					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+					// @ts-expect-error
+					d3Force.force(
+						'radial',
+						d3
+							.forceRadial((node: any) => {
+								// Center node
+								if (node.size === 20) return 0
+
+								// First layer nodes
+								if (node.size === 15) return 180
+
+								// Second layer nodes
+								return 320
+							})
+							.strength(0.3)
+							.x(width / 2)
+							.y(400)
+					)
+				}
 
 				// Add collision force to prevent node overlap
 				if (!d3Force('collision')) {
@@ -149,16 +220,19 @@ export function SocialGraph({
 					// @ts-expect-error
 					d3Force.force(
 						'collision',
-						d3.forceCollide().radius((node: any) => {
-							return (node.size || NODE_SIZE) / 2 + 10
-						})
+						d3
+							.forceCollide()
+							.radius((node: any) => {
+								return (node.size || NODE_SIZE) * 1.2 // Larger collision area
+							})
+							.strength(1) // Full collision strength
 					)
 				}
 			} catch (error) {
 				console.error('Error configuring d3 forces:', error)
 			}
 		},
-		[graphData]
+		[graphData, width]
 	)
 
 	// Optimization: memoize the graph component configuration

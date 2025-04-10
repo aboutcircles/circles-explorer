@@ -193,3 +193,45 @@ export const getGroupMemberships = async (
 		})
 	)
 }
+
+export interface TrustNetworkRelation {
+	id: Address
+	trustee_id: Address
+	truster_id: Address
+	isMutual: boolean
+	version: number
+	timestamp: number
+	limit: string
+	trustee: {
+		id: Address
+		profile?: {
+			name: string
+			previewImageUrl: string
+		}
+	}
+	truster: {
+		id: Address
+		profile?: {
+			name: string
+			previewImageUrl: string
+		}
+	}
+}
+
+export const getTrustNetworkRelations = async (
+	addresses: Address[]
+): Promise<TrustNetworkRelation[]> => {
+	if (addresses.length === 0) {
+		return []
+	}
+
+	const data = await executeQuery<{
+		TrustRelation: TrustNetworkRelation[]
+	}>(
+		queries.GET_TRUST_NETWORK_RELATIONS,
+		{ addresses: addresses.map((addr) => getAddress(addr)) },
+		'getTrustNetworkRelations'
+	)
+
+	return data.TrustRelation
+}
