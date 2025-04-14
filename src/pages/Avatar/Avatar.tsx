@@ -28,7 +28,6 @@ todo:
 - search for trust lists
 - search for graph
 - Invites list
-- events list wrong block shows
  */
 
 // Use lazy loading for the SocialGraph component since it's heavy
