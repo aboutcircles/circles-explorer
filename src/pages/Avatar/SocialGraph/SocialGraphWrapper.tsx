@@ -17,6 +17,7 @@ import type {
 import { getTrustNetworkRelations } from 'services/envio/indexer'
 import type { GraphData, ProfileNode, TrustLink } from 'types/graph'
 import { truncateHex } from 'utils/eth'
+import { Loader } from 'components/Loader'
 
 import { SocialGraph } from './SocialGraph'
 
@@ -416,6 +417,10 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 		window.addEventListener('resize', handleResize)
 		return () => window.removeEventListener('resize', handleResize)
 	}, [])
+
+	if (isLoading) {
+		return <Loader />
+	}
 
 	return (
 		<div
