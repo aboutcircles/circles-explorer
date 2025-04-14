@@ -127,14 +127,14 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 	useEffect(() => {
 		if (isLoading) return
 
+		const profile = getProfile(avatar.id.toLowerCase())
+
 		// Create the center node for the current avatar
 		const centerNode: ProfileNode = {
 			id: avatar.id,
-			name: avatar.profile?.name ?? truncateHex(avatar.id),
+			name: profile?.name ?? truncateHex(avatar.id),
 			imageUrl:
-				avatar.profile?.previewImageUrl ??
-				avatar.profile?.imageUrl ??
-				'/icons/avatar.svg',
+				profile?.previewImageUrl ?? profile?.imageUrl ?? '/icons/avatar.svg',
 			color: COLORS.CENTER,
 			size: CENTER_NODE_SIZE
 		}
