@@ -66,6 +66,10 @@ export const useCirclesEvents = (address: string | null = null) => {
 		// Type-safe access to pages
 		const { pages } = data as unknown as EventsInfiniteData
 
+		const { finalStartBlock } = pages[pages.length - ONE]
+
+		updateStartBlock(finalStartBlock)
+
 		for (const page of pages) {
 			for (const [type, count] of page.eventTypesAmount.entries()) {
 				mergedEventTypes.set(type, (mergedEventTypes.get(type) ?? 0) + count)
@@ -73,6 +77,7 @@ export const useCirclesEvents = (address: string | null = null) => {
 		}
 
 		updateEventTypesAmount(mergedEventTypes)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data, updateEventTypesAmount])
 
 	// Load more events by fetching the next page

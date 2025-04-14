@@ -16,6 +16,7 @@ import {
 } from 'constants/blockRange'
 import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useParams } from 'react-router-dom'
 import { useFilterStore } from 'stores/useFilterStore'
 import type { CirclesEventsResponse, Event } from 'types/events'
 import { type Address, type Hex, hexToNumber, isAddress, isHash } from 'viem'
@@ -295,12 +296,13 @@ const CIRCLES_EVENTS_INFINITE_QUERY_KEY = 'circlesEventsInfinite'
 export const useClearEventsCache = () => {
 	const search = useFilterStore.use.search()
 	const queryClient: QueryClient = useQueryClient()
+	const { address } = useParams<{ address: string }>()
 
 	return useCallback(() => {
 		queryClient.removeQueries({
-			queryKey: [CIRCLES_EVENTS_INFINITE_QUERY_KEY, search]
+			queryKey: [CIRCLES_EVENTS_INFINITE_QUERY_KEY, search ?? address]
 		})
-	}, [search, queryClient])
+	}, [search, queryClient, address])
 }
 
 export const useFetchCirclesEventsInfinite = (

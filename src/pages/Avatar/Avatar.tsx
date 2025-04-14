@@ -17,7 +17,7 @@ import logger from 'services/logger'
 import { Filter } from 'shared/Filter'
 import { EventsTable } from 'shared/EventsTable'
 import useBreakpoint from 'hooks/useBreakpoint'
-import { useProfileStore } from '../../stores/useProfileStore'
+import { useProfileStore } from 'stores/useProfileStore'
 
 import { AvatarInfo } from './AvatarInfo'
 import { AvatarStats } from './AvatarStats'
