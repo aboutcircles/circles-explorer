@@ -2,6 +2,7 @@ import type { CirclesEventType } from '@circles-sdk/data'
 import { useCallback, useEffect, useMemo } from 'react'
 import { isAddress } from 'viem'
 
+import { isNil } from 'utils/isNil'
 import { avatarFields } from 'constants/avatarFields'
 import { ONE } from 'constants/common'
 import { useBlockNumber } from 'services/viemClient'
@@ -35,7 +36,7 @@ export const useCirclesEvents = (address: string | null = null) => {
 		currentStartBlock,
 		Boolean(blockNumber),
 		!search || isAddress(String(address)),
-		search ?? address
+		isNil(search) || search === '' ? address : search
 	)
 
 	// Extract all events from all pages
