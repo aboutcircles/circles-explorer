@@ -25,8 +25,6 @@ import { TrustRelations } from './TrustRelations'
 
 /*
 todo:
-- search for trust lists
-- search for graph
 - Invites list
  */
 
