@@ -45,7 +45,7 @@ export function TrustRelations({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 			return relations.filter((trust) => {
 				const address = trust[addressField].toLowerCase()
 				const profile = getProfile(address)
-				const name = profile?.name.toLowerCase() ?? ''
+				const name = profile?.name ? profile.name.toLowerCase() : ''
 
 				return address.includes(term) || name.includes(term)
 			})
