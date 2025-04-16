@@ -12,10 +12,12 @@ import {
 	getProfileForAddress,
 	type CirclesAvatarFromEnvio
 } from 'services/envio/indexer'
+// import { circlesData } from 'services/circlesData'
 import logger from 'services/logger'
 import { Filter } from 'shared/Filter'
 import { EventsTable } from 'shared/EventsTable'
 import useBreakpoint from 'hooks/useBreakpoint'
+import { useProfileStore } from 'stores/useProfileStore'
 
 import { AvatarInfo } from './AvatarInfo'
 import { AvatarStats } from './AvatarStats'
@@ -23,11 +25,6 @@ import { TrustRelations } from './TrustRelations'
 
 /*
 todo:
-- add loading for circles
-- search by nik
-- Profiles workaround - load from indexer data
-- search for trust lists
-- search for graph
 - Invites list
  */
 
@@ -42,6 +39,7 @@ export default function Avatar() {
 	const { address, tab } = useParams<{ address: string; tab: string }>()
 	const [avatar, setAvatar] = useState<CirclesAvatarFromEnvio>()
 	const { fetchProfiles, isLoading } = useProfiles()
+	const getProfile = useProfileStore.use.getProfile()
 	const { isSmScreen } = useBreakpoint()
 	const navigate = useNavigate()
 
@@ -66,6 +64,7 @@ export default function Avatar() {
 	useEffect(() => {
 		const loadAvatarInfo = async (addressToLoad: Address) => {
 			const avatarInfo = await getProfileForAddress(addressToLoad)
+			// const sdkAvatarInfo = await circlesData.getAvatarInfo(addressToLoad)
 
 			// todo: check 0x9484fcaa4c39d68798e3c1b7f4a3d9dc2adc69cd, it has no profile
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -76,6 +75,8 @@ export default function Avatar() {
 
 			// use Set to avoid duplicates and later check for cached profiles
 			const addresses = new Set()
+
+			addresses.add(avatarInfo.id.toLowerCase())
 
 			if (avatarInfo.invitedBy) {
 				addresses.add(avatarInfo.invitedBy.toLowerCase())
@@ -106,7 +107,7 @@ export default function Avatar() {
 			<div
 				className={`flex ${isMdScreen ? 'flex-row items-start' : 'flex-col items-center'}`}
 			>
-				<AvatarInfo profile={avatar?.profile} />
+				{avatar ? <AvatarInfo profile={getProfile(avatar.id)} /> : null}
 				{avatar ? <AvatarStats avatar={avatar} /> : null}
 			</div>
 

@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import type { Address } from 'viem'
 
 import { FilterCheckBox } from 'components/FilterCheckBox'
+import { Loader } from 'components/Loader'
 import { ONE, TWO } from 'constants/common'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { useProfiles } from 'hooks/useProfiles'
@@ -15,6 +16,7 @@ import type {
 	TrustNetworkRelation
 } from 'services/envio/indexer'
 import { getTrustNetworkRelations } from 'services/envio/indexer'
+import { TrustSearchBox } from 'shared/Search/TrustSearchBox'
 import type { GraphData, ProfileNode, TrustLink } from 'types/graph'
 import { truncateHex } from 'utils/eth'
 
@@ -67,6 +69,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 	// Filter controls
 	const [showRecursive, setShowRecursive] = useState(false)
 	const [showOnlyWithProfiles, setShowOnlyWithProfiles] = useState(true)
+	const [searchTerm, setSearchTerm] = useState('')
 
 	// Handle toggle of recursive view to refresh graph completely
 	const handleRecursiveToggle = (value: boolean) => {
@@ -122,18 +125,38 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 		}
 	}, [avatar, showRecursive])
 
+	// Filter nodes based on search term
+	const filterNodes = useCallback(
+		(nodes: ProfileNode[]) => {
+			if (!searchTerm.trim()) return nodes
+
+			const term = searchTerm.toLowerCase()
+			return nodes.filter((node) => {
+				const address = node.id.toLowerCase()
+				const name = node.name.toLowerCase()
+
+				return (
+					address.includes(term) ||
+					name.includes(term) ||
+					address === avatar.id.toLowerCase()
+				)
+			})
+		},
+		[searchTerm]
+	)
+
 	// Transform avatar trust data into graph data
 	useEffect(() => {
 		if (isLoading) return
 
+		const profile = getProfile(avatar.id.toLowerCase())
+
 		// Create the center node for the current avatar
 		const centerNode: ProfileNode = {
 			id: avatar.id,
-			name: avatar.profile?.name ?? truncateHex(avatar.id),
+			name: profile?.name ?? truncateHex(avatar.id),
 			imageUrl:
-				avatar.profile?.previewImageUrl ??
-				avatar.profile?.imageUrl ??
-				'/icons/avatar.svg',
+				profile?.previewImageUrl ?? profile?.imageUrl ?? '/icons/avatar.svg',
 			color: COLORS.CENTER,
 			size: CENTER_NODE_SIZE
 		}
@@ -328,8 +351,28 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 			}
 		}
 
-		setGraphData({ nodes, links })
-	}, [avatar, getProfile, networkRelations, isLoading, showOnlyWithProfiles])
+		// Filter nodes based on search term
+		const filteredNodes = filterNodes(nodes)
+		const nodeIds = new Set(filteredNodes.map((n) => n.id))
+
+		// Keep only links between filtered nodes
+		const filteredLinks = links.filter((link) => {
+			const sourceId =
+				typeof link.source === 'string' ? link.source : link.source.id
+			const targetId =
+				typeof link.target === 'string' ? link.target : link.target.id
+			return nodeIds.has(sourceId) && nodeIds.has(targetId)
+		})
+
+		setGraphData({ nodes: filteredNodes, links: filteredLinks })
+	}, [
+		avatar,
+		getProfile,
+		networkRelations,
+		isLoading,
+		showOnlyWithProfiles,
+		filterNodes
+	])
 
 	// Center the graph on the main avatar with dynamic zoom level
 	useEffect(() => {
@@ -337,9 +380,9 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 			setTimeout(() => {
 				const zoomDuration = Math.min(400 + graphData.nodes.length * 10, 1000)
 
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-expect-error
-				graphReference.current.zoomToFit(zoomDuration, 1)
+				if (graphReference.current) {
+					graphReference.current.zoomToFit(zoomDuration, 1)
+				}
 			}, MILLISECONDS_IN_A_SECOND / TWO)
 		}
 	}, [graphData])
@@ -417,13 +460,22 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 		return () => window.removeEventListener('resize', handleResize)
 	}, [])
 
+	if (isLoading) {
+		return <Loader />
+	}
+
 	return (
 		<div
 			className='social-graph-container'
 			style={{ height: '100%', width: '100%' }}
 			ref={containerRef}
 		>
-			<div className='mb-3 flex justify-end gap-3 p-2'>
+			<div className='mb-3 flex flex-wrap justify-center gap-3 p-2'>
+				<TrustSearchBox
+					onSearch={setSearchTerm}
+					placeholder='Search nodes by name or address'
+					className='w-full md:w-[320px]'
+				/>
 				<FilterCheckBox
 					label='Show Circles'
 					className='mr-2'

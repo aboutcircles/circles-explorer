@@ -6,7 +6,8 @@ export const V1_EVENTS: CirclesEventType[] = [
 	'CrcV1_Trust',
 	'CrcV1_OrganizationSignup',
 	'CrcV1_Signup',
-	'CrcV1_TransferSummary'
+	'CrcV1_TransferSummary',
+	'CrcV1_UpdateMetadataDigest'
 ]
 
 export const V2_EVENTS: CirclesEventType[] = [
@@ -68,6 +69,7 @@ export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV1_OrganizationSignup: 'Organization Signup',
 	CrcV1_Signup: 'Signup',
 	CrcV1_TransferSummary: 'Transfer Summary',
+	CrcV1_UpdateMetadataDigest: 'Update Metadata Digest',
 
 	CrcV2_ApprovalForAll: 'Approval For All',
 	CrcV2_CidV0: 'Cid V0',

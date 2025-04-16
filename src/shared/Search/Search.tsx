@@ -21,11 +21,13 @@ export function Search({
 	const updateSearch = useFilterStore.use.updateSearch()
 	const search = useFilterStore.use.search() ?? ''
 	const navigate = useNavigate()
+	const clearStartBlock = useFilterStore.use.clearStartBlock()
 
 	const handleSubmit = useCallback(
 		(newSearch: string) => {
 			// If search is an address, navigate to the avatar page with events tab
 			if (isAddress(newSearch as Address)) {
+				clearStartBlock()
 				navigate(`/avatar/${newSearch}/events`)
 			} else {
 				// Otherwise update the search in the filter store
@@ -34,7 +36,7 @@ export function Search({
 
 			onSubmit?.()
 		},
-		[onSubmit, updateSearch, navigate]
+		[clearStartBlock, onSubmit, updateSearch, navigate]
 	)
 
 	const { isSmScreen } = useBreakpoint()

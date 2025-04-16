@@ -1,8 +1,11 @@
 import { Avatar } from '@nextui-org/react'
+import type { SearchResultProfile } from '@circles-sdk/profiles'
 
-import type { IPFSData } from 'services/envio/indexer'
-
-export function AvatarInfo({ profile }: { profile?: IPFSData }) {
+export function AvatarInfo({
+	profile
+}: {
+	profile?: SearchResultProfile | null
+}) {
 	const avatarImageSource = profile?.previewImageUrl ?? profile?.imageUrl
 
 	return (
