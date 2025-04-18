@@ -298,7 +298,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 
 				// Skip nodes without profiles if filter is active
 				const sourceProfile =
-					getProfile(sourceId.toLowerCase()) || relation.truster.profile
+					getProfile(sourceId.toLowerCase()) || relation.truster?.profile
 				const targetProfile =
 					getProfile(targetId.toLowerCase()) || relation.trustee?.profile
 
