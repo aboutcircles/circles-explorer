@@ -1,4 +1,4 @@
-import { Badge, Card, Tooltip } from '@nextui-org/react'
+import { Badge, Card, Tooltip, Link } from '@nextui-org/react'
 import { toBigInt } from 'ethers'
 import { useMemo } from 'react'
 import { formatUnits, type Address } from 'viem'
@@ -7,7 +7,8 @@ import { Timestamp } from 'components/Timestamp'
 import {
 	CRC_TOKEN_DECIMALS,
 	TWO,
-	CRC_MIGRATION_DENOMINATION
+	CRC_MIGRATION_DENOMINATION,
+	EXPLORER_URL
 } from 'constants/common'
 import {
 	useFetchCrcV1TotalSupply,
@@ -45,8 +46,6 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 		crcV1TotalSupply?.tokenAddress as Address
 	)
 
-	console.log({ crcV1TotalSupply, crcV1TokenMigrationHeldData })
-
 	const avatarType = useMemo(() => {
 		switch (avatar.avatarType) {
 			case 'RegisterGroup': {
@@ -83,19 +82,25 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 						<Tooltip
 							content={`${Number(crcV1TotalSupply.totalSupply) * CRC_MIGRATION_DENOMINATION} : ${crcV1TokenStoppedData ? 'stopped' : 'active'}`}
 						>
-							<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
-								<b>Total CRC supply (V1)</b>:
-								<span className='pl-1'>
-									{(
-										Number(
-											formatUnits(
-												toBigInt(crcV1TotalSupply.totalSupply),
-												CRC_TOKEN_DECIMALS
-											)
-										) * CRC_MIGRATION_DENOMINATION
-									).toFixed(TWO)}
-								</span>
-							</Card>
+							<Link
+								target='_blank'
+								isExternal
+								href={`${EXPLORER_URL}/token/${crcV1TotalSupply.tokenAddress}`}
+							>
+								<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
+									<b>Total CRC supply (V1)</b>:
+									<span className='pl-1'>
+										{(
+											Number(
+												formatUnits(
+													toBigInt(crcV1TotalSupply.totalSupply),
+													CRC_TOKEN_DECIMALS
+												)
+											) * CRC_MIGRATION_DENOMINATION
+										).toFixed(TWO)}
+									</span>
+								</Card>
+							</Link>
 						</Tooltip>
 					</Badge>
 				) : null}
@@ -121,17 +126,23 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 						<Tooltip
 							content={`${crcV2TotalSupply.totalSupply} : ${crcV2Stopped ? 'stopped' : 'active'}`}
 						>
-							<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
-								<b>Total CRC supply (V2)</b>:
-								<span className='pl-1'>
-									{Number(
-										formatUnits(
-											toBigInt(crcV2TotalSupply.totalSupply),
-											CRC_TOKEN_DECIMALS
-										)
-									).toFixed(TWO)}
-								</span>
-							</Card>
+							<Link
+								target='_blank'
+								isExternal
+								href={`${EXPLORER_URL}/token/${crcV2TotalSupply.tokenAddress}`}
+							>
+								<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
+									<b>Total CRC supply (V2)</b>:
+									<span className='pl-1'>
+										{Number(
+											formatUnits(
+												toBigInt(crcV2TotalSupply.totalSupply),
+												CRC_TOKEN_DECIMALS
+											)
+										).toFixed(TWO)}
+									</span>
+								</Card>
+							</Link>
 						</Tooltip>
 					</Badge>
 				) : null}
