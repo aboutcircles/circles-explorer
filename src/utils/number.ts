@@ -1,4 +1,4 @@
-import { ONE } from 'constants/common'
+import { CRC_TOKEN_DECIMALS, DECIMAL_RADIX, ONE } from 'constants/common'
 
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 export const prettifyNumber = (number: number) => {
@@ -14,3 +14,6 @@ export const prettifyNumber = (number: number) => {
 	return number.toString() // Less than thousand
 }
 /* eslint-enable @typescript-eslint/no-magic-numbers */
+
+export const formatTokenUnits = (number: number) =>
+	number / DECIMAL_RADIX ** CRC_TOKEN_DECIMALS

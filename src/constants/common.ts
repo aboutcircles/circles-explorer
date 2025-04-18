@@ -25,3 +25,8 @@ export const INDIVIDUAL_TOKEN_SYMBOL = 'RING'
 export const DEFAULT_BATCH_SIZE = 999
 export const MIN_BATCH_SIZE = 1
 export const DECIMAL_RADIX = 10
+
+export const MIGRATION_CONTRACT = '0xD44B8dcFBaDfC78EA64c55B705BFc68199B56376'
+
+// eslint-disable-next-line @typescript-eslint/no-loss-of-precision
+export const CRC_MIGRATION_DENOMINATION = 2.216_690_071_905_145_5
