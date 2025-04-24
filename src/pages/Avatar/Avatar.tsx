@@ -13,20 +13,15 @@ import {
 	type CirclesAvatarFromEnvio
 } from 'services/envio/indexer'
 // import { circlesData } from 'services/circlesData'
-import logger from 'services/logger'
 import { Filter } from 'shared/Filter'
 import { EventsTable } from 'shared/EventsTable'
 import useBreakpoint from 'hooks/useBreakpoint'
 import { useProfileStore } from 'stores/useProfileStore'
+import { useFetchInvites } from 'services/circlesIndex'
 
 import { AvatarInfo } from './AvatarInfo'
 import { AvatarStats } from './AvatarStats'
 import { TrustRelations } from './TrustRelations'
-
-/*
-todo:
-- Invites list
- */
 
 // Use lazy loading for the SocialGraph component since it's heavy
 const SocialGraph = lazy(async () => import('./SocialGraph/index'))
@@ -42,6 +37,10 @@ export default function Avatar() {
 	const getProfile = useProfileStore.use.getProfile()
 	const { isSmScreen } = useBreakpoint()
 	const navigate = useNavigate()
+
+	const { data: invitesGiven, refetch: fetchInvites } = useFetchInvites(
+		address ?? ''
+	)
 
 	// Validate tab and default to 'events' if invalid
 	const currentTab = useMemo(
@@ -63,15 +62,15 @@ export default function Avatar() {
 
 	useEffect(() => {
 		const loadAvatarInfo = async (addressToLoad: Address) => {
-			const avatarInfo = await getProfileForAddress(addressToLoad)
+			const [avatarInfo, invites] = await Promise.all([
+				getProfileForAddress(addressToLoad),
+				fetchInvites()
+			])
 			// const sdkAvatarInfo = await circlesData.getAvatarInfo(addressToLoad)
 
 			// todo: check 0x9484fcaa4c39d68798e3c1b7f4a3d9dc2adc69cd, it has no profile
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 			if (!avatarInfo) return
-
-			setAvatar(avatarInfo)
-			logger.log({ avatarInfo })
 
 			// use Set to avoid duplicates and later check for cached profiles
 			const addresses = new Set()
@@ -89,15 +88,21 @@ export default function Avatar() {
 				addresses.add(trustRelation.truster_id.toLowerCase())
 			}
 
-			if (addresses.size > 0) {
-				void fetchProfiles([...addresses] as string[])
+			for (const invite of invites.data ?? []) {
+				addresses.add(invite.avatar.toLowerCase())
 			}
+
+			if (addresses.size > 0) {
+				await fetchProfiles([...addresses] as string[])
+			}
+
+			setAvatar(avatarInfo)
 		}
 
 		if (address && isAddress(address as Address)) {
 			void loadAvatarInfo(address as Address)
 		}
-		// In the future, handle nickname lookup here
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [address, fetchProfiles])
 
 	const { isMdScreen } = useBreakpoint()
@@ -127,7 +132,7 @@ export default function Avatar() {
 				</Tab>
 				<Tab key='trust' title='Trust Relations'>
 					{avatar && !isLoading ? (
-						<TrustRelations avatar={avatar} />
+						<TrustRelations avatar={avatar} invitesGiven={invitesGiven ?? []} />
 					) : (
 						<Loader />
 					)}
