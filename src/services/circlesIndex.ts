@@ -214,6 +214,44 @@ export const useFetchCrcV2TotalSupply = (
 		enabled: Boolean(address)
 	})
 
+export interface InviteRow {
+	avatar: string
+	inviter: string
+	transactionHash: string
+}
+
+// V2 Total Supply Query
+const CIRCLES_INVITES = 'circlesInvites'
+export const useFetchInvites = (address: string): UseQueryResult<InviteRow[]> =>
+	useQuery({
+		queryKey: [CIRCLES_INVITES, address],
+		queryFn: async () => {
+			const result = await makeCirclesQuery({
+				namespace: 'CrcV2',
+				table: 'RegisterHuman',
+				columns: ['avatar', 'inviter', 'transactionHash'],
+				filter: [
+					{
+						Type: 'Conjunction',
+						ConjunctionType: 'Or',
+						Predicates: [
+							{
+								Type: 'FilterPredicate',
+								FilterType: 'Equals',
+								Column: 'inviter',
+								Value: [address.toLowerCase()]
+							}
+						]
+					}
+				]
+			})
+
+			return mapTableResponse<InviteRow>(result)
+		},
+		// avoid auto fetching
+		enabled: false
+	})
+
 // query
 const CIRCLES_PROFILES_SEARCH_BY_NAME = 'circlesProfilesSearchByName'
 export const useSearchProfileByName = (
