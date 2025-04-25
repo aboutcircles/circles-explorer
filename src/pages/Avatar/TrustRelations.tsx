@@ -109,6 +109,7 @@ export function TrustRelations({
 						</h3>
 						<Listbox
 							className='overflow-auto py-0'
+							label={section.label}
 							variant='light'
 							isVirtualized
 							virtualization={{
@@ -150,6 +151,7 @@ export function TrustRelations({
 					<Listbox
 						className='overflow-auto py-0'
 						variant='light'
+						label='Invites given'
 						isVirtualized
 						virtualization={{
 							// eslint-disable-next-line @typescript-eslint/no-magic-numbers
@@ -160,7 +162,7 @@ export function TrustRelations({
 					>
 						{filteredInvites.length > 0 ? (
 							filteredInvites.map((invite) => (
-								<ListboxItem key={invite.avatar}>
+								<ListboxItem key={invite.avatar} textValue={invite.avatar}>
 									<div className='flex items-center'>
 										<AvatarAddress address={invite.avatar} size='md' />
 									</div>
