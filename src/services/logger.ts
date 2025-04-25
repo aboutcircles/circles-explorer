@@ -1,7 +1,8 @@
 // could send logs to log service
 export default {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	log(...arguments_: unknown[]): void {
-		console.log(...arguments_)
+		// console.log(...arguments_)
 	},
 	error(...arguments_: unknown[]): void {
 		console.error(...arguments_)

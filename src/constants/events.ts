@@ -10,6 +10,13 @@ export const V1_EVENTS: CirclesEventType[] = [
 	'CrcV1_UpdateMetadataDigest'
 ]
 
+export const BASE_GROUP_EVENTS: CirclesEventType[] = [
+	'CrcV2_BaseGroupCreated',
+	'CrcV2_BaseGroupOwnerUpdated',
+	'CrcV2_BaseGroupServiceUpdated',
+	'CrcV2_BaseGroupFeeCollectionUpdated'
+]
+
 export const V2_EVENTS: CirclesEventType[] = [
 	'CrcV2_ApprovalForAll',
 	'CrcV2_CidV0',
@@ -43,7 +50,9 @@ export const V2_EVENTS: CirclesEventType[] = [
 	'CrcV2_CollateralLockedBatch',
 	'CrcV2_TransferSummary',
 	'CrcV2_FlowEdgesScopeLastEnded',
-	'CrcV2_FlowEdgesScopeSingleStarted'
+	'CrcV2_FlowEdgesScopeSingleStarted',
+
+	...BASE_GROUP_EVENTS
 ]
 
 export const SAFE_EVENTS: CirclesEventType[] = [
@@ -104,6 +113,11 @@ export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV2_TransferSummary: 'Transfer Summary',
 	CrcV2_FlowEdgesScopeLastEnded: 'Flow Edges Scope Last Ended',
 	CrcV2_FlowEdgesScopeSingleStarted: 'Flow Edges Scope Single Started',
+
+	CrcV2_BaseGroupCreated: 'Base Group Created',
+	CrcV2_BaseGroupOwnerUpdated: 'Base Group Owner Updated',
+	CrcV2_BaseGroupServiceUpdated: 'Base Group Service Updated',
+	CrcV2_BaseGroupFeeCollectionUpdated: 'Base Group Fee Collection Updated',
 
 	Safe_AddedOwner: 'Safe Added Owner',
 	Safe_ProxyCreation: 'Safe Proxy Creation',
