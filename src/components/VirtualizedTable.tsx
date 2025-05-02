@@ -2,11 +2,13 @@ import { Spinner } from '@nextui-org/react'
 import {
 	flexRender,
 	getCoreRowModel,
+	getExpandedRowModel,
 	useReactTable,
-	type ColumnDef
+	type ColumnDef,
+	type ExpandedState
 } from '@tanstack/react-table'
 import type { ReactElement } from 'react'
-import { useMemo, useRef } from 'react'
+import { Fragment, useMemo, useRef, useState } from 'react'
 
 import { useVirtualScroll } from 'hooks/useVirtualScroll'
 import { TableCell } from './TableCell'
@@ -26,7 +28,10 @@ export interface Column {
 }
 
 export type Key = number | string
-export type Row = Record<string, number | string>
+export type Row = Record<string, number | string> & {
+	isExpandable?: boolean
+	subEvents?: Row[]
+}
 
 interface TableProperties {
 	ariaLabel: string
@@ -52,6 +57,8 @@ export function VirtualizedTable({
 	const tableContainerReference = useRef<HTMLDivElement>(null)
 
 	// Memoize data and column definitions
+	const [expanded, setExpanded] = useState<ExpandedState>({})
+
 	const tableColumns = useMemo<ColumnDef<Row>[]>(
 		() =>
 			columns.map((col) => ({
@@ -63,10 +70,17 @@ export function VirtualizedTable({
 		[columns]
 	)
 
-	const table = useReactTable({
+	const table = useReactTable<Row>({
 		data: rows,
 		columns: tableColumns,
-		getCoreRowModel: getCoreRowModel()
+		state: {
+			expanded
+		},
+		onExpandedChange: setExpanded,
+		getSubRows: (row) => row.subEvents,
+		getRowCanExpand: (row) => Boolean(row.original.isExpandable),
+		getCoreRowModel: getCoreRowModel(),
+		getExpandedRowModel: getExpandedRowModel()
 	})
 
 	const { rows: tableRows } = table.getRowModel()
@@ -163,36 +177,68 @@ export function VirtualizedTable({
 							return virtualItems.map((virtualRow) => {
 								const row = tableRows[virtualRow.index]
 								return (
-									<tr
-										key={row.id}
-										className='animate-fade-in border-b border-gray-100 transition-opacity duration-500 ease-in-out hover:bg-gray-50'
-									>
-										{row.getVisibleCells().map((cell) => {
-											const columnLabel = String(
-												columns.find((col) => col.key === cell.column.id)
-													?.label ?? ''
-											)
-											return (
-												<td
-													key={cell.id}
-													className='px-4 py-2.5'
-													style={{
-														textAlign:
-															columns.find((col) => col.key === cell.column.id)
-																?.align ?? 'left'
-													}}
-													role='gridcell'
-													aria-label={`${columnLabel} value`}
-												>
-													<TableCell
-														row={row.original}
-														columnKey={cell.column.id}
-														cellRenderer={renderCell}
-													/>
-												</td>
-											)
-										})}
-									</tr>
+									<Fragment key={row.id}>
+										<tr
+											className={`animate-fade-in ${row.original.isExpandable ? 'cursor-pointer' : ''} border-b border-gray-100 transition-opacity duration-500 ease-in-out hover:bg-gray-50`}
+											onClick={() =>
+												row.original.isExpandable && row.toggleExpanded()
+											}
+										>
+											{row.getVisibleCells().map((cell) => {
+												const columnLabel = String(
+													columns.find((col) => col.key === cell.column.id)
+														?.label ?? ''
+												)
+												return (
+													<td
+														key={cell.id}
+														className='px-4 py-2.5'
+														style={{
+															textAlign:
+																columns.find(
+																	(col) => col.key === cell.column.id
+																)?.align ?? 'left'
+														}}
+														role='gridcell'
+														aria-label={`${columnLabel} value`}
+													>
+														<TableCell
+															row={row.original}
+															columnKey={cell.column.id}
+															cellRenderer={renderCell}
+														/>
+													</td>
+												)
+											})}
+										</tr>
+										{row.getIsExpanded() && row.original.subEvents ? (
+											<>
+												{row.original.subEvents.map((subEvent) => (
+													<tr
+														key={`${row.id}-sub-${subEvent.key}`}
+														className='border-b border-gray-100 bg-gray-50'
+													>
+														{columns.map((col) => (
+															<td
+																aria-label='Sub-row value'
+																key={`${row.id}-sub-${subEvent.key}-${col.key}`}
+																className='px-4 py-2.5'
+																style={{
+																	textAlign: col.align ?? 'left'
+																}}
+															>
+																<TableCell
+																	row={subEvent}
+																	columnKey={col.key}
+																	cellRenderer={renderCell}
+																/>
+															</td>
+														))}
+													</tr>
+												))}
+											</>
+										) : null}
+									</Fragment>
 								)
 							})
 						})()}

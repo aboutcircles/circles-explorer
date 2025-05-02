@@ -5,6 +5,7 @@ export type EventType =
 	| 'CrcV1_OrganizationSignup'
 	| 'CrcV1_Signup'
 	| 'CrcV1_Transfer'
+	| 'CrcV1_TransferSummary'
 	| 'CrcV1_Trust'
 	| 'CrcV2_ApprovalForAll'
 	| 'CrcV2_CidV0'
@@ -27,6 +28,7 @@ export type EventType =
 	| 'CrcV2_StreamCompleted'
 	| 'CrcV2_TransferBatch'
 	| 'CrcV2_TransferSingle'
+	| 'CrcV2_TransferSummary'
 	| 'CrcV2_Trust'
 	| 'CrcV2_UpdateMetadataDigest'
 	| 'CrcV2_URI'
@@ -71,3 +73,8 @@ export type Event = EventResponse['values'] &
 	Pick<EventResponse, 'event'> & {
 		key: string
 	}
+
+export type ProcessedEvent = Event & {
+	isExpandable: boolean
+	subEvents: Event[]
+}

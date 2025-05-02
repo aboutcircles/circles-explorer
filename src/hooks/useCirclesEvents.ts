@@ -2,18 +2,18 @@ import type { CirclesEventType } from '@circles-sdk/data'
 import { useCallback, useEffect, useMemo } from 'react'
 import { isAddress } from 'viem'
 
-import { isNil } from 'utils/isNil'
 import { avatarFields } from 'constants/avatarFields'
 import { ONE } from 'constants/common'
-import { useBlockNumber } from 'services/viemClient'
 import { useProfiles } from 'hooks/useProfiles'
 import {
 	useFetchCirclesEventsInfinite,
 	type EventsInfiniteData
 } from 'services/circlesEvents'
 import logger from 'services/logger'
+import { useBlockNumber } from 'services/viemClient'
 import { useFilterStore } from 'stores/useFilterStore'
-import type { Event } from 'types/events'
+import type { Event, ProcessedEvent } from 'types/events'
+import { isNil } from 'utils/isNil'
 import { useStartBlock } from './useStartBlock'
 
 export const useCirclesEvents = (address: string | null = null) => {
@@ -101,13 +101,55 @@ export const useCirclesEvents = (address: string | null = null) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [fetchNextPage, hasNextPage, isLoadingMore])
 
-	// Filter events by selected event types
+	// Process and filter events, grouping related events by transaction hash
 	const filteredEvents = useMemo(() => {
 		if (allEvents.length === 0) return []
 
-		return allEvents.filter((event: Event): boolean =>
-			eventTypes.has(event.event)
-		)
+		// Create a map to group events by transaction hash
+		const eventsByTxHash = new Map<string, Event[]>()
+
+		// First pass: collect all events by transaction hash
+		for (const event of allEvents) {
+			if (eventTypes.has(event.event)) {
+				const { transactionHash } = event
+				const existingEvents = eventsByTxHash.get(transactionHash) ?? []
+				eventsByTxHash.set(transactionHash, [...existingEvents, event])
+			}
+		}
+
+		// Second pass: identify summary events and their sub-events
+		const result: ProcessedEvent[] = []
+
+		for (const events of eventsByTxHash.values()) {
+			// Check if there's a summary event in this transaction
+			const summaryEvent = events.find(
+				(event) =>
+					event.event === 'CrcV1_TransferSummary' ||
+					event.event === 'CrcV2_TransferSummary'
+			)
+
+			if (summaryEvent) {
+				// Add the summary event with its sub-events
+				const processedEvent: ProcessedEvent = {
+					...summaryEvent,
+					isExpandable: true,
+					subEvents: events.filter((event) => event !== summaryEvent)
+				}
+				result.push(processedEvent)
+			} else {
+				// Add all events individually
+				for (const event of events) {
+					const processedEvent: ProcessedEvent = {
+						...event,
+						isExpandable: false,
+						subEvents: []
+					}
+					result.push(processedEvent)
+				}
+			}
+		}
+
+		return result
 	}, [allEvents, eventTypes])
 
 	// Prefetch profiles for all addresses in the events
