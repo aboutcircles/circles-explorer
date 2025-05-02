@@ -15,7 +15,13 @@ const eventDetailsColumns: Column[] = [
 	}
 ]
 
-const hiddenEventDetails = new Set(['key', 'values'])
+const hiddenEventDetails = new Set([
+	'key',
+	'values',
+	'isExpandable',
+	'subEvents',
+	'events'
+])
 
 const keyValuesRenderCell = (item: Row, columnKey: Key) => {
 	const cellValue =
