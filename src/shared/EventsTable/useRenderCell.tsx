@@ -59,7 +59,7 @@ export const useRenderCell = () => {
 									className='ml-2 block cursor-help text-xs text-primary'
 									title={`Click to view ${item.subEvents?.length} individual transfers`}
 								>
-									{item.subEvents?.length} transfers
+									{item.subEvents?.length} events
 								</span>
 							) : null}
 						</>
