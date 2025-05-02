@@ -36,23 +36,33 @@ export const useRenderCell = () => {
 				}
 				case 'transactionHash': {
 					return (
-						<div className='flex w-[152px] items-center space-x-2'>
-							<Link
-								target='_blank'
-								isExternal
-								href={`${EXPLORER_URL}/tx/${cellValue}`}
-								className='font-mono text-sm'
-							>
-								{truncateHex(String(cellValue))}
-							</Link>
-							<Snippet
-								symbol=''
-								variant='flat'
-								className='min-w-0 bg-transparent p-0'
-								size='sm'
-								codeString={String(cellValue)}
-							/>
-						</div>
+						<>
+							<div className='flex w-[152px] items-center space-x-2'>
+								<Link
+									target='_blank'
+									isExternal
+									href={`${EXPLORER_URL}/tx/${cellValue}`}
+									className='font-mono text-sm'
+								>
+									{truncateHex(String(cellValue))}
+								</Link>
+								<Snippet
+									symbol=''
+									variant='flat'
+									className='min-w-0 bg-transparent p-0'
+									size='sm'
+									codeString={String(cellValue)}
+								/>
+							</div>
+							{item.isExpandable ? (
+								<span
+									className='ml-2 block cursor-help text-xs text-primary'
+									title={`Click to view ${item.subEvents?.length} individual transfers`}
+								>
+									{item.subEvents?.length} transfers
+								</span>
+							) : null}
+						</>
 					)
 				}
 				case 'event': {
@@ -98,7 +108,7 @@ export const useRenderCell = () => {
 					if (
 						item.from &&
 						item.to &&
-						(item.tokenAddress || item.id) &&
+						// (item.tokenAddress || item.id) &&
 						(item.amount || item.value)
 					) {
 						const fromAddress = String(item.from)

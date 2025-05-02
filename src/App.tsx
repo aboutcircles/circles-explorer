@@ -14,7 +14,7 @@ export default function App(): ReactElement {
 			<Suspense fallback={<LoadingOrError />}>
 				<Header />
 
-				<div className='m-auto max-w-[1300px]'>
+				<div className='m-auto max-w-[1350px]'>
 					<Routes>
 						<Route path='/' element={<MainPage />} />
 						<Route
