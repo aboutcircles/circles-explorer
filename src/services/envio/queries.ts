@@ -367,5 +367,22 @@ query checkIfAddressExistsInRegistryQuery($address: String!) {
         previewImageUrl         
       }
   }
-}`
+}`,
+
+	PROFILES_FOR_ADDRESSES: `
+  query getProfilesForAddresses($addresses: [String!]) {
+    Avatar(where: {id: {_in: $addresses}}) {
+      id
+      isVerified
+      cidV0
+      version
+      avatarType
+      profile {
+        name
+        id
+        description
+        previewImageUrl         
+      }
+    }
+  }`
 }
