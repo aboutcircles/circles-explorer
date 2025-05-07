@@ -32,7 +32,7 @@ type TabKey = (typeof TABS)[number]
 
 export default function Avatar() {
 	const { address, tab } = useParams<{ address: string; tab: string }>()
-	const [avatar, setAvatar] = useState<CirclesAvatarFromEnvio>()
+	const [avatar, setAvatar] = useState<CirclesAvatarFromEnvio | null>()
 	const { fetchProfiles, isLoading } = useProfiles()
 	const getProfile = useProfileStore.use.getProfile()
 	const { isSmScreen } = useBreakpoint()
@@ -62,6 +62,8 @@ export default function Avatar() {
 
 	useEffect(() => {
 		const loadAvatarInfo = async (addressToLoad: Address) => {
+			setAvatar(null)
+
 			const [avatarInfo, invites] = await Promise.all([
 				getProfileForAddress(addressToLoad),
 				fetchInvites()
@@ -103,7 +105,7 @@ export default function Avatar() {
 			void loadAvatarInfo(address as Address)
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [])
+	}, [address])
 
 	const { isMdScreen } = useBreakpoint()
 
@@ -113,7 +115,7 @@ export default function Avatar() {
 				className={`flex ${isMdScreen ? 'flex-row items-start' : 'flex-col items-center'}`}
 			>
 				{avatar ? <AvatarInfo profile={getProfile(avatar.id)} /> : null}
-				{avatar ? <AvatarStats avatar={avatar} /> : null}
+				{avatar ? <AvatarStats avatar={avatar} /> : <Loader />}
 			</div>
 
 			<Tabs
