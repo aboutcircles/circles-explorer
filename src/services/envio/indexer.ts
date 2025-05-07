@@ -235,3 +235,21 @@ export const getTrustNetworkRelations = async (
 
 	return data.TrustRelation
 }
+
+export const getProfilesForAddresses = async (
+	addresses: Address[]
+): Promise<CirclesAvatarFromEnvio[]> => {
+	if (addresses.length === 0) {
+		return []
+	}
+
+	const data = await executeQuery<{
+		Avatar: CirclesAvatarFromEnvio[]
+	}>(
+		queries.PROFILES_FOR_ADDRESSES,
+		{ addresses: addresses.map((addr) => getAddress(addr)) },
+		'getProfilesForAddresses'
+	)
+
+	return data.Avatar
+}

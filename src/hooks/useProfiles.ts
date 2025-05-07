@@ -3,15 +3,30 @@ import type { Address } from 'viem'
 import { isAddress } from 'viem'
 
 import type { SearchResultProfile } from '@circles-sdk/profiles'
-import { circlesProfiles } from 'services/circlesData'
-import logger from 'services/logger'
-import { useProfileStore } from 'stores/useProfileStore'
 import {
+	DECIMAL_RADIX,
 	DEFAULT_BATCH_SIZE,
 	MIN_BATCH_SIZE,
-	DECIMAL_RADIX,
 	ONE
 } from 'constants/common'
+import { circlesProfiles } from 'services/circlesData'
+import type { CirclesAvatarFromEnvio } from 'services/envio/indexer'
+import { getProfilesForAddresses } from 'services/envio/indexer'
+import logger from 'services/logger'
+import { useProfileStore } from 'stores/useProfileStore'
+
+const convertEnvioProfileToSearchResult = (
+	envioProfile: CirclesAvatarFromEnvio
+): SearchResultProfile => ({
+	address: envioProfile.id,
+	name: envioProfile.profile?.name ?? '',
+	previewImageUrl: envioProfile.profile?.previewImageUrl ?? '',
+	imageUrl: envioProfile.profile?.imageUrl ?? '',
+	description: envioProfile.profile?.description ?? '',
+	CID: envioProfile.cidV0,
+	lastUpdatedAt: 0,
+	registeredName: envioProfile.profile?.name ?? ''
+})
 
 const processBatches = async (
 	addressList: string[],
@@ -115,24 +130,42 @@ export function useProfiles() {
 					DEFAULT_BATCH_SIZE
 				)
 
-				// Create a map of addresses that were fetched
-				const fetchedAddresses = new Set(
+				// Create a map of addresses that were fetched but not found
+				const notFoundAddresses = new Set(
 					addressesToFetch.map((addr) => addr.toLowerCase())
 				)
 
-				// Process successful results
+				// Process successful results from primary service
 				for (const results of batchResults) {
 					for (const profile of results) {
 						if (profile.address) {
 							setProfile(profile.address, profile)
-							// Remove from the set of fetched addresses
-							fetchedAddresses.delete(profile.address.toLowerCase())
+							notFoundAddresses.delete(profile.address.toLowerCase())
 						}
 					}
 				}
 
-				// For any addresses that were fetched but not found in results, set them to null
-				for (const address of fetchedAddresses) {
+				// If we have addresses with no profiles, try envio as fallback
+				if (notFoundAddresses.size > 0) {
+					try {
+						const envioProfiles = await getProfilesForAddresses([
+							...notFoundAddresses
+						] as Address[])
+
+						// Process envio results
+						for (const envioProfile of envioProfiles) {
+							const searchProfile =
+								convertEnvioProfileToSearchResult(envioProfile)
+							setProfile(envioProfile.id, searchProfile)
+							notFoundAddresses.delete(envioProfile.id.toLowerCase())
+						}
+					} catch (envioError) {
+						logger.error('Failed to fetch profiles from envio:', envioError)
+					}
+				}
+
+				// For any remaining addresses not found in either service, set them to null
+				for (const address of notFoundAddresses) {
 					setProfile(address, null)
 				}
 			} catch (error) {
