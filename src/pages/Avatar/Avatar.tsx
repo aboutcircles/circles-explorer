@@ -1,23 +1,23 @@
-import { useEffect, useState, useMemo, lazy, Suspense } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { Tabs, Tab } from '@nextui-org/react'
+import { Tab, Tabs } from '@nextui-org/react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { ErrorBoundary } from 'react-error-boundary'
+import { useNavigate, useParams } from 'react-router-dom'
 import type { Address } from 'viem'
 import { isAddress } from 'viem'
-import { ErrorBoundary } from 'react-error-boundary'
 
 import { Error } from 'components/Error'
 import { Loader } from 'components/Loader'
+import useBreakpoint from 'hooks/useBreakpoint'
 import { useProfiles } from 'hooks/useProfiles'
+import { useSdkTrustRelations } from 'hooks/useSdkTrustRelations'
+import { useFetchInvites } from 'services/circlesIndex'
 import {
 	getProfileForAddress,
 	type CirclesAvatarFromEnvio
 } from 'services/envio/indexer'
-// import { circlesData } from 'services/circlesData'
-import { Filter } from 'shared/Filter'
 import { EventsTable } from 'shared/EventsTable'
-import useBreakpoint from 'hooks/useBreakpoint'
+import { Filter } from 'shared/Filter'
 import { useProfileStore } from 'stores/useProfileStore'
-import { useFetchInvites } from 'services/circlesIndex'
 
 import { AvatarInfo } from './AvatarInfo'
 import { AvatarStats } from './AvatarStats'
@@ -42,6 +42,10 @@ export default function Avatar() {
 		address ?? ''
 	)
 
+	const { trustRelations, refetch: fetchTrustRelations } = useSdkTrustRelations(
+		address as Address
+	)
+
 	// Validate tab and default to 'events' if invalid
 	const currentTab = useMemo(
 		() => (TABS.includes(tab as TabKey) ? (tab as TabKey) : 'events'),
@@ -64,11 +68,11 @@ export default function Avatar() {
 		const loadAvatarInfo = async (addressToLoad: Address) => {
 			setAvatar(null)
 
-			const [avatarInfo, invites] = await Promise.all([
+			const [avatarInfo, invites, relations] = await Promise.all([
 				getProfileForAddress(addressToLoad),
-				fetchInvites()
+				fetchInvites(),
+				fetchTrustRelations()
 			])
-			// const sdkAvatarInfo = await circlesData.getAvatarInfo(addressToLoad)
 
 			// todo: check 0x9484fcaa4c39d68798e3c1b7f4a3d9dc2adc69cd, it has no profile
 			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -83,13 +87,17 @@ export default function Avatar() {
 				addresses.add(avatarInfo.invitedBy.toLowerCase())
 			}
 
-			for (const trustRelation of avatarInfo.trustsGiven) {
-				addresses.add(trustRelation.trustee_id.toLowerCase())
-			}
-			for (const trustRelation of avatarInfo.trustsReceived) {
-				addresses.add(trustRelation.truster_id.toLowerCase())
+			// Add addresses from trust relations
+			if (relations.data) {
+				for (const relation of [
+					...relations.data.given,
+					...relations.data.received
+				]) {
+					addresses.add(relation.address.toLowerCase())
+				}
 			}
 
+			// Add addresses from invites
 			for (const invite of invites.data ?? []) {
 				addresses.add(invite.avatar.toLowerCase())
 			}
@@ -134,7 +142,10 @@ export default function Avatar() {
 				</Tab>
 				<Tab key='trust' title='Trust Relations'>
 					{avatar && !isLoading ? (
-						<TrustRelations avatar={avatar} invitesGiven={invitesGiven ?? []} />
+						<TrustRelations
+							trustRelations={trustRelations}
+							invitesGiven={invitesGiven ?? []}
+						/>
 					) : (
 						<Loader />
 					)}

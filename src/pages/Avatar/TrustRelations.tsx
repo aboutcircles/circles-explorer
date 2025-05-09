@@ -1,76 +1,62 @@
 import { Card, Listbox, ListboxItem } from '@nextui-org/react'
 import useBreakpoint from 'hooks/useBreakpoint'
-import { useCallback, useMemo, useState } from 'react'
 import type {
-	TrustRelationFromEnvio,
-	CirclesAvatarFromEnvio
-} from 'services/envio/indexer'
+	GroupedTrustRelations,
+	TransformedTrustRelation
+} from 'hooks/useSdkTrustRelations'
+import { useCallback, useMemo, useState } from 'react'
 import type { InviteRow } from 'services/circlesIndex'
 import { AvatarAddress } from 'shared/AvatarAddress'
 import { TrustSearchBox } from 'shared/Search/TrustSearchBox'
 import { useProfileStore } from 'stores/useProfileStore'
 
+const LISTBOX_MAX_HEIGHT = 400
+const LISTBOX_ITEM_HEIGHT = 40
+
 interface TrustSection {
 	label: string
-	arrayField: 'trustsGiven' | 'trustsReceived'
-	addressField: 'trustee_id' | 'truster_id'
+	type: 'given' | 'received'
 }
 
 const trustSections: TrustSection[] = [
 	{
 		label: 'Trusts given',
-		arrayField: 'trustsGiven',
-		addressField: 'trustee_id'
+		type: 'given'
 	},
 	{
 		label: 'Trusts received',
-		arrayField: 'trustsReceived',
-		addressField: 'truster_id'
+		type: 'received'
 	}
 ]
 
-export function TrustRelations({
-	avatar,
-	invitesGiven
-}: {
-	avatar: CirclesAvatarFromEnvio
+interface TrustRelationsProperties {
+	trustRelations?: GroupedTrustRelations
 	invitesGiven: InviteRow[]
-}) {
+}
+
+export function TrustRelations({
+	trustRelations,
+	invitesGiven
+}: TrustRelationsProperties) {
 	const { isMdScreen } = useBreakpoint()
 	const [searchTerm, setSearchTerm] = useState('')
 	const getProfile = useProfileStore.use.getProfile()
 
 	// Filter trust relations based on search term
 	const filterTrustRelations = useCallback(
-		(
-			relations: TrustRelationFromEnvio[],
-			addressField: 'trustee_id' | 'truster_id'
-		) => {
+		(relations: TransformedTrustRelation[]) => {
 			if (!searchTerm.trim()) return relations
 
 			const term = searchTerm.toLowerCase()
 			return relations.filter((trust) => {
-				const address = trust[addressField].toLowerCase()
-				const profile = getProfile(address)
+				const trustAddress = trust.address.toLowerCase()
+				const profile = getProfile(trustAddress)
 				const name = profile?.name ? profile.name.toLowerCase() : ''
 
-				return address.includes(term) || name.includes(term)
+				return trustAddress.includes(term) || name.includes(term)
 			})
 		},
 		[searchTerm, getProfile]
-	)
-
-	// Memoize filtered trust relations
-	const filteredTrustSections = useMemo(
-		() =>
-			trustSections.map((section) => ({
-				...section,
-				filteredData: filterTrustRelations(
-					avatar[section.arrayField],
-					section.addressField
-				)
-			})),
-		[avatar, filterTrustRelations]
 	)
 
 	// Filter invites based on search term
@@ -79,13 +65,15 @@ export function TrustRelations({
 
 		const term = searchTerm.toLowerCase()
 		return invitesGiven.filter((invite) => {
-			const address = invite.avatar.toLowerCase()
-			const profile = getProfile(address)
+			const inviteAddress = invite.avatar.toLowerCase()
+			const profile = getProfile(inviteAddress)
 			const name = profile?.name ? profile.name.toLowerCase() : ''
 
-			return address.includes(term) || name.includes(term)
+			return inviteAddress.includes(term) || name.includes(term)
 		})
 	}, [searchTerm, getProfile, invitesGiven])
+
+	if (!trustRelations) return null
 
 	return (
 		<div className='flex flex-col gap-4 p-4'>
@@ -99,13 +87,14 @@ export function TrustRelations({
 			<div
 				className={`flex flex-wrap ${isMdScreen ? 'flex-row' : 'flex-col'} gap-4`}
 			>
-				{filteredTrustSections.map((section) => (
+				{trustSections.map((section) => (
 					<Card
 						key={section.label}
 						className={`${isMdScreen ? 'flex-1' : 'w-full'} p-4`}
 					>
 						<h3 className='mb-2 font-semibold'>
-							{section.label}: {section.filteredData.length}
+							{section.label}:{' '}
+							{filterTrustRelations(trustRelations[section.type]).length}
 						</h3>
 						<Listbox
 							className='overflow-auto py-0'
@@ -113,26 +102,26 @@ export function TrustRelations({
 							variant='light'
 							isVirtualized
 							virtualization={{
-								// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-								maxListboxHeight: 400,
-								// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-								itemHeight: 40
+								maxListboxHeight: LISTBOX_MAX_HEIGHT,
+								itemHeight: LISTBOX_ITEM_HEIGHT
 							}}
 						>
-							{section.filteredData.length > 0 ? (
-								section.filteredData.map((trust) => (
-									<ListboxItem
-										key={trust.truster_id + trust.trustee_id + trust.version}
-										textValue={`(v${trust.version}) - ${trust[section.addressField]}`}
-									>
-										<div className='flex items-center'>
-											<AvatarAddress
-												address={trust[section.addressField]}
-												size='md'
-											/>
-										</div>
-									</ListboxItem>
-								))
+							{trustRelations[section.type].length > 0 ? (
+								filterTrustRelations(trustRelations[section.type]).map(
+									(trust) => (
+										<ListboxItem
+											key={`${trust.address}-${trust.type}-${trust.version.join('-')}`}
+											textValue={`${trust.address} (v${trust.version.join(', ')})`}
+										>
+											<div className='flex items-center justify-between'>
+												<AvatarAddress address={trust.address} size='md' />
+												{trust.isMutual ? (
+													<span className='text-sm text-success'>Mutual</span>
+												) : null}
+											</div>
+										</ListboxItem>
+									)
+								)
 							) : (
 								<ListboxItem>No trust relations found</ListboxItem>
 							)}
@@ -140,7 +129,6 @@ export function TrustRelations({
 					</Card>
 				))}
 
-				{/* Third list for invites - placeholder for future implementation */}
 				<Card
 					key='Invites given'
 					className={`${isMdScreen ? 'flex-1' : 'w-full'} p-4`}
@@ -154,10 +142,8 @@ export function TrustRelations({
 						label='Invites given'
 						isVirtualized
 						virtualization={{
-							// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-							maxListboxHeight: 400,
-							// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-							itemHeight: 40
+							maxListboxHeight: LISTBOX_MAX_HEIGHT,
+							itemHeight: LISTBOX_ITEM_HEIGHT
 						}}
 					>
 						{filteredInvites.length > 0 ? (
@@ -169,11 +155,18 @@ export function TrustRelations({
 								</ListboxItem>
 							))
 						) : (
-							<ListboxItem>No trust relations found</ListboxItem>
+							<ListboxItem>No invites found</ListboxItem>
 						)}
 					</Listbox>
 				</Card>
 			</div>
 		</div>
 	)
+}
+
+TrustRelations.defaultProps = {
+	trustRelations: {
+		given: [],
+		received: []
+	}
 }
