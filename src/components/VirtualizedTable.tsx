@@ -211,33 +211,6 @@ export function VirtualizedTable({
 												)
 											})}
 										</tr>
-										{row.getIsExpanded() && row.original.subEvents ? (
-											<>
-												{row.original.subEvents.map((subEvent) => (
-													<tr
-														key={`${row.id}-sub-${subEvent.key}`}
-														className='border-b border-gray-100 bg-gray-50'
-													>
-														{columns.map((col) => (
-															<td
-																aria-label='Sub-row value'
-																key={`${row.id}-sub-${subEvent.key}-${col.key}`}
-																className='px-4 py-2.5'
-																style={{
-																	textAlign: col.align ?? 'left'
-																}}
-															>
-																<TableCell
-																	row={subEvent}
-																	columnKey={col.key}
-																	cellRenderer={renderCell}
-																/>
-															</td>
-														))}
-													</tr>
-												))}
-											</>
-										) : null}
 									</Fragment>
 								)
 							})
