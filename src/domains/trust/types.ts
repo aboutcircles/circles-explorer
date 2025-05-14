@@ -37,8 +37,11 @@ export interface GroupedTrustRelations {
  * Represents an invitation from one avatar to another
  */
 export interface Invitation {
-	inviter: Address
-	invited: Address
+	blockNumber: number
+	transactionIndex: number
+	logIndex: number
 	timestamp: number
 	transactionHash: string
+	inviter: Address
+	avatar: Address
 }

@@ -20,13 +20,12 @@ import { useProfileStore } from 'stores/useProfileStore'
 
 import { AvatarInfo } from './AvatarInfo'
 import { AvatarStats } from './AvatarStats'
-import { TrustRelations } from './TrustRelations/TrustRelations'
+import { TrustRelations } from './TrustRelations'
 
 /*
 todo:
 - invitedBy
 - totalSupply
-- invitations
 - lastMint
 - profiles repository
 - coordinator for fetch all required repos in once\
@@ -105,7 +104,7 @@ export default function Avatar() {
 
 			// Add addresses from invites
 			for (const invite of invitations) {
-				addresses.add(invite.invited.toLowerCase())
+				addresses.add(invite.avatar.toLowerCase())
 			}
 
 			if (addresses.size > 0) {

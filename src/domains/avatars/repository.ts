@@ -41,7 +41,6 @@ export const avatarRepository = {
 
 			const avatar = adaptAvatarFromSdk(sdkAvatar)
 
-			console.log({ sdkAvatar, avatar })
 			return {
 				...avatar,
 				invitedBy

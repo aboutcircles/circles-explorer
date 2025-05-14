@@ -5,6 +5,7 @@ import { MILLISECONDS_IN_A_MINUTE } from 'constants/time'
 import { circlesData } from 'services/circlesData'
 import logger from 'services/logger'
 
+import { CirclesQuery } from '@circles-sdk/data'
 import { adaptTrustRelationFromSdk, groupTrustRelations } from './adapters'
 import type { GroupedTrustRelations, Invitation, TrustRelation } from './types'
 
@@ -45,12 +46,45 @@ export const trustRepository = {
 	// Fetch invitations
 	getInvitations: async (address: Address): Promise<Invitation[]> => {
 		try {
-			const invitations = await circlesData.getInvitations(address)
+			const pageSize = 200
+			const query = new CirclesQuery<Invitation>(circlesData.rpc, {
+				namespace: 'CrcV2',
+				table: 'RegisterHuman',
+				columns: [
+					'blockNumber',
+					'timestamp',
+					'transactionIndex',
+					'logIndex',
+					'transactionHash',
+					'avatar',
+					'inviter'
+				],
+				filter: [
+					{
+						Type: 'FilterPredicate',
+						FilterType: 'Equals',
+						Column: 'inviter',
+						Value: address.toLowerCase()
+					}
+				],
+				sortOrder: 'DESC',
+				limit: pageSize
+			})
 
-			// todo: fix it
-			console.log({ invitations, address })
+			const invitations: Invitation[] = []
 
-			return []
+			// Fetch all pages
+			let hasMorePages = true
+			while (hasMorePages) {
+				// eslint-disable-next-line no-await-in-loop
+				hasMorePages = await query.queryNextPage()
+				const results = query.currentPage?.results ?? []
+				if (results.length === 0) break
+				invitations.push(...results)
+				if (results.length < pageSize) break // No more results to fetch
+			}
+
+			return invitations
 		} catch (error) {
 			logger.error('[Repository] Failed to fetch invitations:', error)
 			return []

@@ -1,8 +1,6 @@
 import type { TrustRelationRow } from '@circles-sdk/data/dist/rows/trustRelationRow'
-import type { Address } from 'viem'
 import type {
 	GroupedTrustRelations,
-	Invitation,
 	TransformedTrustRelation,
 	TrustRelation
 } from './types'
@@ -60,18 +58,3 @@ export const groupTrustRelations = (
 
 	return { given, received }
 }
-
-/**
- * Creates an invitation object
- */
-export const createInvitation = (
-	inviter: Address,
-	invited: Address,
-	timestamp: number,
-	transactionHash: string
-): Invitation => ({
-	inviter,
-	invited,
-	timestamp,
-	transactionHash
-})

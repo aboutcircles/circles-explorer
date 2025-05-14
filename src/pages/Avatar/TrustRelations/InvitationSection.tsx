@@ -1,8 +1,8 @@
 import { Card, Listbox, ListboxItem } from '@nextui-org/react'
-import type { Address } from 'viem'
 
 import { AvatarAddress } from 'shared/AvatarAddress'
 import { useProfileStore } from 'stores/useProfileStore'
+import type { Invitation } from 'domains/trust/types'
 
 import { LISTBOX_MAX_HEIGHT, LISTBOX_ITEM_HEIGHT } from './constants'
 
@@ -11,7 +11,7 @@ export function InvitationSection({
 	invitations,
 	searchTerm
 }: {
-	invitations: { inviter: Address; invited: Address }[]
+	invitations: Invitation[]
 	searchTerm: string
 }) {
 	const getProfile = useProfileStore.use.getProfile()
@@ -19,7 +19,7 @@ export function InvitationSection({
 	// Filter invitations based on search term
 	const filteredInvitations = searchTerm.trim()
 		? invitations.filter((invite) => {
-				const inviteAddress = invite.invited.toLowerCase()
+				const inviteAddress = invite.avatar.toLowerCase()
 				const profile = getProfile(inviteAddress)
 
 				// If profile is not found, return false
@@ -49,9 +49,9 @@ export function InvitationSection({
 			>
 				{filteredInvitations.length > 0 ? (
 					filteredInvitations.map((invite) => (
-						<ListboxItem key={invite.invited} textValue={invite.invited}>
+						<ListboxItem key={invite.avatar} textValue={invite.avatar}>
 							<div className='flex items-center'>
-								<AvatarAddress address={invite.invited} size='md' />
+								<AvatarAddress address={invite.avatar} size='md' />
 							</div>
 						</ListboxItem>
 					))
