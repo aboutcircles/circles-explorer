@@ -1,5 +1,5 @@
 import { Tab, Tabs } from '@nextui-org/react'
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, type ComponentProps } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useNavigate, useParams } from 'react-router-dom'
 import type { Address } from 'viem'
@@ -7,21 +7,31 @@ import { isAddress } from 'viem'
 
 import { Error } from 'components/Error'
 import { Loader } from 'components/Loader'
+import { useAvatar } from 'domains/avatars/repository'
+import {
+	useGroupedTrustRelations,
+	useInvitations
+} from 'domains/trust/repository'
 import useBreakpoint from 'hooks/useBreakpoint'
 import { useProfiles } from 'hooks/useProfiles'
-import { useSdkTrustRelations } from 'hooks/useSdkTrustRelations'
-import { useFetchInvites } from 'services/circlesIndex'
-import {
-	getProfileForAddress,
-	type CirclesAvatarFromEnvio
-} from 'services/envio/indexer'
 import { EventsTable } from 'shared/EventsTable'
 import { Filter } from 'shared/Filter'
 import { useProfileStore } from 'stores/useProfileStore'
 
 import { AvatarInfo } from './AvatarInfo'
 import { AvatarStats } from './AvatarStats'
-import { TrustRelations } from './TrustRelations'
+import { TrustRelations } from './TrustRelations/TrustRelations'
+
+/*
+todo:
+- invitedBy
+- totalSupply
+- invitations
+- lastMint
+- profiles repository
+- coordinator for fetch all required repos in once\
+- graph
+ */
 
 // Use lazy loading for the SocialGraph component since it's heavy
 const SocialGraph = lazy(async () => import('./SocialGraph/index'))
@@ -32,17 +42,22 @@ type TabKey = (typeof TABS)[number]
 
 export default function Avatar() {
 	const { address, tab } = useParams<{ address: string; tab: string }>()
-	const [avatar, setAvatar] = useState<CirclesAvatarFromEnvio | null>()
-	const { fetchProfiles, isLoading } = useProfiles()
+	const { fetchProfiles, isLoading: profilesLoading } = useProfiles()
 	const getProfile = useProfileStore.use.getProfile()
-	const { isSmScreen } = useBreakpoint()
+	const { isSmScreen, isMdScreen } = useBreakpoint()
 	const navigate = useNavigate()
 
-	const { data: invitesGiven, refetch: fetchInvites } = useFetchInvites(
-		address ?? ''
+	// Fetch avatar data using our new repository
+	const { data: avatar, isLoading: avatarLoading } = useAvatar(
+		address as Address
 	)
 
-	const { trustRelations, refetch: fetchTrustRelations } = useSdkTrustRelations(
+	// Fetch trust relations using our new repository
+	const { data: trustRelations, isLoading: trustLoading } =
+		useGroupedTrustRelations(address as Address)
+
+	// Fetch invitations
+	const { data: invitations, isLoading: invitationsLoading } = useInvitations(
 		address as Address
 	)
 
@@ -65,57 +80,44 @@ export default function Avatar() {
 	}, [tab, address, navigate])
 
 	useEffect(() => {
-		const loadAvatarInfo = async (addressToLoad: Address) => {
-			setAvatar(null)
-
-			const [avatarInfo, invites, relations] = await Promise.all([
-				getProfileForAddress(addressToLoad),
-				fetchInvites(),
-				fetchTrustRelations()
-			])
-
-			// todo: check 0x9484fcaa4c39d68798e3c1b7f4a3d9dc2adc69cd, it has no profile
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-			if (!avatarInfo) return
+		const loadProfiles = async () => {
+			if (!address || !isAddress(address as Address)) return
+			if (!avatar || !trustRelations || !invitations) return
 
 			// use Set to avoid duplicates and later check for cached profiles
-			const addresses = new Set()
+			const addresses = new Set<string>()
 
-			addresses.add(avatarInfo.id.toLowerCase())
+			// Add the avatar address
+			addresses.add(address.toLowerCase())
 
-			if (avatarInfo.invitedBy) {
-				addresses.add(avatarInfo.invitedBy.toLowerCase())
+			// Add invited by address if available
+			if (avatar.invitedBy) {
+				addresses.add(avatar.invitedBy.toLowerCase())
 			}
 
 			// Add addresses from trust relations
-			if (relations.data) {
-				for (const relation of [
-					...relations.data.given,
-					...relations.data.received
-				]) {
-					addresses.add(relation.address.toLowerCase())
-				}
+			for (const relation of [
+				...trustRelations.given,
+				...trustRelations.received
+			]) {
+				addresses.add(relation.address.toLowerCase())
 			}
 
 			// Add addresses from invites
-			for (const invite of invites.data ?? []) {
-				addresses.add(invite.avatar.toLowerCase())
+			for (const invite of invitations) {
+				addresses.add(invite.invited.toLowerCase())
 			}
 
 			if (addresses.size > 0) {
-				await fetchProfiles([...addresses] as string[])
+				void fetchProfiles([...addresses])
 			}
-
-			setAvatar(avatarInfo)
 		}
 
-		if (address && isAddress(address as Address)) {
-			void loadAvatarInfo(address as Address)
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [address])
+		void loadProfiles()
+	}, [address, avatar, trustRelations, invitations, fetchProfiles])
 
-	const { isMdScreen } = useBreakpoint()
+	const isLoading =
+		avatarLoading || profilesLoading || trustLoading || invitationsLoading
 
 	return (
 		<div className='flex flex-col'>
@@ -123,7 +125,7 @@ export default function Avatar() {
 				className={`flex ${isMdScreen ? 'flex-row items-start' : 'flex-col items-center'}`}
 			>
 				{avatar ? <AvatarInfo profile={getProfile(avatar.id)} /> : null}
-				{avatar ? <AvatarStats avatar={avatar} /> : <Loader />}
+				{address ? <AvatarStats address={address as Address} /> : <Loader />}
 			</div>
 
 			<Tabs
@@ -141,10 +143,12 @@ export default function Avatar() {
 					{address ? <EventsTable address={address} /> : null}
 				</Tab>
 				<Tab key='trust' title='Trust Relations'>
-					{avatar && !isLoading ? (
+					{address && !isLoading ? (
 						<TrustRelations
 							trustRelations={trustRelations}
-							invitesGiven={invitesGiven ?? []}
+							invitations={invitations}
+							isTrustLoading={trustLoading}
+							isInvitationsLoading={invitationsLoading}
 						/>
 					) : (
 						<Loader />
@@ -156,7 +160,14 @@ export default function Avatar() {
 						// @ts-expect-error
 						<ErrorBoundary FallbackComponent={Error} fallback={<Error />}>
 							<Suspense fallback={<Loader />}>
-								<SocialGraph avatar={avatar} />
+								{/* Cast avatar to the type expected by SocialGraph (remove later) */}
+								<SocialGraph
+									avatar={
+										avatar as unknown as ComponentProps<
+											typeof SocialGraph
+										>['avatar']
+									}
+								/>
 							</Suspense>
 						</ErrorBoundary>
 					) : (
