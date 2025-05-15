@@ -47,6 +47,7 @@ export const trustRepository = {
 	getInvitations: async (address: Address): Promise<Invitation[]> => {
 		try {
 			const pageSize = 200
+			// todo: it'll be changed to circlesData.getInvitations after sdk fix
 			const query = new CirclesQuery<Invitation>(circlesData.rpc, {
 				namespace: 'CrcV2',
 				table: 'RegisterHuman',

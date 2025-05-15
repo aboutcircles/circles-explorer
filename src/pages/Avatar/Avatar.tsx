@@ -24,7 +24,6 @@ import { TrustRelations } from './TrustRelations'
 
 /*
 todo:
-- invitedBy
 - totalSupply
 - lastMint
 - profiles repository
@@ -124,7 +123,7 @@ export default function Avatar() {
 				className={`flex ${isMdScreen ? 'flex-row items-start' : 'flex-col items-center'}`}
 			>
 				{avatar ? <AvatarInfo profile={getProfile(avatar.id)} /> : null}
-				{address ? <AvatarStats address={address as Address} /> : <Loader />}
+				<AvatarStats address={address as Address} avatar={avatar} />
 			</div>
 
 			<Tabs

@@ -11,18 +11,24 @@ import {
 	TWO
 } from 'constants/common'
 import { useAvatarStats } from 'domains/avatars/repository'
+import type { Avatar } from 'domains/avatars/types'
 import { useTokenMigration } from 'domains/tokens/repository'
 import { AvatarAddress } from 'shared/AvatarAddress'
 import { isDeadAddress } from 'utils/eth'
 import { formatTokenUnits } from 'utils/number'
 
-export function AvatarStats({ address }: { address: Address }) {
+interface AvatarStatsProperties {
+	address: Address
+	avatar?: Avatar
+}
+
+export function AvatarStats({ address, avatar }: AvatarStatsProperties) {
 	// Fetch avatar stats using our new repository
 	const {
 		data: statsData,
 		isLoading: statsLoading,
 		error: statsError
-	} = useAvatarStats(address)
+	} = useAvatarStats(address, avatar)
 
 	// Get migration data if V1 token exists
 	const { data: migrationData } = useTokenMigration(statsData?.v1Token?.address)
@@ -35,7 +41,12 @@ export function AvatarStats({ address }: { address: Address }) {
 			</div>
 		)
 
-	const { avatar, v1Token, v2Token, formattedAvatarType } = statsData
+	const {
+		avatar: avatarData,
+		v1Token,
+		v2Token,
+		formattedAvatarType
+	} = statsData
 
 	return (
 		<div className='m-5'>
@@ -43,7 +54,11 @@ export function AvatarStats({ address }: { address: Address }) {
 				<Card className='mb-2 mr-2 inline-flex w-[240px] flex-row p-4 text-center'>
 					<b>Last mint</b>:
 					<span className='pl-1'>
-						{avatar.lastMint ? <Timestamp value={avatar.lastMint} /> : 'n/a'}
+						{avatarData.lastMint ? (
+							<Timestamp value={avatarData.lastMint} />
+						) : (
+							'n/a'
+						)}
 					</span>
 				</Card>
 
@@ -117,12 +132,12 @@ export function AvatarStats({ address }: { address: Address }) {
 					</Badge>
 				) : null}
 
-				{avatar.invitedBy && !isDeadAddress(avatar.invitedBy) ? (
+				{avatarData.invitedBy && !isDeadAddress(avatarData.invitedBy) ? (
 					<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center align-middle'>
 						<b>Invited by: </b>
 						<span className='ml-2 inline'>
 							<AvatarAddress
-								address={avatar.invitedBy}
+								address={avatarData.invitedBy}
 								size='sm'
 								className='inline'
 							/>
@@ -139,4 +154,9 @@ export function AvatarStats({ address }: { address: Address }) {
 			</div>
 		</div>
 	)
+}
+
+// Set default props
+AvatarStats.defaultProps = {
+	avatar: undefined
 }
