@@ -1,8 +1,14 @@
 import type { TokenInfoRow } from '@circles-sdk/data/dist/rows/tokenInfoRow'
-import { CRC_TOKEN_DECIMALS } from 'constants/common'
 import type { Address } from 'viem'
 import { formatUnits } from 'viem'
-import type { Token, TokenBalance, TokenMigration } from './types'
+
+import {
+	CRC_MIGRATION_DENOMINATION,
+	CRC_TOKEN_DECIMALS,
+	TWO
+} from 'constants/common'
+import { formatTokenUnits } from 'utils/number'
+import type { Token, TokenBalance } from './types'
 
 /**
  * Adapts a token from the SDK format to our domain model
@@ -41,28 +47,5 @@ export const createTokenBalance = (
 /**
  * Creates a token migration object
  */
-export const createTokenMigration = (
-	tokenAddress: Address,
-	migrationAmount: number,
-	totalSupply: string
-): TokenMigration => {
-	const totalSupplyNumber = Number(
-		formatUnits(BigInt(totalSupply), CRC_TOKEN_DECIMALS)
-	)
-	const migrationAmountNumber = Number(
-		formatUnits(BigInt(migrationAmount.toString()), CRC_TOKEN_DECIMALS)
-	)
-
-	// Use constant for percentage calculation to avoid magic number
-	const PERCENTAGE_MULTIPLIER = 100
-	const migrationPercentage =
-		totalSupplyNumber > 0
-			? (migrationAmountNumber / totalSupplyNumber) * PERCENTAGE_MULTIPLIER
-			: 0
-
-	return {
-		tokenAddress,
-		migrationAmount,
-		migrationPercentage
-	}
-}
+export const formatTokenMigrationAmount = (migrationAmount: number): string =>
+	(formatTokenUnits(migrationAmount) * CRC_MIGRATION_DENOMINATION).toFixed(TWO)

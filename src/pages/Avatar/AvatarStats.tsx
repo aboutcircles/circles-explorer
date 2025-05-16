@@ -10,43 +10,51 @@ import {
 	EXPLORER_URL,
 	TWO
 } from 'constants/common'
-import { useAvatarStats } from 'domains/avatars/repository'
+import { formatAvatarType } from 'domains/avatars/adapters'
+import { useAvatar } from 'domains/avatars/repository'
 import type { Avatar } from 'domains/avatars/types'
-import { useTokenMigration } from 'domains/tokens/repository'
+import { useAvatarTokenData } from 'domains/tokens/repository'
 import { AvatarAddress } from 'shared/AvatarAddress'
 import { isDeadAddress } from 'utils/eth'
-import { formatTokenUnits } from 'utils/number'
 
 interface AvatarStatsProperties {
 	address: Address
 	avatar?: Avatar
 }
 
-export function AvatarStats({ address, avatar }: AvatarStatsProperties) {
-	// Fetch avatar stats using our new repository
+export function AvatarStats({
+	address,
+	avatar: initialAvatar
+}: AvatarStatsProperties) {
+	// Fetch avatar data
 	const {
-		data: statsData,
-		isLoading: statsLoading,
-		error: statsError
-	} = useAvatarStats(address, avatar)
+		data: avatarData,
+		isLoading: avatarLoading,
+		error: avatarError
+	} = useAvatar(address)
 
-	// Get migration data if V1 token exists
-	const { data: migrationData } = useTokenMigration(statsData?.v1Token?.address)
+	// Fetch token data using our new hook
+	const {
+		data: tokenData,
+		isLoading: tokenLoading,
+		error: tokenError
+	} = useAvatarTokenData(avatarData ?? initialAvatar)
 
-	if (statsLoading) return <Loader />
-	if (statsError ?? !statsData)
+	const isLoading = avatarLoading || tokenLoading
+	const error = avatarError ?? tokenError
+
+	if (isLoading) return <Loader />
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+	if (error || !avatarData || !tokenData)
 		return (
 			<div className='m-5'>
 				<Card className='p-4 text-danger'>Error loading avatar stats</Card>
 			</div>
 		)
 
-	const {
-		avatar: avatarData,
-		v1Token,
-		v2Token,
-		formattedAvatarType
-	} = statsData
+	const { v1Token, v2Token, v1MigrationAmount } = tokenData
+
+	const formattedAvatarType = formatAvatarType(avatarData.type)
 
 	return (
 		<div className='m-5'>
@@ -90,18 +98,11 @@ export function AvatarStats({ address, avatar }: AvatarStatsProperties) {
 					</Badge>
 				) : null}
 
-				{migrationData ? (
-					<Tooltip
-						content={migrationData.migrationAmount * CRC_MIGRATION_DENOMINATION}
-					>
+				{v1MigrationAmount ? (
+					<Tooltip content={v1MigrationAmount}>
 						<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
 							<b>V1 {'->'} V2 migrated: </b>:
-							<span className='pl-1'>
-								{(
-									formatTokenUnits(migrationData.migrationAmount) *
-									CRC_MIGRATION_DENOMINATION
-								).toFixed(TWO)}
-							</span>
+							<span className='pl-1'>{v1MigrationAmount}</span>
 						</Card>
 					</Tooltip>
 				) : null}

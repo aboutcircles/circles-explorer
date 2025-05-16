@@ -14,26 +14,3 @@ export interface Avatar {
 	v1Token?: Address
 	cidV0?: string
 }
-
-/**
- * Represents token information for an avatar
- */
-export interface TokenInfo {
-	address: Address
-	owner: Address
-	totalSupply: string
-	type: string
-	version: number
-	isStopped: boolean
-}
-
-/**
- * Represents comprehensive avatar statistics including token information
- */
-export interface AvatarStats {
-	avatar: Avatar
-	v1Token?: TokenInfo
-	v2Token?: TokenInfo
-	v1MigrationAmount?: number
-	formattedAvatarType: string // Human, Group, etc.
-}

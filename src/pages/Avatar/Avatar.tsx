@@ -24,7 +24,7 @@ import { TrustRelations } from './TrustRelations'
 
 /*
 todo:
-- totalSupply
+- totalSupply (refactor)
 - lastMint
 - profiles repository
 - coordinator for fetch all required repos in once\
