@@ -180,6 +180,31 @@ interface TotalSupplyV2Row {
 	totalSupply: string
 }
 
+export const fetchCrcV2TotalSupply = async (address: Address) => {
+	const result = await makeCirclesQuery({
+		namespace: 'V_CrcV2',
+		table: 'TotalSupply',
+		columns: ['tokenAddress', 'tokenId', 'totalSupply'],
+		filter: [
+			{
+				Type: 'Conjunction',
+				ConjunctionType: 'Or',
+				Predicates: [
+					{
+						Type: 'FilterPredicate',
+						FilterType: 'Equals',
+						Column: 'tokenAddress',
+						Value: [address.toLowerCase()]
+					}
+				]
+			}
+		],
+		limit: ONE
+	})
+
+	return mapTableResponse<TotalSupplyV2Row>(result)[0] ?? null
+}
+
 // V2 Total Supply Query
 const CIRCLES_CRC_V2_TOTAL_SUPPLY = 'circlesCrcV2TotalSupply'
 export const useFetchCrcV2TotalSupply = (

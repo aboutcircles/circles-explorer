@@ -1,64 +1,60 @@
-import { Badge, Card, Tooltip, Link } from '@nextui-org/react'
+import { Badge, Card, Link, Tooltip } from '@nextui-org/react'
 import { toBigInt } from 'ethers'
-import { useMemo } from 'react'
 import { formatUnits, type Address } from 'viem'
 
+import { Loader } from 'components/Loader'
 import { Timestamp } from 'components/Timestamp'
 import {
-	CRC_TOKEN_DECIMALS,
-	TWO,
 	CRC_MIGRATION_DENOMINATION,
-	EXPLORER_URL
+	CRC_TOKEN_DECIMALS,
+	EXPLORER_URL,
+	TWO
 } from 'constants/common'
-import {
-	useFetchCrcV1TotalSupply,
-	useFetchCrcV2TokenStopped,
-	useFetchCrcV2TotalSupply
-} from 'services/circlesIndex'
-import type { CirclesAvatarFromEnvio } from 'services/envio/indexer'
-import {
-	useCrcV1TokenStopped,
-	useCrcV1TokenMigrationHeld
-} from 'services/viemClient'
+import { formatAvatarType } from 'domains/avatars/adapters'
+import { useAvatar } from 'domains/avatars/repository'
+import type { Avatar } from 'domains/avatars/types'
+import { useAvatarTokenData } from 'domains/tokens/repository'
 import { AvatarAddress } from 'shared/AvatarAddress'
 import { isDeadAddress } from 'utils/eth'
-import { formatTokenUnits } from 'utils/number'
 
-/*
-todo:
-- add calculation for migrated token, based on crcV1TotalSupply.tokenAddress
- */
+interface AvatarStatsProperties {
+	address: Address
+	avatar?: Avatar
+}
 
-export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
-	const { data: crcV2TokenStoppedData } = useFetchCrcV2TokenStopped(avatar.id)
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-expect-error
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	const crcV2Stopped = Boolean(crcV2TokenStoppedData?.rows?.length)
+export function AvatarStats({
+	address,
+	avatar: initialAvatar
+}: AvatarStatsProperties) {
+	// Fetch avatar data
+	const {
+		data: avatarData,
+		isLoading: avatarLoading,
+		error: avatarError
+	} = useAvatar(address)
 
-	const { data: crcV1TotalSupply } = useFetchCrcV1TotalSupply(avatar.id)
-	const { data: crcV2TotalSupply } = useFetchCrcV2TotalSupply(avatar.id)
+	// Fetch token data using our new hook
+	const {
+		data: tokenData,
+		isLoading: tokenLoading,
+		error: tokenError
+	} = useAvatarTokenData(avatarData ?? initialAvatar)
 
-	const { data: crcV1TokenMigrationHeldData } = useCrcV1TokenMigrationHeld(
-		crcV1TotalSupply?.tokenAddress as Address
-	)
-	const { data: crcV1TokenStoppedData } = useCrcV1TokenStopped(
-		crcV1TotalSupply?.tokenAddress as Address
-	)
+	const isLoading = avatarLoading || tokenLoading
+	const error = avatarError ?? tokenError
 
-	const avatarType = useMemo(() => {
-		switch (avatar.avatarType) {
-			case 'RegisterGroup': {
-				return 'Group'
-			}
-			case 'RegisterHuman': {
-				return 'Human'
-			}
-			default: {
-				return avatar.avatarType
-			}
-		}
-	}, [avatar.avatarType])
+	if (isLoading) return <Loader />
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+	if (error || !avatarData || !tokenData)
+		return (
+			<div className='m-5'>
+				<Card className='p-4 text-danger'>Error loading avatar stats</Card>
+			</div>
+		)
+
+	const { v1Token, v2Token, v1MigrationAmount } = tokenData
+
+	const formattedAvatarType = formatAvatarType(avatarData.type)
 
 	return (
 		<div className='m-5'>
@@ -66,26 +62,23 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 				<Card className='mb-2 mr-2 inline-flex w-[240px] flex-row p-4 text-center'>
 					<b>Last mint</b>:
 					<span className='pl-1'>
-						{avatar.lastMint ? (
-							<Timestamp value={Number(avatar.lastMint)} />
+						{avatarData.lastMint ? (
+							<Timestamp value={avatarData.lastMint} />
 						) : (
 							'n/a'
 						)}
 					</span>
 				</Card>
 
-				{crcV1TotalSupply ? (
-					<Badge
-						color={crcV1TokenStoppedData ? 'danger' : 'success'}
-						content=' '
-					>
+				{v1Token ? (
+					<Badge color={v1Token.isStopped ? 'danger' : 'success'} content=' '>
 						<Tooltip
-							content={`${Number(crcV1TotalSupply.totalSupply) * CRC_MIGRATION_DENOMINATION} : ${crcV1TokenStoppedData ? 'stopped' : 'active'}`}
+							content={`${Number(v1Token.totalSupply) * CRC_MIGRATION_DENOMINATION} : ${v1Token.isStopped ? 'stopped' : 'active'}`}
 						>
 							<Link
 								target='_blank'
 								isExternal
-								href={`${EXPLORER_URL}/token/${crcV1TotalSupply.tokenAddress}`}
+								href={`${EXPLORER_URL}/token/${v1Token.address}`}
 							>
 								<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
 									<b>Total CRC supply (V1)</b>:
@@ -93,7 +86,7 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 										{(
 											Number(
 												formatUnits(
-													toBigInt(crcV1TotalSupply.totalSupply),
+													toBigInt(v1Token.totalSupply),
 													CRC_TOKEN_DECIMALS
 												)
 											) * CRC_MIGRATION_DENOMINATION
@@ -105,38 +98,31 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 					</Badge>
 				) : null}
 
-				{crcV1TokenMigrationHeldData ? (
-					<Tooltip
-						content={crcV1TokenMigrationHeldData * CRC_MIGRATION_DENOMINATION}
-					>
+				{v1MigrationAmount ? (
+					<Tooltip content={v1MigrationAmount}>
 						<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
 							<b>V1 {'->'} V2 migrated: </b>:
-							<span className='pl-1'>
-								{(
-									formatTokenUnits(crcV1TokenMigrationHeldData) *
-									CRC_MIGRATION_DENOMINATION
-								).toFixed(TWO)}
-							</span>
+							<span className='pl-1'>{v1MigrationAmount}</span>
 						</Card>
 					</Tooltip>
 				) : null}
 
-				{crcV2TotalSupply ? (
-					<Badge color={crcV2Stopped ? 'danger' : 'success'} content=' '>
+				{v2Token ? (
+					<Badge color={v2Token.isStopped ? 'danger' : 'success'} content=' '>
 						<Tooltip
-							content={`${crcV2TotalSupply.totalSupply} : ${crcV2Stopped ? 'stopped' : 'active'}`}
+							content={`${v2Token.totalSupply} : ${v2Token.isStopped ? 'stopped' : 'active'}`}
 						>
 							<Link
 								target='_blank'
 								isExternal
-								href={`${EXPLORER_URL}/token/${crcV2TotalSupply.tokenAddress}`}
+								href={`${EXPLORER_URL}/token/${v2Token.address}`}
 							>
 								<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
 									<b>Total CRC supply (V2)</b>:
 									<span className='pl-1'>
 										{Number(
 											formatUnits(
-												toBigInt(crcV2TotalSupply.totalSupply),
+												toBigInt(v2Token.totalSupply),
 												CRC_TOKEN_DECIMALS
 											)
 										).toFixed(TWO)}
@@ -147,12 +133,12 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 					</Badge>
 				) : null}
 
-				{avatar.invitedBy && !isDeadAddress(avatar.invitedBy) ? (
+				{avatarData.invitedBy && !isDeadAddress(avatarData.invitedBy) ? (
 					<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center align-middle'>
 						<b>Invited by: </b>
 						<span className='ml-2 inline'>
 							<AvatarAddress
-								address={avatar.invitedBy}
+								address={avatarData.invitedBy}
 								size='sm'
 								className='inline'
 							/>
@@ -160,12 +146,18 @@ export function AvatarStats({ avatar }: { avatar: CirclesAvatarFromEnvio }) {
 					</Card>
 				) : null}
 
-				{avatar.avatarType ? (
+				{/* Destructure formattedAvatarType from statsData */}
+				{formattedAvatarType ? (
 					<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
-						<b>Avatar type</b>: {avatarType}
+						<b>Avatar type</b>: {formattedAvatarType}
 					</Card>
 				) : null}
 			</div>
 		</div>
 	)
+}
+
+// Set default props
+AvatarStats.defaultProps = {
+	avatar: undefined
 }
