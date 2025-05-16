@@ -282,7 +282,6 @@ export const tokenRepository = {
 			await tokenRepository
 				.getTokenMigration(result.v1Token)
 				.then((v1MigrationAmount) => {
-					console.log({ v1MigrationAmount })
 					result.v1MigrationAmount = v1MigrationAmount
 				})
 		}
