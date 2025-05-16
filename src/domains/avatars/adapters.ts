@@ -25,5 +25,10 @@ export const adaptAvatarFromSdk = (sdkAvatar: AvatarRow): Avatar => ({
 export const formatAvatarType = (type: string): string => {
 	if (type === 'CrcV2_RegisterGroup') return 'Group'
 	if (type === 'CrcV2_RegisterHuman' || type === 'CrcV1_Signup') return 'Human'
+	if (
+		type === 'CrcV2_RegisterOrganization' ||
+		type === 'CrcV1_OrganizationSignup'
+	)
+		return 'Organization'
 	return type
 }
