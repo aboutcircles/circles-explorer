@@ -48,7 +48,66 @@ export const avatarRepository = {
 	getLastMintV1: async (address: Address): Promise<number | undefined> => {
 		try {
 			const LIMIT_ONE = 1
-			const query = new CirclesQuery<{
+			const VERSION_ONE = 1
+
+			// Step 1: First query to get the token address for this avatar
+			const tokenQuery = new CirclesQuery<{
+				blockNumber: number
+				timestamp: number
+				transactionIndex: number
+				logIndex: number
+				transactionHash: string
+				version: number
+				type: string
+				token: Address
+				tokenOwner: Address
+			}>(circlesData.rpc, {
+				namespace: 'V_Crc',
+				table: 'Tokens',
+				columns: [
+					'blockNumber',
+					'timestamp',
+					'transactionIndex',
+					'logIndex',
+					'transactionHash',
+					'version',
+					'type',
+					'token',
+					'tokenOwner'
+				],
+				filter: [
+					{
+						Type: 'Conjunction',
+						ConjunctionType: 'And',
+						Predicates: [
+							{
+								Type: 'FilterPredicate',
+								FilterType: 'Equals',
+								Column: 'tokenOwner',
+								Value: address.toLowerCase()
+							},
+							{
+								Type: 'FilterPredicate',
+								FilterType: 'Equals',
+								Column: 'version',
+								Value: VERSION_ONE // V1 tokens only
+							}
+						]
+					}
+				],
+				sortOrder: 'DESC',
+				limit: LIMIT_ONE
+			})
+
+			const hasTokenResults = await tokenQuery.queryNextPage()
+			if (!hasTokenResults || !tokenQuery.currentPage?.results.length) {
+				return undefined // No V1 token found for this avatar
+			}
+
+			const tokenAddress = tokenQuery.currentPage.results[0].token
+
+			// Step 2: Now query for mint events using the token address
+			const mintQuery = new CirclesQuery<{
 				blockNumber: number
 				timestamp: number
 				transactionIndex: number
@@ -88,6 +147,12 @@ export const avatarRepository = {
 								FilterType: 'Equals',
 								Column: 'to',
 								Value: address.toLowerCase()
+							},
+							{
+								Type: 'FilterPredicate',
+								FilterType: 'Equals',
+								Column: 'tokenAddress',
+								Value: tokenAddress
 							}
 						]
 					}
@@ -96,12 +161,12 @@ export const avatarRepository = {
 				limit: LIMIT_ONE
 			})
 
-			const hasResults = await query.queryNextPage()
-			if (!hasResults || !query.currentPage?.results.length) {
+			const hasMintResults = await mintQuery.queryNextPage()
+			if (!hasMintResults || !mintQuery.currentPage?.results.length) {
 				return undefined
 			}
 
-			return query.currentPage.results[0].timestamp
+			return mintQuery.currentPage.results[0].timestamp
 		} catch (error) {
 			logger.error('[Repository] Failed to fetch V1 last mint:', error)
 			return undefined
