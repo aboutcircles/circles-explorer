@@ -7,7 +7,7 @@ interface BotLabelProperties {
 
 function BotLabelBase({ className = '' }: BotLabelProperties) {
 	return (
-		<Tooltip content='This avatar could be a bot'>
+		<Tooltip content='Account flagged due to suspicious activity.'>
 			<span
 				className={`inline-flex items-center rounded-full bg-yellow-50 p-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20 ${className}`}
 			>

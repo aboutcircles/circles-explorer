@@ -25,7 +25,7 @@ function BotWarningBannerBase({ className = '' }: BotWarningBannerProperties) {
 					/>
 				</svg>
 				<span className='text-sm font-medium text-yellow-800'>
-					This avatar could be a bot
+					This account has been flagged due to suspicious activity.
 				</span>
 			</div>
 		</Card>
