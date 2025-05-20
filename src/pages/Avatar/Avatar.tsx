@@ -1,5 +1,5 @@
 import { Tab, Tabs } from '@nextui-org/react'
-import { lazy, Suspense, useEffect, useMemo, type ComponentProps } from 'react'
+import { lazy, Suspense, useEffect, useMemo } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useNavigate, useParams } from 'react-router-dom'
 import type { Address } from 'viem'
@@ -152,18 +152,49 @@ export default function Avatar() {
 					)}
 				</Tab>
 				<Tab key='graph' title='Trust Graph'>
-					{avatar && !isLoading ? (
+					{avatar && trustRelations && !isLoading ? (
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-expect-error
 						<ErrorBoundary FallbackComponent={Error} fallback={<Error />}>
 							<Suspense fallback={<Loader />}>
-								{/* Cast avatar to the type expected by SocialGraph (remove later) */}
+								{/* Adapt the data to the format expected by SocialGraph */}
 								<SocialGraph
-									avatar={
-										avatar as unknown as ComponentProps<
-											typeof SocialGraph
-										>['avatar']
-									}
+									avatar={{
+										...avatar,
+										cidV0: avatar.cidV0 || '',
+										tokenId: avatar.tokenId || avatar.id,
+										lastMint: avatar.lastMint ? String(avatar.lastMint) : undefined,
+										isVerified: true,
+										balances: [],
+										trustsGivenCount: trustRelations.given.length,
+										trustsReceivedCount: trustRelations.received.length,
+										trustsGiven: trustRelations.given.map(relation => ({
+											id: relation.address,
+											trustee_id: relation.objectAvatar,
+											truster_id: relation.subjectAvatar,
+											isMutual: relation.isMutual,
+											version: relation.versions[0] || 0,
+											timestamp: relation.timestamp,
+											limit: '0',
+											expiryTime: '0',
+											trustee: { id: relation.objectAvatar } as any,
+											truster: { id: relation.subjectAvatar } as any,
+											token_id: relation.address
+										})),
+										trustsReceived: trustRelations.received.map(relation => ({
+											id: relation.address,
+											trustee_id: relation.objectAvatar,
+											truster_id: relation.subjectAvatar,
+											isMutual: relation.isMutual,
+											version: relation.versions[0] || 0,
+											timestamp: relation.timestamp,
+											limit: '0',
+											expiryTime: '0',
+											trustee: { id: relation.objectAvatar } as any,
+											truster: { id: relation.subjectAvatar } as any,
+											token_id: relation.address
+										}))
+									}}
 								/>
 							</Suspense>
 						</ErrorBoundary>
