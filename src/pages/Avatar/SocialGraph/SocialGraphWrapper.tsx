@@ -11,11 +11,10 @@ import { Loader } from 'components/Loader'
 import { ONE, TWO } from 'constants/common'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { useProfiles } from 'hooks/useProfiles'
-import type {
-	CirclesAvatarFromEnvio,
-	TrustNetworkRelation
+import {
+	type CirclesAvatarFromEnvio,
+	type TrustNetworkRelation
 } from 'services/envio/indexer'
-import { getTrustNetworkRelations } from 'services/envio/indexer'
 import { TrustSearchBox } from 'shared/Search/TrustSearchBox'
 import type { GraphData, ProfileNode, TrustLink } from 'types/graph'
 import { truncateHex } from 'utils/eth'
@@ -43,15 +42,15 @@ const COLORS = {
 	}
 }
 
-interface SocialGraphWrapperProps {
+interface SocialGraphWrapperProperties {
 	avatar: CirclesAvatarFromEnvio
 }
 
-export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
+export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 	const graphReference = useRef<unknown>()
 	const navigate = useNavigate()
 	const { tab } = useParams<{ tab?: string }>()
-	const containerRef = useRef<HTMLDivElement>(null)
+	const containerReference = useRef<HTMLDivElement>(null)
 
 	// State for graph data and UI controls
 	const [graphData, setGraphData] = useState<GraphData>({
@@ -80,7 +79,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 		}
 	}
 
-	const { getProfile } = useProfiles()
+	const { getProfile, fetchProfiles } = useProfiles()
 
 	// First fetch the network relations to build a more comprehensive graph
 	useEffect(() => {
@@ -106,7 +105,12 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 				}
 
 				if (directConnections.length > 0) {
-					const relations = await getTrustNetworkRelations(directConnections)
+					// Import and use our repository-based function
+					const { getRepositoryTrustNetworkRelations } = await import(
+						'domains/trust/networkRelations'
+					)
+					const relations =
+						await getRepositoryTrustNetworkRelations(directConnections)
 					setNetworkRelations(relations)
 				} else {
 					// Clear network relations if not showing recursive
@@ -184,15 +188,15 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 			if (showOnlyWithProfiles && !profile) continue
 
 			// Track first layer connection - outgoing
-			if (!firstLayerConnections.has(trusteeId)) {
+			if (firstLayerConnections.has(trusteeId)) {
+				const connection = firstLayerConnections.get(trusteeId)
+				connection.outgoing = true
+				firstLayerConnections.set(trusteeId, connection)
+			} else {
 				firstLayerConnections.set(trusteeId, {
 					outgoing: true,
 					incoming: false
 				})
-			} else {
-				const connection = firstLayerConnections.get(trusteeId)
-				connection.outgoing = true
-				firstLayerConnections.set(trusteeId, connection)
 			}
 
 			if (!processedIds.has(trusteeId)) {
@@ -230,15 +234,15 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 			if (showOnlyWithProfiles && !profile) continue
 
 			// Track first layer connection - incoming
-			if (!firstLayerConnections.has(trusterId)) {
+			if (firstLayerConnections.has(trusterId)) {
+				const connection = firstLayerConnections.get(trusterId)
+				connection.incoming = true
+				firstLayerConnections.set(trusterId, connection)
+			} else {
 				firstLayerConnections.set(trusterId, {
 					outgoing: false,
 					incoming: true
 				})
-			} else {
-				const connection = firstLayerConnections.get(trusterId)
-				connection.incoming = true
-				firstLayerConnections.set(trusterId, connection)
 			}
 
 			if (!processedIds.has(trusterId)) {
@@ -287,7 +291,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 
 		// Process network relations to build second layer connections
 		if (networkRelations.length > 0) {
-			const firstLayerIds = Array.from(firstLayerConnections.keys())
+			const firstLayerIds = new Set(firstLayerConnections.keys())
 
 			for (const relation of networkRelations) {
 				const sourceId = relation.truster_id
@@ -298,17 +302,16 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 
 				// Skip nodes without profiles if filter is active
 				const sourceProfile =
-					getProfile(sourceId.toLowerCase()) || relation.truster?.profile
+					getProfile(sourceId.toLowerCase()) || relation.truster.profile
 				const targetProfile =
-					getProfile(targetId.toLowerCase()) || relation.trustee?.profile
+					getProfile(targetId.toLowerCase()) || relation.trustee.profile
 
 				if (showOnlyWithProfiles && (!sourceProfile || !targetProfile)) continue
 
 				// We want to include relationships between first layer nodes
 				// and relationships from first layer nodes to new nodes (second layer)
 				if (
-					(firstLayerIds.includes(sourceId) ||
-						firstLayerIds.includes(targetId)) &&
+					(firstLayerIds.has(sourceId) || firstLayerIds.has(targetId)) &&
 					sourceId !== targetId // Skip self-trust
 				) {
 					// Add any new nodes (second layer)
@@ -329,7 +332,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 					if (!processedIds.has(targetId)) {
 						processedIds.add(targetId)
 						const profile =
-							getProfile(targetId.toLowerCase()) || relation.trustee?.profile
+							getProfile(targetId.toLowerCase()) || relation.trustee.profile
 
 						nodes.push({
 							id: targetId,
@@ -446,13 +449,13 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 	)
 
 	useEffect(() => {
-		if (containerRef.current) {
-			setContainerWidth(containerRef.current.clientWidth)
+		if (containerReference.current) {
+			setContainerWidth(containerReference.current.clientWidth)
 		}
 
 		const handleResize = () => {
-			if (containerRef.current) {
-				setContainerWidth(containerRef.current.clientWidth)
+			if (containerReference.current) {
+				setContainerWidth(containerReference.current.clientWidth)
 			}
 		}
 
@@ -468,7 +471,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProps) {
 		<div
 			className='social-graph-container'
 			style={{ height: '100%', width: '100%' }}
-			ref={containerRef}
+			ref={containerReference}
 		>
 			<div className='mb-3 flex flex-wrap justify-center gap-3 p-2'>
 				<TrustSearchBox

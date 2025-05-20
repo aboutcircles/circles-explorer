@@ -157,45 +157,7 @@ export default function Avatar() {
 						// @ts-expect-error
 						<ErrorBoundary FallbackComponent={Error} fallback={<Error />}>
 							<Suspense fallback={<Loader />}>
-								{/* Adapt the data to the format expected by SocialGraph */}
-								<SocialGraph
-									avatar={{
-										...avatar,
-										cidV0: avatar.cidV0 || '',
-										tokenId: avatar.tokenId || avatar.id,
-										lastMint: avatar.lastMint ? String(avatar.lastMint) : undefined,
-										isVerified: true,
-										balances: [],
-										trustsGivenCount: trustRelations.given.length,
-										trustsReceivedCount: trustRelations.received.length,
-										trustsGiven: trustRelations.given.map(relation => ({
-											id: relation.address,
-											trustee_id: relation.objectAvatar,
-											truster_id: relation.subjectAvatar,
-											isMutual: relation.isMutual,
-											version: relation.versions[0] || 0,
-											timestamp: relation.timestamp,
-											limit: '0',
-											expiryTime: '0',
-											trustee: { id: relation.objectAvatar } as any,
-											truster: { id: relation.subjectAvatar } as any,
-											token_id: relation.address
-										})),
-										trustsReceived: trustRelations.received.map(relation => ({
-											id: relation.address,
-											trustee_id: relation.objectAvatar,
-											truster_id: relation.subjectAvatar,
-											isMutual: relation.isMutual,
-											version: relation.versions[0] || 0,
-											timestamp: relation.timestamp,
-											limit: '0',
-											expiryTime: '0',
-											trustee: { id: relation.objectAvatar } as any,
-											truster: { id: relation.subjectAvatar } as any,
-											token_id: relation.address
-										}))
-									}}
-								/>
+								<SocialGraph avatar={avatar} trustRelations={trustRelations} />
 							</Suspense>
 						</ErrorBoundary>
 					) : (
