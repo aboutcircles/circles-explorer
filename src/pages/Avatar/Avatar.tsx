@@ -1,5 +1,5 @@
 import { Tab, Tabs } from '@nextui-org/react'
-import { lazy, Suspense, useEffect, useMemo, type ComponentProps } from 'react'
+import { lazy, Suspense, useEffect, useMemo } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useNavigate, useParams } from 'react-router-dom'
 import type { Address } from 'viem'
@@ -152,19 +152,12 @@ export default function Avatar() {
 					)}
 				</Tab>
 				<Tab key='graph' title='Trust Graph'>
-					{avatar && !isLoading ? (
+					{avatar && trustRelations && !isLoading ? (
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-expect-error
 						<ErrorBoundary FallbackComponent={Error} fallback={<Error />}>
 							<Suspense fallback={<Loader />}>
-								{/* Cast avatar to the type expected by SocialGraph (remove later) */}
-								<SocialGraph
-									avatar={
-										avatar as unknown as ComponentProps<
-											typeof SocialGraph
-										>['avatar']
-									}
-								/>
+								<SocialGraph avatar={avatar} trustRelations={trustRelations} />
 							</Suspense>
 						</ErrorBoundary>
 					) : (
