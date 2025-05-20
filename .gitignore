@@ -9,3 +9,4 @@ coverage
 .stylelintcache
 cypress/videos
 .env
+stats.html

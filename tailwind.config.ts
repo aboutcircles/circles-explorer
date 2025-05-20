@@ -28,10 +28,29 @@ const config = {
 					colors: {
 						background: '#FFFFFF', // or DEFAULT
 						foreground: '#11181C', // or 50 to 900 DEFAULT
+						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+						// @ts-expect-error
+						border: '#D1D5DB',
+						icon: '#1F2937',
 						primary: {
+							// foreground: '#FFFFFF',
+							DEFAULT: '#38318B',
+							'100': 'rgba(242, 244, 255, 1)',
+							'200': 'rgba(212, 221, 255, 1)',
+							'400': 'rgba(56, 49, 139, 1)'
+						},
+						secondary: {
 							foreground: '#FFFFFF',
-							DEFAULT: '#006FEE'
-						}
+							DEFAULT: '#DF6552'
+						},
+
+						gray: {
+							'50': 'rgba(249, 250, 251, 1)',
+							'100': 'rgba(229, 231, 235, 1)',
+							'300': 'rgba(31, 41, 55, 1)'
+						},
+
+						grayText: 'rgba(31, 41, 55, 1)'
 						// ... rest of the colors
 					}
 				},

@@ -1,20 +1,20 @@
 import type { CirclesEventType } from '@circles-sdk/data'
-import { Code, Link, Snippet, Tooltip } from '@nextui-org/react'
-import dayjs from 'dayjs'
+import { Code, Link, Snippet } from '@nextui-org/react'
 import { useCallback } from 'react'
 import { formatUnits } from 'viem'
-import { Link as RouterLink } from 'react-router-dom'
 
-import type { Key, Row } from 'components/Table'
+import { Timestamp } from 'components/Timestamp'
+import type { Key, Row } from 'components/VirtualizedTable'
 import {
-	EXPLORER_URL,
 	CRC_TOKEN_DECIMALS,
-	CRC_TOKEN_SYMBOL
+	CRC_TOKEN_SYMBOL,
+	EXPLORER_URL
 } from 'constants/common'
-import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
+import { LABELS_MAPPER } from 'constants/events'
+import { AvatarAddress } from 'shared/AvatarAddress'
+import { EyePopoverDetails } from 'shared/EyePopoverDetails'
 import { useFilterStore } from 'stores/useFilterStore'
 import { truncateHex } from 'utils/eth'
-import { EyePopoverDetails } from 'shared/EyePopoverDetails'
 
 export const useRenderCell = () => {
 	const updateEventTypes = useFilterStore.use.updateEventTypes()
@@ -36,50 +36,71 @@ export const useRenderCell = () => {
 				}
 				case 'transactionHash': {
 					return (
-						<Snippet
-							symbol=''
-							variant='bordered'
-							size='sm'
-							codeString={String(cellValue)}
-						>
-							<Link
-								target='_blank'
-								isExternal
-								href={`${EXPLORER_URL}/tx/${cellValue}`}
-							>
-								{truncateHex(String(cellValue))}
-							</Link>
-						</Snippet>
+						<>
+							<div className='flex w-[152px] items-center space-x-2'>
+								<Link
+									target='_blank'
+									isExternal
+									href={`${EXPLORER_URL}/tx/${cellValue}`}
+									className='font-mono text-sm'
+								>
+									{truncateHex(String(cellValue))}
+								</Link>
+								<Snippet
+									symbol=''
+									variant='flat'
+									className='min-w-0 bg-transparent p-0'
+									size='sm'
+									codeString={String(cellValue)}
+								/>
+							</div>
+							{item.isExpandable ? (
+								<span
+									className='ml-2 block cursor-help text-xs text-primary'
+									title={`Click to view ${item.subEvents?.length} individual transfers`}
+								>
+									{item.subEvents?.length} events
+								</span>
+							) : null}
+						</>
 					)
 				}
 				case 'event': {
 					return (
 						<Code
-							className='border-2 hover:cursor-pointer hover:border-dashed hover:border-primary'
+							className='rounded-md border border-gray-100 bg-gray-50/50 px-2.5 py-1 text-sm hover:cursor-pointer hover:border-dashed hover:border-primary'
 							// eslint-disable-next-line react/jsx-no-bind
 							onClick={onEventClick.bind(null, cellValue as CirclesEventType)}
 						>
-							{cellValue}
+							{String(cellValue).includes('CrcV1') ? 'V1' : 'V2'} -{' '}
+							{LABELS_MAPPER[cellValue as CirclesEventType]}
 						</Code>
 					)
 				}
 				case 'details': {
-					if ((item.truster && item.trustee) || (item.canSendTo && item.user)) {
+					if (
+						(item.truster && item.trustee) ||
+						(item.canSendTo && item.user) ||
+						(item.inviter && item.invited)
+					) {
+						const trusterAddress = String(
+							item.truster || item.canSendTo || item.inviter
+						)
+						const trusteeAddress = String(
+							item.trustee || item.user || item.invited
+						)
+
 						return (
-							<div className='flex justify-around'>
-								<RouterLink
-									className='text-blue-500'
-									to={`/avatar/${item.truster || item.canSendTo}`}
-								>
-									{truncateHex(String(item.truster || item.canSendTo))}
-								</RouterLink>
+							<div className='flex items-center justify-start'>
+								<AvatarAddress
+									address={trusterAddress}
+									className='mr-0 md:mr-2'
+								/>
 								{' -> '}
-								<RouterLink
-									className='text-blue-500'
-									to={`/avatar/${item.trustee || item.user}`}
-								>
-									{truncateHex(String(item.trustee || item.user))}
-								</RouterLink>
+								<AvatarAddress
+									address={trusteeAddress}
+									className='ml-0 md:ml-2'
+								/>
 							</div>
 						)
 					}
@@ -87,25 +108,18 @@ export const useRenderCell = () => {
 					if (
 						item.from &&
 						item.to &&
-						(item.tokenAddress || item.id) &&
+						// (item.tokenAddress || item.id) &&
 						(item.amount || item.value)
 					) {
+						const fromAddress = String(item.from)
+						const toAddress = String(item.to)
+
 						return (
-							<div className='flex flex-col items-center'>
-								<div>
-									<RouterLink
-										className='text-blue-500'
-										to={`/avatar/${item.from}`}
-									>
-										{truncateHex(String(item.from))}
-									</RouterLink>
+							<div className='flex flex-row items-center justify-start md:w-[400px]'>
+								<div className='flex items-center'>
+									<AvatarAddress address={fromAddress} className='mr-2' />
 									{' -> '}
-									<RouterLink
-										className='text-blue-500'
-										to={`/avatar/${item.to}`}
-									>
-										{truncateHex(String(item.to))}
-									</RouterLink>
+									<AvatarAddress address={toAddress} className='ml-2 mr-2' />
 								</div>
 
 								<div>
@@ -124,13 +138,43 @@ export const useRenderCell = () => {
 
 					if ((item.event as string).toLowerCase().includes('mint')) {
 						return (
-							<div className='flex justify-center'>
-								{Number(
-									formatUnits(BigInt(item.amount), CRC_TOKEN_DECIMALS)
-									// eslint-disable-next-line @typescript-eslint/no-magic-numbers
-								).toFixed(4)}{' '}
-								{CRC_TOKEN_SYMBOL}
+							<div className='flex flex-row'>
+								<AvatarAddress
+									address={String(item.human)}
+									className='ml-0 mr-2'
+								/>
+								<div className='min-w-[100px]'>
+									{Number(
+										formatUnits(BigInt(item.amount), CRC_TOKEN_DECIMALS)
+										// eslint-disable-next-line @typescript-eslint/no-magic-numbers
+									).toFixed(4)}{' '}
+									{CRC_TOKEN_SYMBOL}
+								</div>
 							</div>
+						)
+					}
+
+					if (
+						item.user ||
+						item.avatar ||
+						item.organization ||
+						item.group ||
+						item.account ||
+						item.operator
+					) {
+						return (
+							<AvatarAddress
+								address={String(
+									// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+									item.user ??
+										item.avatar ??
+										item.organization ??
+										item.group ??
+										item.account ??
+										item.operator
+								)}
+								className='ml-0 mr-2'
+							/>
 						)
 					}
 
@@ -148,13 +192,10 @@ export const useRenderCell = () => {
 					)
 				}
 				case 'timestamp': {
-					const timestampMs = (cellValue as number) * MILLISECONDS_IN_A_SECOND
-					const date = dayjs(timestampMs)
-
 					return (
-						<Tooltip size='sm' content={date.format('YYYY-MMM-DD HH:mm:ss')}>
-							{dayjs().to(date)}
-						</Tooltip>
+						<div className='w-[160px]'>
+							<Timestamp value={cellValue as number} />
+						</div>
 					)
 				}
 				default: {

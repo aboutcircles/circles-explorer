@@ -1,5 +1,5 @@
 import type { RadioProps } from '@nextui-org/react'
-import { useRadio, VisuallyHidden, cn } from '@nextui-org/react'
+import { cn, useRadio, VisuallyHidden } from '@nextui-org/react'
 
 export function CustomRadio(properties: RadioProps) {
 	const {
@@ -7,30 +7,34 @@ export function CustomRadio(properties: RadioProps) {
 		children,
 		description,
 		getBaseProps,
-		getWrapperProps,
 		getInputProps,
 		getLabelProps,
-		getLabelWrapperProps,
-		getControlProps
+		getLabelWrapperProps
 	} = useRadio(properties)
 
 	return (
 		<Component
 			{...getBaseProps()}
 			className={cn(
-				'group inline-flex flex-row-reverse items-center justify-between hover:bg-content2',
-				'max-w-[300px] cursor-pointer gap-4 rounded-lg border-2 border-default p-1',
-				'data-[selected=true]:border-primary'
+				'group inline-flex items-center',
+				'cursor-pointer gap-0 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5',
+				'hover:bg-gray-100',
+				'data-[selected=true]:bg-[#312E81] data-[selected=true]:text-white'
 			)}
 		>
 			<VisuallyHidden>
 				<input {...getInputProps()} />
 			</VisuallyHidden>
-			<span {...getWrapperProps()}>
-				<span {...getControlProps()} />
-			</span>
-			<div {...getLabelWrapperProps()}>
-				{children ? <span {...getLabelProps()}>{children}</span> : null}
+
+			<div
+				{...getLabelWrapperProps()}
+				className='text-bold flex justify-center gap-0'
+			>
+				{children ? (
+					<span {...getLabelProps()} className='text-sm font-medium'>
+						{children}
+					</span>
+				) : null}
 				{description ? (
 					<span className='text-small text-foreground opacity-70'>
 						{description}

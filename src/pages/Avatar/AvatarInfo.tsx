@@ -1,38 +1,44 @@
-import { useState, useEffect } from 'react'
+import type { SearchResultProfile } from '@circles-sdk/profiles'
 import { Avatar } from '@nextui-org/react'
-import type { Profile } from '@circles-sdk/profiles'
 
-import { circlesProfiles } from 'services/circlesData'
-
-export function AvatarInfo({ cidV0 }: { cidV0?: string }) {
-	const [profile, setProfile] = useState<Profile>()
-
-	useEffect(() => {
-		const loadProfile = async (cidV0_: string) => {
-			setProfile(await circlesProfiles.get(cidV0_))
-		}
-
-		if (cidV0) {
-			void loadProfile(cidV0)
-		}
-	}, [cidV0])
+export function AvatarInfo({
+	profile
+}: {
+	profile?: SearchResultProfile | null
+}) {
+	const avatarImageSource = profile?.previewImageUrl ?? profile?.imageUrl
 
 	return (
-		<div className='m-5'>
-			<Avatar
-				className='mb-3 h-[150px] w-[150px]'
-				size='lg'
-				showFallback
-				src={profile?.previewImageUrl ?? profile?.imageUrl}
-			/>
+		<div className='m-5 text-center'>
+			{avatarImageSource ? (
+				<Avatar
+					className='m-auto h-[150px] w-[150px]'
+					size='lg'
+					showFallback
+					src={avatarImageSource}
+				/>
+			) : (
+				<Avatar
+					src='/icons/avatar.svg'
+					className='m-auto h-[150px] w-[150px]'
+					size='lg'
+					classNames={{
+						base: 'p-5'
+					}}
+				/>
+			)}
 
-			<h1>{profile?.name ?? 'Avatar Name'}</h1>
+			<h1 className='mt-3 max-h-[100px] max-w-[200px] overflow-auto break-words'>
+				{profile?.name ?? 'Avatar Name'}
+			</h1>
 
-			<div>{profile?.description}</div>
+			<div className='max-h-[100px] max-w-[200px] overflow-auto break-words text-sm'>
+				{profile?.description}
+			</div>
 		</div>
 	)
 }
 
 AvatarInfo.defaultProps = {
-	cidV0: ''
+	profile: undefined
 }

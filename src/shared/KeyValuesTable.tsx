@@ -1,7 +1,8 @@
-import { Link as RouterLink } from 'react-router-dom'
-
 import { type Column, type Key, type Row, Table } from 'components/Table'
+import { Timestamp } from 'components/Timestamp'
+import { AvatarAddress } from 'shared/AvatarAddress'
 import { isDeadAddress } from 'utils/eth'
+import { avatarFields } from 'constants/avatarFields'
 
 const eventDetailsColumns: Column[] = [
 	{
@@ -14,17 +15,12 @@ const eventDetailsColumns: Column[] = [
 	}
 ]
 
-const hiddenEventDetails = new Set(['key', 'values'])
-
-const avatarFields = new Set([
-	'from',
-	'to',
-	'canSendTo',
-	'user',
-	'avatar',
-	'truster',
-	'trustee',
-	'operator'
+const hiddenEventDetails = new Set([
+	'key',
+	'values',
+	'isExpandable',
+	'subEvents',
+	'events'
 ])
 
 const keyValuesRenderCell = (item: Row, columnKey: Key) => {
@@ -38,11 +34,10 @@ const keyValuesRenderCell = (item: Row, columnKey: Key) => {
 		columnKey === 'value' &&
 		!isDeadAddress(cellValue as string)
 	) {
-		return (
-			<RouterLink className='text-primary' to={`avatar/${cellValue}`}>
-				{cellValue}
-			</RouterLink>
-		)
+		return <AvatarAddress address={cellValue as string} size='sm' />
+	}
+	if (item.key === 'timestamp' && columnKey === 'value') {
+		return <Timestamp value={cellValue as number} />
 	}
 
 	return cellValue
