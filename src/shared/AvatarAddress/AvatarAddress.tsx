@@ -3,6 +3,7 @@ import { memo } from 'react'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 import { isAddress } from 'viem'
 
+import { BotLabel } from 'components/BotLabel'
 import { useProfiles } from 'hooks/useProfiles'
 import { truncateHex } from 'utils/eth'
 
@@ -30,13 +31,15 @@ function AvatarAddressBase({
 	size = 'sm',
 	className = ''
 }: AvatarAddressProperties) {
-	const { getProfile } = useProfiles()
+	const { getProfile, getBotVerdict } = useProfiles()
 	const parameters = useParams<{ tab?: string }>()
 
 	// Use current tab or default to 'events'
 	const currentTab = parameters.tab ?? 'events'
 
 	const profile = getProfile(address.toLowerCase())
+	const botVerdict = getBotVerdict(address.toLowerCase())
+	const isBot = botVerdict?.is_bot === true
 
 	if (!isAddress(address)) {
 		return <span className={className}>{address}</span>
@@ -76,8 +79,9 @@ function AvatarAddressBase({
 							}}
 						/>
 					)}
+					{isBot ? <BotLabel className='mr-1' /> : null}
 					<Code
-						className={`rounded-md border border-gray-200 bg-gray-50 px-2 py-1 ${textSizeMap[size]} ${size === 'sm' ? 'max-w-[100px]' : 'max-w-[250px]'} overflow-hidden text-ellipsis whitespace-nowrap`}
+						className={`rounded-md border ${isBot ? 'border-yellow-600/20' : 'border-gray-200'} ${isBot ? 'bg-yellow-50/30' : 'bg-gray-50'} px-2 py-1 ${textSizeMap[size]} ${size === 'sm' ? 'max-w-[100px]' : 'max-w-[250px]'} overflow-hidden text-ellipsis whitespace-nowrap`}
 					>
 						{displayName}
 					</Code>

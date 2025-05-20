@@ -9,6 +9,7 @@ import {
 	MIN_BATCH_SIZE,
 	ONE
 } from 'constants/common'
+import { botRepository } from 'domains/bots'
 import { circlesProfiles } from 'services/circlesData'
 import type { CirclesAvatarFromEnvio } from 'services/envio/indexer'
 import { getProfilesForAddresses } from 'services/envio/indexer'
@@ -82,6 +83,8 @@ export function useProfiles() {
 	const profiles = useProfileStore.use.profiles()
 	const isLoading = useProfileStore.use.isLoading()
 	const setIsLoading = useProfileStore.use.setIsLoading()
+	const setBotVerdicts = useProfileStore.use.setBotVerdicts()
+	const getBotVerdict = useProfileStore.use.getBotVerdict()
 
 	const fetchProfile = useCallback(
 		async (
@@ -168,13 +171,33 @@ export function useProfiles() {
 				for (const address of notFoundAddresses) {
 					setProfile(address, null)
 				}
+
+				// Fetch bot verdicts for all addresses
+				try {
+					// Only fetch bot verdicts for addresses that don't already have them
+					const addressesForBotCheck = addresses.filter(
+						(address) => getBotVerdict(address.toLowerCase()) === undefined
+					)
+
+					if (addressesForBotCheck.length > 0) {
+						logger.log(
+							`Fetching bot verdicts for ${addressesForBotCheck.length} addresses`
+						)
+						const botVerdicts = await botRepository.getBotVerdicts(
+							addressesForBotCheck as Address[]
+						)
+						setBotVerdicts(botVerdicts)
+					}
+				} catch (botError) {
+					logger.error('Failed to fetch bot verdicts:', botError)
+				}
 			} catch (error) {
 				logger.error('Failed to fetch profiles:', error)
 			} finally {
 				setIsLoading(false)
 			}
 		},
-		[getProfile, setProfile, setIsLoading]
+		[getProfile, setProfile, setIsLoading, getBotVerdict, setBotVerdicts]
 	)
 
 	return {
@@ -182,6 +205,7 @@ export function useProfiles() {
 		fetchProfile,
 		fetchProfiles,
 		getProfile,
+		getBotVerdict,
 		isLoading
 	}
 }
