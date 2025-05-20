@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import type { Address } from 'viem'
 import { isAddress } from 'viem'
 
+import { BotWarningBanner } from 'components/BotWarningBanner'
 import { Error } from 'components/Error'
 import { Loader } from 'components/Loader'
 import { useAvatar } from 'domains/avatars/repository'
@@ -39,10 +40,18 @@ type TabKey = (typeof TABS)[number]
 
 export default function Avatar() {
 	const { address, tab } = useParams<{ address: string; tab: string }>()
-	const { fetchProfiles, isLoading: profilesLoading } = useProfiles()
+	const {
+		fetchProfiles,
+		isLoading: profilesLoading,
+		getBotVerdict
+	} = useProfiles()
 	const getProfile = useProfileStore.use.getProfile()
 	const { isSmScreen, isMdScreen } = useBreakpoint()
 	const navigate = useNavigate()
+
+	// Check if the avatar is a bot
+	const botVerdict = address ? getBotVerdict(address.toLowerCase()) : undefined
+	const isBot = botVerdict?.is_bot === true
 
 	// Fetch avatar data using our new repository
 	const { data: avatar, isLoading: avatarLoading } = useAvatar(
@@ -124,6 +133,8 @@ export default function Avatar() {
 				{avatar ? <AvatarInfo profile={getProfile(avatar.id)} /> : null}
 				<AvatarStats address={address as Address} avatar={avatar} />
 			</div>
+
+			{isBot ? <BotWarningBanner className='mx-5 mb-4' /> : null}
 
 			<Tabs
 				aria-label='Avatar tabs'

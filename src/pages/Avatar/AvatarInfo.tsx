@@ -1,5 +1,5 @@
-import { Avatar } from '@nextui-org/react'
 import type { SearchResultProfile } from '@circles-sdk/profiles'
+import { Avatar } from '@nextui-org/react'
 
 export function AvatarInfo({
 	profile
