@@ -25,7 +25,16 @@ function BotWarningBannerBase({ className = '' }: BotWarningBannerProperties) {
 					/>
 				</svg>
 				<span className='text-sm font-medium text-yellow-800'>
-					This account has been flagged due to suspicious activity.
+					This account has been flagged due to suspicious activity.{' '}
+					<a
+						href='https://tally.so/r/mVyxKN'
+						className='text-blue-600 underline hover:text-blue-800'
+						target='_blank'
+						rel='noopener noreferrer'
+					>
+						Contact us
+					</a>{' '}
+					if you believe this is an error.
 				</span>
 			</div>
 		</Card>
