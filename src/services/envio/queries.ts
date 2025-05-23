@@ -221,7 +221,7 @@ export const queries = {
         name
         id
         description
-        previewImageUrl         
+        previewImageUrl
       }
   }
 }
@@ -240,7 +240,7 @@ export const queries = {
       name
       id
       description
-      previewImageUrl         
+      previewImageUrl
     }
   }
 }
@@ -364,7 +364,7 @@ query checkIfAddressExistsInRegistryQuery($address: String!) {
         name
         id
         description
-        previewImageUrl         
+        previewImageUrl
       }
   }
 }`,
@@ -380,8 +380,8 @@ query checkIfAddressExistsInRegistryQuery($address: String!) {
       profile {
         name
         id
+        cidV0
         description
-        previewImageUrl         
       }
     }
   }`

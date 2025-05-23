@@ -28,6 +28,7 @@ export interface IPFSData {
 	previewImageUrl: string
 	description: string
 	imageUrl: string
+	cidV0?: string
 }
 
 export interface CirclesAvatarFromEnvio {
