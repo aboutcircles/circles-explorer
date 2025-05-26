@@ -73,7 +73,9 @@ export const useRenderCell = () => {
 							onClick={onEventClick.bind(null, cellValue as CirclesEventType)}
 						>
 							{String(cellValue).includes('CrcV1') ? 'V1' : 'V2'} -{' '}
-							{LABELS_MAPPER[cellValue as CirclesEventType]}
+							{item.expiryTime && Number(item.expiryTime) === item.timestamp
+								? 'Untrust'
+								: LABELS_MAPPER[cellValue as CirclesEventType]}
 						</Code>
 					)
 				}
