@@ -23,7 +23,7 @@ export const INDIVIDUAL_TOKEN_SYMBOL = 'RING'
 
 // Constants for profile fetching
 export const DEFAULT_BATCH_SIZE = 999
-export const DEFAULT_IMAGE_BATCH_SIZE = 20
+export const DEFAULT_IMAGE_BATCH_SIZE = 50
 export const MIN_BATCH_SIZE = 1
 export const DECIMAL_RADIX = 10
 
