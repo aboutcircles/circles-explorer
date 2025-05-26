@@ -2,17 +2,21 @@ import { useCallback } from 'react'
 import type { Address } from 'viem'
 import { isAddress } from 'viem'
 
-import type { SearchResultProfile } from '@circles-sdk/profiles'
+import type { Profile, SearchResultProfile } from '@circles-sdk/profiles'
 import {
 	DECIMAL_RADIX,
 	DEFAULT_BATCH_SIZE,
+	DEFAULT_IMAGE_BATCH_SIZE,
 	MIN_BATCH_SIZE,
 	ONE
 } from 'constants/common'
 import { botRepository } from 'domains/bots'
 import { circlesProfiles } from 'services/circlesData'
-import type { CirclesAvatarFromEnvio } from 'services/envio/indexer'
-import { getProfilesForAddresses } from 'services/envio/indexer'
+import {
+	getProfilesForAddresses,
+	type CirclesAvatarFromEnvio,
+	type IPFSData
+} from 'services/envio/indexer'
 import logger from 'services/logger'
 import { useProfileStore } from 'stores/useProfileStore'
 
@@ -75,6 +79,57 @@ const processBatches = async (
 	}
 
 	return []
+}
+
+const getProfileByCids = async (
+	cids: string[],
+	currentBatchSize: number
+): Promise<Record<string, Profile>> => {
+	// Split CIDs into batches
+	const cidBatches: string[][] = []
+	for (let index = 0; index < cids.length; index += currentBatchSize) {
+		cidBatches.push(cids.slice(index, index + currentBatchSize))
+	}
+
+	try {
+		// Create an array of promises for each batch
+		const batchPromises = cidBatches.map(async (batch) => {
+			logger.log(`Fetching profiles batch of ${batch.length} CIDs`)
+			return circlesProfiles.getMany(batch)
+		})
+
+		// Execute all batch requests in parallel
+		const batchResults = await Promise.all(batchPromises)
+
+		// Merge all batch results into a single record
+		const mergedProfiles: Record<string, Profile> = {}
+		for (const batchResult of batchResults) {
+			Object.assign(mergedProfiles, batchResult)
+		}
+
+		return mergedProfiles
+	} catch (error) {
+		// Check if the error is about exceeding the maximum number of CIDs
+		const errorMessage = String(error)
+		const limitMatch = errorMessage.match(
+			/Maximum number of (?:cids|CIDs) exceeded\. Limit is (\d+)/
+		)
+
+		if (limitMatch?.[ONE]) {
+			// Extract the limit from the error message and subtract MIN_BATCH_SIZE for safety
+			const newBatchSize = Math.max(
+				MIN_BATCH_SIZE,
+				Number.parseInt(limitMatch[ONE], DECIMAL_RADIX) - MIN_BATCH_SIZE
+			)
+			logger.log(`Adjusting batch size to ${newBatchSize} based on API limit`)
+
+			// Retry with the new batch size
+			return getProfileByCids(cids, newBatchSize)
+		}
+
+		logger.error('Failed to fetch profiles preview image:', error)
+		return {}
+	}
 }
 
 export function useProfiles() {
@@ -155,10 +210,41 @@ export function useProfiles() {
 							...notFoundAddresses
 						] as Address[])
 
-						// Process envio results
+						const cidsToExtract: string[] = envioProfiles
+							.map((account) => account.profile?.cidV0)
+							.filter(Boolean) as string[]
+
+						const profileResults =
+							cidsToExtract.length > 0
+								? await getProfileByCids(
+										cidsToExtract,
+										DEFAULT_IMAGE_BATCH_SIZE
+									)
+								: {}
+
+						// Process profiles in a single pass
 						for (const envioProfile of envioProfiles) {
+							const cidV0 = envioProfile.profile?.cidV0 ?? ''
+							const profilePreviewImage =
+								cidV0 in profileResults
+									? profileResults[cidV0].previewImageUrl
+									: ''
+							// Create merged profile with preview image
+							const mergedProfile: CirclesAvatarFromEnvio = {
+								...envioProfile,
+								profile: envioProfile.profile
+									? ({
+											name: envioProfile.profile.name,
+											previewImageUrl: profilePreviewImage,
+											description: envioProfile.profile.description,
+											cidV0: envioProfile.profile.cidV0
+										} as IPFSData)
+									: undefined
+							}
+
+							// Convert and set profile
 							const searchProfile =
-								convertEnvioProfileToSearchResult(envioProfile)
+								convertEnvioProfileToSearchResult(mergedProfile)
 							setProfile(envioProfile.id, searchProfile)
 							notFoundAddresses.delete(envioProfile.id.toLowerCase())
 						}
