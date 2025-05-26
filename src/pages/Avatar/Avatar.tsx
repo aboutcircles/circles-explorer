@@ -1,4 +1,5 @@
 import { Tab, Tabs } from '@nextui-org/react'
+import { useNavigationListener } from 'hooks/useNavigationListener'
 import { lazy, Suspense, useEffect, useMemo } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -48,6 +49,10 @@ export default function Avatar() {
 	const getProfile = useProfileStore.use.getProfile()
 	const { isSmScreen, isMdScreen } = useBreakpoint()
 	const navigate = useNavigate()
+
+	// Use the navigation listener hook to handle browser back/forward events
+	// and sync URL parameters with the filter store
+	useNavigationListener()
 
 	// Check if the avatar is a bot
 	const botVerdict = address ? getBotVerdict(address.toLowerCase()) : undefined

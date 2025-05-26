@@ -36,7 +36,10 @@ const keyValuesRenderCell = (item: Row, columnKey: Key) => {
 	) {
 		return <AvatarAddress address={cellValue as string} size='sm' />
 	}
-	if (item.key === 'timestamp' && columnKey === 'value') {
+	if (
+		(item.key === 'timestamp' || item.key === 'expiryTime') &&
+		columnKey === 'value'
+	) {
 		return <Timestamp value={cellValue as number} />
 	}
 
