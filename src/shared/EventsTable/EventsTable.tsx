@@ -3,8 +3,8 @@ import type { ReactElement } from 'react'
 
 import type { Column, Row } from 'components/VirtualizedTable'
 import { VirtualizedTable } from 'components/VirtualizedTable'
+import { useEventsCoordinator } from 'coordinators'
 import useBreakpoint from 'hooks/useBreakpoint'
-import { useCirclesEvents } from 'hooks/useCirclesEvents'
 
 import { TotalLabel } from './TotalLabel'
 import { useRenderCell } from './useRenderCell'
@@ -52,7 +52,7 @@ export function EventsTable({ address }: { address?: string }): ReactElement {
 		isLoadingMore,
 		loadMoreEvents,
 		hasMoreEvents
-	} = useCirclesEvents(address)
+	} = useEventsCoordinator(address ?? null)
 
 	const renderCell = useRenderCell()
 	const { isSmScreen } = useBreakpoint()

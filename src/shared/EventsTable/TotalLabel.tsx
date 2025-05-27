@@ -6,7 +6,7 @@ import { useBlockNumber } from 'services/viemClient'
 import { useFilterStore } from 'stores/useFilterStore'
 import { MILLISECONDS_IN_A_SECOND, BLOCK_TIME } from 'constants/time'
 import { useStartBlock } from 'hooks/useStartBlock'
-import { useClearEventsCache } from 'services/circlesEvents'
+import { useClearEventsCache } from 'domains/events/repository'
 
 interface TotalLabelProperties {
 	eventsLength: number
