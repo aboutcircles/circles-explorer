@@ -1,8 +1,7 @@
 import type { Address } from 'viem'
 
-import type { TrustNetworkRelation } from 'services/envio/indexer'
 import { trustRepository } from './repository'
-import type { TrustRelation } from './types'
+import type { TrustRelation, TrustNetworkRelation } from './types'
 
 /**
  * Transforms a trust relation from our repository format to the network relation format
