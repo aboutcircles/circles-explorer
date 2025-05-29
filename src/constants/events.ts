@@ -71,6 +71,34 @@ export const EVENTS = [
 	...UNKNOWN_EVENTS
 ]
 
+// Default filter events for main page
+export const DEFAULT_FILTER_EVENTS: CirclesEventType[] = [
+	// Signup events (including organizations)
+	'CrcV1_Signup',
+	'CrcV1_OrganizationSignup',
+	'CrcV2_RegisterHuman',
+	'CrcV2_RegisterOrganization',
+
+	// Trust events
+	'CrcV1_Trust',
+	'CrcV2_Trust',
+
+	// Mint events
+	'CrcV2_PersonalMint',
+
+	// Individual transfer events (excluding summaries)
+	'CrcV1_Transfer',
+	'CrcV1_HubTransfer',
+	'CrcV2_TransferSingle',
+	'CrcV2_TransferBatch',
+	'CrcV2_Erc20WrapperTransfer',
+	'CrcV2_StreamCompleted',
+
+	// Group creation events
+	'CrcV2_RegisterGroup',
+	'CrcV2_BaseGroupCreated'
+]
+
 export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV1_HubTransfer: 'Hub Transfer',
 	CrcV1_Transfer: 'Transfer',
