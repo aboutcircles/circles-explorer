@@ -142,7 +142,8 @@ export const useRenderCell = () => {
 						return (
 							<div className='flex flex-row'>
 								<AvatarAddress
-									address={String(item.human)}
+									// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+									address={String(item.human ?? item.receiver)}
 									className='ml-0 mr-2'
 								/>
 								<div className='min-w-[100px]'>

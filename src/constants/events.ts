@@ -52,6 +52,13 @@ export const V2_EVENTS: CirclesEventType[] = [
 	'CrcV2_FlowEdgesScopeLastEnded',
 	'CrcV2_FlowEdgesScopeSingleStarted',
 
+	'CrcV2_GroupMint',
+	'CrcV2_CMGroupCreated',
+	'CrcV2_CirclesBackingDeployed',
+	'CrcV2_CirclesBackingInitiated',
+	'CrcV2_CirclesBackingCompleted',
+	'CrcV2_LBPDeployed',
+
 	...BASE_GROUP_EVENTS
 ]
 
@@ -151,6 +158,13 @@ export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	Safe_ProxyCreation: 'Safe Proxy Creation',
 	Safe_RemovedOwner: 'Safe Removed Owner',
 	Safe_SafeSetup: 'Safe Setup',
+
+	CrcV2_GroupMint: 'Group Mint',
+	CrcV2_CMGroupCreated: 'CM Group Created',
+	CrcV2_CirclesBackingDeployed: 'Circles Backing Deployed',
+	CrcV2_CirclesBackingInitiated: 'Circles Backing Initiated',
+	CrcV2_CirclesBackingCompleted: 'Circles Backing Completed',
+	CrcV2_LBPDeployed: 'LBP Deployed',
 
 	Crc_UnknownEvent: 'Unknown Event'
 }
