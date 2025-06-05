@@ -10,6 +10,7 @@ import {
 import type { ReactElement } from 'react'
 import { Fragment, useMemo, useRef, useState } from 'react'
 
+import { useScrollPreservation } from 'hooks/useScrollPreservation'
 import { useVirtualScroll } from 'hooks/useVirtualScroll'
 import { TableCell } from './TableCell'
 
@@ -94,6 +95,13 @@ export function VirtualizedTable({
 			max: TABLE_MAX_OVERSCAN
 		},
 		onReachEnd: onLoadMore
+	})
+
+	// Preserve scroll position when new events are added
+	useScrollPreservation({
+		containerRef: tableContainerReference,
+		items: rows,
+		rowHeight: ROW_HEIGHT
 	})
 
 	return (

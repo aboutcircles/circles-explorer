@@ -11,6 +11,7 @@ interface AvatarAddressProperties {
 	address: string
 	size?: 'lg' | 'md' | 'sm'
 	className?: string
+	isAddressVisible?: boolean
 }
 
 // Size mappings
@@ -29,7 +30,8 @@ const textSizeMap = {
 function AvatarAddressBase({
 	address,
 	size = 'sm',
-	className = ''
+	className = '',
+	isAddressVisible = true
 }: AvatarAddressProperties) {
 	const { getProfile, getBotVerdict } = useProfiles()
 	const parameters = useParams<{ tab?: string }>()
@@ -67,13 +69,13 @@ function AvatarAddressBase({
 				>
 					{profile?.previewImageUrl ? (
 						<Avatar
-							className={`mr-2 ${avatarSizeMap[size]}`}
+							className={`${isAddressVisible ? 'mr-2' : ''} ${avatarSizeMap[size]}`}
 							size={size}
 							src={profile.previewImageUrl}
 						/>
 					) : (
 						<Avatar
-							className={`mr-2 ${avatarSizeMap[size]}`}
+							className={`${isAddressVisible ? 'mr-2' : ''} ${avatarSizeMap[size]}`}
 							size={size}
 							src='/icons/avatar.svg'
 							classNames={{
@@ -82,11 +84,13 @@ function AvatarAddressBase({
 						/>
 					)}
 					{isBot ? <BotLabel className='mr-1' /> : null}
-					<Code
-						className={`rounded-md border ${isBot ? 'border-yellow-600/20' : 'border-gray-200'} ${isBot ? 'bg-yellow-50/30' : 'bg-gray-50'} px-2 py-1 ${textSizeMap[size]} ${size === 'sm' ? 'max-w-[100px]' : 'max-w-[250px]'} overflow-hidden text-ellipsis whitespace-nowrap`}
-					>
-						{displayName}
-					</Code>
+					{isAddressVisible ? (
+						<Code
+							className={`rounded-md border ${isBot ? 'border-yellow-600/20' : 'border-gray-200'} ${isBot ? 'bg-yellow-50/30' : 'bg-gray-50'} px-2 py-1 ${textSizeMap[size]} ${size === 'sm' ? 'max-w-[100px]' : 'max-w-[250px]'} overflow-hidden text-ellipsis whitespace-nowrap`}
+						>
+							{displayName}
+						</Code>
+					) : null}
 				</div>
 			</Tooltip>
 		</RouterLink>
@@ -97,5 +101,6 @@ export const AvatarAddress = memo(AvatarAddressBase)
 
 AvatarAddressBase.defaultProps = {
 	className: '',
+	isAddressVisible: true,
 	size: 'sm'
 }
