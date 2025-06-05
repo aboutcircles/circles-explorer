@@ -5,16 +5,22 @@ import { formatUnits } from 'viem'
 
 import { Timestamp } from 'components/Timestamp'
 import type { Key, Row } from 'components/VirtualizedTable'
+import { avatarFields } from 'constants/avatarFields'
 import {
 	CRC_TOKEN_DECIMALS,
 	CRC_TOKEN_SYMBOL,
+	DEAD_ADDRESS,
 	EXPLORER_URL
 } from 'constants/common'
 import { LABELS_MAPPER } from 'constants/events'
 import { AvatarAddress } from 'shared/AvatarAddress'
 import { EyePopoverDetails } from 'shared/EyePopoverDetails'
 import { useFilterStore } from 'stores/useFilterStore'
+import type { ProcessedEvent } from 'types/events'
 import { truncateHex } from 'utils/eth'
+
+const MAX_AVATARS_DISPLAY = 5
+const DECIMAL_PLACES = 4
 
 export const useRenderCell = () => {
 	const updateEventTypes = useFilterStore.use.updateEventTypes()
@@ -24,6 +30,25 @@ export const useRenderCell = () => {
 			updateEventTypes(event)
 		},
 		[updateEventTypes]
+	)
+
+	// Helper function to collect unique avatars from sub-events
+	const collectAvatarsFromSubEvents = useCallback(
+		(subEvents: Record<string, unknown>[]) => {
+			const uniqueAddresses = new Set<string>()
+
+			for (const subEvent of subEvents) {
+				for (const field of avatarFields) {
+					const value = subEvent[field]
+					if (value && typeof value === 'string' && value !== DEAD_ADDRESS) {
+						uniqueAddresses.add(value)
+					}
+				}
+			}
+
+			return [...uniqueAddresses]
+		},
+		[]
 	)
 
 	return useCallback(
@@ -80,6 +105,53 @@ export const useRenderCell = () => {
 					)
 				}
 				case 'details': {
+					// Handle Summary events with special display
+					if (
+						item.event === 'CrcV1_TransferSummary' ||
+						item.event === 'CrcV2_TransferSummary'
+					) {
+						const processedEvent = item as unknown as ProcessedEvent
+						const uniqueAvatars = collectAvatarsFromSubEvents(
+							// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+							(processedEvent.subEvents || []) as unknown as Record<
+								string,
+								unknown
+							>[]
+						)
+
+						return (
+							<div className='flex flex-row items-center justify-start md:w-[400px]'>
+								<div className='flex items-center space-x-1'>
+									{uniqueAvatars
+										.slice(0, MAX_AVATARS_DISPLAY)
+										.map((address) => (
+											<AvatarAddress
+												key={address}
+												address={address}
+												className='mr-1'
+												size='sm'
+												isAddressVisible={false}
+											/>
+										))}
+									{uniqueAvatars.length > MAX_AVATARS_DISPLAY && (
+										<span className='text-xs text-gray-500'>
+											+{uniqueAvatars.length - MAX_AVATARS_DISPLAY}
+										</span>
+									)}
+								</div>
+
+								{item.amount ? (
+									<div className='ml-2'>
+										{Number(
+											formatUnits(BigInt(item.amount), CRC_TOKEN_DECIMALS)
+										).toFixed(DECIMAL_PLACES)}{' '}
+										{CRC_TOKEN_SYMBOL}
+									</div>
+								) : null}
+							</div>
+						)
+					}
+
 					if (
 						(item.truster && item.trustee) ||
 						(item.canSendTo && item.user) ||
@@ -206,6 +278,6 @@ export const useRenderCell = () => {
 				}
 			}
 		},
-		[onEventClick]
+		[onEventClick, collectAvatarsFromSubEvents]
 	)
 }

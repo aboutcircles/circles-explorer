@@ -93,11 +93,13 @@ export const DEFAULT_FILTER_EVENTS: CirclesEventType[] = [
 	// Mint events
 	'CrcV2_PersonalMint',
 
-	// Individual transfer events (excluding summaries)
+	// Transfer events (including summaries)
 	'CrcV1_Transfer',
 	'CrcV1_HubTransfer',
+	'CrcV1_TransferSummary',
 	'CrcV2_TransferSingle',
 	'CrcV2_TransferBatch',
+	'CrcV2_TransferSummary',
 	'CrcV2_Erc20WrapperTransfer',
 	'CrcV2_StreamCompleted',
 
@@ -112,7 +114,7 @@ export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV1_Trust: 'Trust',
 	CrcV1_OrganizationSignup: 'Organization Signup',
 	CrcV1_Signup: 'Signup',
-	CrcV1_TransferSummary: 'Transfer Summary',
+	CrcV1_TransferSummary: 'Summary',
 	CrcV1_UpdateMetadataDigest: 'Update Metadata Digest',
 
 	CrcV2_ApprovalForAll: 'Approval For All',
@@ -145,7 +147,7 @@ export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV2_DiscountCost: 'Discount Cost',
 	CrcV2_CollateralLockedSingle: 'Collateral Locked Single',
 	CrcV2_CollateralLockedBatch: 'Collateral Locked Batch',
-	CrcV2_TransferSummary: 'Transfer Summary',
+	CrcV2_TransferSummary: 'Summary',
 	CrcV2_FlowEdgesScopeLastEnded: 'Flow Edges Scope Last Ended',
 	CrcV2_FlowEdgesScopeSingleStarted: 'Flow Edges Scope Single Started',
 
