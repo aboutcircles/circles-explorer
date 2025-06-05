@@ -52,6 +52,13 @@ export const V2_EVENTS: CirclesEventType[] = [
 	'CrcV2_FlowEdgesScopeLastEnded',
 	'CrcV2_FlowEdgesScopeSingleStarted',
 
+	'CrcV2_GroupMint',
+	'CrcV2_CMGroupCreated',
+	'CrcV2_CirclesBackingDeployed',
+	'CrcV2_CirclesBackingInitiated',
+	'CrcV2_CirclesBackingCompleted',
+	'CrcV2_LBPDeployed',
+
 	...BASE_GROUP_EVENTS
 ]
 
@@ -71,13 +78,43 @@ export const EVENTS = [
 	...UNKNOWN_EVENTS
 ]
 
+// Default filter events for main page
+export const DEFAULT_FILTER_EVENTS: CirclesEventType[] = [
+	// Signup events (including organizations)
+	'CrcV1_Signup',
+	'CrcV1_OrganizationSignup',
+	'CrcV2_RegisterHuman',
+	'CrcV2_RegisterOrganization',
+
+	// Trust events
+	'CrcV1_Trust',
+	'CrcV2_Trust',
+
+	// Mint events
+	'CrcV2_PersonalMint',
+
+	// Transfer events (including summaries)
+	'CrcV1_Transfer',
+	'CrcV1_HubTransfer',
+	'CrcV1_TransferSummary',
+	'CrcV2_TransferSingle',
+	'CrcV2_TransferBatch',
+	'CrcV2_TransferSummary',
+	'CrcV2_Erc20WrapperTransfer',
+	'CrcV2_StreamCompleted',
+
+	// Group creation events
+	'CrcV2_RegisterGroup',
+	'CrcV2_BaseGroupCreated'
+]
+
 export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV1_HubTransfer: 'Hub Transfer',
 	CrcV1_Transfer: 'Transfer',
 	CrcV1_Trust: 'Trust',
 	CrcV1_OrganizationSignup: 'Organization Signup',
 	CrcV1_Signup: 'Signup',
-	CrcV1_TransferSummary: 'Transfer Summary',
+	CrcV1_TransferSummary: 'Summary',
 	CrcV1_UpdateMetadataDigest: 'Update Metadata Digest',
 
 	CrcV2_ApprovalForAll: 'Approval For All',
@@ -110,7 +147,7 @@ export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV2_DiscountCost: 'Discount Cost',
 	CrcV2_CollateralLockedSingle: 'Collateral Locked Single',
 	CrcV2_CollateralLockedBatch: 'Collateral Locked Batch',
-	CrcV2_TransferSummary: 'Transfer Summary',
+	CrcV2_TransferSummary: 'Summary',
 	CrcV2_FlowEdgesScopeLastEnded: 'Flow Edges Scope Last Ended',
 	CrcV2_FlowEdgesScopeSingleStarted: 'Flow Edges Scope Single Started',
 
@@ -123,6 +160,13 @@ export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	Safe_ProxyCreation: 'Safe Proxy Creation',
 	Safe_RemovedOwner: 'Safe Removed Owner',
 	Safe_SafeSetup: 'Safe Setup',
+
+	CrcV2_GroupMint: 'Group Mint',
+	CrcV2_CMGroupCreated: 'CM Group Created',
+	CrcV2_CirclesBackingDeployed: 'Circles Backing Deployed',
+	CrcV2_CirclesBackingInitiated: 'Circles Backing Initiated',
+	CrcV2_CirclesBackingCompleted: 'Circles Backing Completed',
+	CrcV2_LBPDeployed: 'LBP Deployed',
 
 	Crc_UnknownEvent: 'Unknown Event'
 }

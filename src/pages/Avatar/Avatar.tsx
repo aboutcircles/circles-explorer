@@ -4,18 +4,17 @@ import { lazy, Suspense, useEffect, useMemo } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 import { useNavigate, useParams } from 'react-router-dom'
 import type { Address } from 'viem'
-import { isAddress } from 'viem'
 
 import { BotWarningBanner } from 'components/BotWarningBanner'
 import { Error } from 'components/Error'
 import { Loader } from 'components/Loader'
+import { useProfilesCoordinator } from 'coordinators'
 import { useAvatar } from 'domains/avatars/repository'
 import {
 	useGroupedTrustRelations,
 	useInvitations
 } from 'domains/trust/repository'
 import useBreakpoint from 'hooks/useBreakpoint'
-import { useProfiles } from 'hooks/useProfiles'
 import { EventsTable } from 'shared/EventsTable'
 import { Filter } from 'shared/Filter'
 import { useProfileStore } from 'stores/useProfileStore'
@@ -27,8 +26,6 @@ import { TrustRelations } from './TrustRelations'
 /*
 todo:
 - totalSupply (refactor)
-- profiles repository
-- coordinator for fetch all required repos in once\
 - graph
  */
 
@@ -42,10 +39,10 @@ type TabKey = (typeof TABS)[number]
 export default function Avatar() {
 	const { address, tab } = useParams<{ address: string; tab: string }>()
 	const {
-		fetchProfiles,
 		isLoading: profilesLoading,
-		getBotVerdict
-	} = useProfiles()
+		getBotVerdict,
+		loadProfilesForAvatar
+	} = useProfilesCoordinator()
 	const getProfile = useProfileStore.use.getProfile()
 	const { isSmScreen, isMdScreen } = useBreakpoint()
 	const navigate = useNavigate()
@@ -90,42 +87,12 @@ export default function Avatar() {
 		}
 	}, [tab, address, navigate])
 
+	// Load profiles for the avatar page
 	useEffect(() => {
-		const loadProfiles = async () => {
-			if (!address || !isAddress(address as Address)) return
-			if (!avatar || !trustRelations || !invitations) return
-
-			// use Set to avoid duplicates and later check for cached profiles
-			const addresses = new Set<string>()
-
-			// Add the avatar address
-			addresses.add(address.toLowerCase())
-
-			// Add invited by address if available
-			if (avatar.invitedBy) {
-				addresses.add(avatar.invitedBy.toLowerCase())
-			}
-
-			// Add addresses from trust relations
-			for (const relation of [
-				...trustRelations.given,
-				...trustRelations.received
-			]) {
-				addresses.add(relation.address.toLowerCase())
-			}
-
-			// Add addresses from invites
-			for (const invite of invitations) {
-				addresses.add(invite.avatar.toLowerCase())
-			}
-
-			if (addresses.size > 0) {
-				void fetchProfiles([...addresses])
-			}
+		if (address && avatar && trustRelations && invitations) {
+			loadProfilesForAvatar(address, avatar, trustRelations, invitations)
 		}
-
-		void loadProfiles()
-	}, [address, avatar, trustRelations, invitations, fetchProfiles])
+	}, [address, avatar, trustRelations, invitations, loadProfilesForAvatar])
 
 	const isLoading =
 		avatarLoading || profilesLoading || trustLoading || invitationsLoading

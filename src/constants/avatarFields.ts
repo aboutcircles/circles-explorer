@@ -21,5 +21,8 @@ export const avatarFields = new Set([
 	'initiator',
 	'safeAddress',
 	'proxy',
-	'singleton'
+	'singleton',
+
+	'sender',
+	'receiver'
 ])

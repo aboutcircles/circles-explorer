@@ -70,7 +70,7 @@ export function AvatarStats({
 					</span>
 				</Card>
 
-				{v1Token ? (
+				{v1Token && v1Token.totalSupply !== '0' ? (
 					<Badge color={v1Token.isStopped ? 'danger' : 'success'} content=' '>
 						<Tooltip
 							content={`${Number(v1Token.totalSupply) * CRC_MIGRATION_DENOMINATION} : ${v1Token.isStopped ? 'stopped' : 'active'}`}
@@ -98,7 +98,7 @@ export function AvatarStats({
 					</Badge>
 				) : null}
 
-				{v1MigrationAmount ? (
+				{v1MigrationAmount && v1MigrationAmount !== '0.00' ? (
 					<Tooltip content={v1MigrationAmount}>
 						<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
 							<b>V1 {'->'} V2 migrated: </b>:
@@ -107,7 +107,7 @@ export function AvatarStats({
 					</Tooltip>
 				) : null}
 
-				{v2Token ? (
+				{v2Token && v2Token.totalSupply !== '0' ? (
 					<Badge color={v2Token.isStopped ? 'danger' : 'success'} content=' '>
 						<Tooltip
 							content={`${v2Token.totalSupply} : ${v2Token.isStopped ? 'stopped' : 'active'}`}

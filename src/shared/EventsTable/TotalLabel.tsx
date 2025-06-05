@@ -1,18 +1,18 @@
 import { Button } from '@nextui-org/react'
-import { useMemo, useCallback } from 'react'
 import dayjs from 'dayjs'
+import { useCallback, useMemo } from 'react'
 
+import { BLOCK_TIME, MILLISECONDS_IN_A_SECOND } from 'constants/time'
+import { useClearEventsCache } from 'domains/events/repository'
+import { useStartBlock } from 'hooks/useStartBlock'
 import { useBlockNumber } from 'services/viemClient'
 import { useFilterStore } from 'stores/useFilterStore'
-import { MILLISECONDS_IN_A_SECOND, BLOCK_TIME } from 'constants/time'
-import { useStartBlock } from 'hooks/useStartBlock'
-import { useClearEventsCache } from 'services/circlesEvents'
 
 interface TotalLabelProperties {
-	eventsLength: number
+	totalEventsWithSubEvents: number
 }
 
-export function TotalLabel({ eventsLength }: TotalLabelProperties) {
+export function TotalLabel({ totalEventsWithSubEvents }: TotalLabelProperties) {
 	const { currentStartBlock, defaultStartBlock } = useStartBlock()
 	const clearStartBlock = useFilterStore.use.clearStartBlock()
 	const blockNumber = useBlockNumber()
@@ -38,7 +38,8 @@ export function TotalLabel({ eventsLength }: TotalLabelProperties) {
 		<div className='flex items-center justify-between'>
 			<span className='text-small text-default-400'>
 				<span className='font-semibold text-black'>
-					Total Events: {eventsLength === 0 ? '...' : eventsLength}
+					Total Events:{' '}
+					{totalEventsWithSubEvents === 0 ? '...' : totalEventsWithSubEvents}
 				</span>
 				<span className='ml-2 text-small text-default-400'>
 					(From Block: {currentStartBlock}

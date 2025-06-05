@@ -1,13 +1,13 @@
-import type React from 'react'
+import type { CirclesEventType } from '@circles-sdk/data'
 import cn from 'classnames'
+import type React from 'react'
 import { useCallback, useMemo } from 'react'
 import { TagPicker } from 'rsuite'
-import type { CirclesEventType } from '@circles-sdk/data'
 
-import RsuiteStyleProvider from 'components/RsuiteStyleProvider'
-import { EVENTS } from 'constants/events'
-import { useFilterStore } from 'stores/useFilterStore'
 import { FilterCheckBox } from 'components/FilterCheckBox'
+import RsuiteStyleProvider from 'components/RsuiteStyleProvider'
+import { DEFAULT_FILTER_EVENTS, EVENTS } from 'constants/events'
+import { useFilterStore } from 'stores/useFilterStore'
 
 import { createFilterOptions, type FilterOption } from './filterOptions'
 
@@ -23,6 +23,10 @@ export function Filter({
 	const toggleAllEvents = useFilterStore.use.toggleAllEvents()
 
 	const isAllSelected = eventTypes.size === EVENTS.length
+	const isDefaultSelected = useMemo(() => {
+		if (eventTypes.size !== DEFAULT_FILTER_EVENTS.length) return false
+		return DEFAULT_FILTER_EVENTS.every((event) => eventTypes.has(event))
+	}, [eventTypes])
 
 	const filterOptions = useMemo(
 		() => createFilterOptions(eventTypesAmount),
@@ -98,7 +102,13 @@ export function Filter({
 						handleChange={toggleAllEvents}
 						isDefaultSelected={isAllSelected}
 						className='ml-2'
-						label={isAllSelected ? 'Clear All' : 'Select All'}
+						label={
+							isDefaultSelected
+								? 'Select All'
+								: isAllSelected
+									? 'Clear All'
+									: 'Reset to Default'
+						}
 					/>
 				</div>
 			</div>

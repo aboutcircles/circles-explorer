@@ -11,10 +11,8 @@ import { Loader } from 'components/Loader'
 import { ONE, TWO } from 'constants/common'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { useProfiles } from 'hooks/useProfiles'
-import {
-	type CirclesAvatarFromEnvio,
-	type TrustNetworkRelation
-} from 'services/envio/indexer'
+import { type CirclesAvatarFromEnvio } from 'services/envio/indexer'
+import type { TrustNetworkRelation } from 'domains/trust/types'
 import { TrustSearchBox } from 'shared/Search/TrustSearchBox'
 import type { GraphData, ProfileNode, TrustLink } from 'types/graph'
 import { truncateHex } from 'utils/eth'

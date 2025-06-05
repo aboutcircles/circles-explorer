@@ -45,3 +45,27 @@ export interface Invitation {
 	inviter: Address
 	avatar: Address
 }
+
+export interface TrustNetworkRelation {
+	id: Address
+	trustee_id: Address
+	truster_id: Address
+	isMutual: boolean
+	version: number
+	timestamp: number
+	limit: string
+	trustee: {
+		id: Address
+		profile?: {
+			name: string
+			previewImageUrl: string
+		}
+	}
+	truster: {
+		id: Address
+		profile?: {
+			name: string
+			previewImageUrl: string
+		}
+	}
+}
