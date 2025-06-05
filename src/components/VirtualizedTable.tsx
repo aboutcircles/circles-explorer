@@ -184,13 +184,37 @@ export function VirtualizedTable({
 
 							return virtualItems.map((virtualRow) => {
 								const row = tableRows[virtualRow.index]
+								const isSubEvent = row.depth > 0
+								const isExpandableParent =
+									row.original.isExpandable && row.depth === 0
+
+								// Determine row styling based on type
+								const getRowClassName = () => {
+									const baseClasses =
+										'animate-fade-in border-b transition-all duration-300 ease-in-out'
+
+									if (isSubEvent) {
+										// Sub-event styling - highlighted with primary color background
+										return `${baseClasses} bg-primary-50/50 border-primary-100 hover:bg-primary-100/60`
+									}
+
+									if (isExpandableParent) {
+										// Expandable parent styling - slightly different when expanded
+										const expandedClass = row.getIsExpanded()
+											? 'bg-primary-25 border-primary-200'
+											: ''
+										return `${baseClasses} cursor-pointer border-gray-100 hover:bg-gray-50 ${expandedClass}`
+									}
+
+									// Regular row styling
+									return `${baseClasses} border-gray-100 hover:bg-gray-50`
+								}
+
 								return (
 									<Fragment key={row.id}>
 										<tr
-											className={`animate-fade-in ${row.original.isExpandable ? 'cursor-pointer' : ''} border-b border-gray-100 transition-opacity duration-500 ease-in-out hover:bg-gray-50`}
-											onClick={() =>
-												row.original.isExpandable && row.toggleExpanded()
-											}
+											className={getRowClassName()}
+											onClick={() => isExpandableParent && row.toggleExpanded()}
 										>
 											{row.getVisibleCells().map((cell) => {
 												const columnLabel = String(
