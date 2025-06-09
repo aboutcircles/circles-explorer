@@ -78,6 +78,7 @@ export function VirtualizedTable({
 			expanded
 		},
 		onExpandedChange: setExpanded,
+		getRowId: (row) => (row.key as string) || String(row.transactionHash),
 		getSubRows: (row) => row.subEvents,
 		getRowCanExpand: (row) => Boolean(row.original.isExpandable),
 		getCoreRowModel: getCoreRowModel(),
