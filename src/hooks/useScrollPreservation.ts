@@ -31,16 +31,7 @@ export function useScrollPreservation({
 	topThreshold = DEFAULT_TOP_THRESHOLD
 }: ScrollPreservationOptions): void {
 	const previousItemCount = useRef(items.length)
-	const previousScrollTop = useRef(0)
 	const isInitialized = useRef(false)
-
-	useEffect(() => {
-		const element = containerRef.current
-		if (!element) return
-
-		// Store current scroll position
-		previousScrollTop.current = element.scrollTop
-	})
 
 	useEffect(() => {
 		const element = containerRef.current
@@ -49,37 +40,26 @@ export function useScrollPreservation({
 		const currentItemCount = items.length
 		const itemCountDiff = currentItemCount - previousItemCount.current
 
-		// Skip adjustment on initial load or when no items
+		// Skip adjustment on initial load
 		if (!isInitialized.current) {
 			isInitialized.current = true
 			previousItemCount.current = currentItemCount
 			return
 		}
 
-		// Skip adjustment if we have no items yet
-		if (currentItemCount === 0 || previousItemCount.current === 0) {
-			previousItemCount.current = currentItemCount
-			return
-		}
-
-		// If new items were added to the top (item count increased)
+		// Only adjust if new items were added and not at top
 		if (itemCountDiff > 0) {
 			const currentScrollTop = element.scrollTop
-
-			// If user is at the top, let them stay at the top (default behavior)
-			if (currentScrollTop <= topThreshold) {
-				previousItemCount.current = currentItemCount
-				return
+			if (currentScrollTop > topThreshold) {
+				// Schedule scroll adjustment for next paint
+				queueMicrotask(() => {
+					const scrollAdjustment = itemCountDiff * rowHeight
+					element.scrollTop = currentScrollTop + scrollAdjustment
+				})
 			}
-
-			// Calculate how much to adjust scroll position
-			const scrollAdjustment = itemCountDiff * rowHeight
-
-			// Preserve scroll position by adjusting for new items
-			element.scrollTop = currentScrollTop + scrollAdjustment
 		}
 
-		// Update previous count
+		// Update count after adjustment
 		previousItemCount.current = currentItemCount
 	}, [items.length, rowHeight, containerRef, topThreshold])
 }

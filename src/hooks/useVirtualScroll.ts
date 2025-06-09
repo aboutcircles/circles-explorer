@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
 import { VIRTUALIZATION } from 'constants/virtualization'
 
+const OVERSCAN_UPDATE_DELAY = 50 // milliseconds
+
 interface VirtualScrollOptions {
 	/**
 	 * Reference to the container element
@@ -81,6 +83,17 @@ export function useVirtualScroll({
 		time: 0,
 		position: 0
 	})
+	const overscanTimeout = useRef<number>()
+
+	// Cleanup timeout on unmount
+	useEffect(
+		() => () => {
+			if (overscanTimeout.current) {
+				window.clearTimeout(overscanTimeout.current)
+			}
+		},
+		[]
+	)
 
 	// Initialize virtualizer
 	const virtualizer = useVirtualizer({
@@ -106,9 +119,16 @@ export function useVirtualScroll({
 				)
 				const scrollSpeed = (positionDiff / timeDiff) * MILLISECONDS_IN_A_SECOND
 
-				setOverscanCount(
-					scrollSpeed > speedThreshold ? maxOverscan : minOverscan
-				)
+				// Debounce overscan updates
+				if (overscanTimeout.current) {
+					window.clearTimeout(overscanTimeout.current)
+				}
+
+				overscanTimeout.current = window.setTimeout(() => {
+					setOverscanCount(
+						scrollSpeed > speedThreshold ? maxOverscan : minOverscan
+					)
+				}, OVERSCAN_UPDATE_DELAY) // Small delay to batch overscan changes
 			}
 
 			lastScrollTime.current = { time: currentTime, position: currentPosition }
