@@ -303,7 +303,6 @@ export const useEventsInfinite = (
 		const setupSubscription = async () => {
 			try {
 				const addressToUse = isAddress(search ?? '') ? search : null
-				console.log({ addressToUse })
 				const cleanup = await watchEventUpdates(
 					queryKey,
 					queryClient,

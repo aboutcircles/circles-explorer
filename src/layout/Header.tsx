@@ -1,7 +1,6 @@
 import { Divider, useDisclosure } from '@nextui-org/react'
 import { useNavigate } from 'react-router-dom'
-import { SearchModal } from 'shared/Search'
-import { Search } from 'shared/Search/Search'
+import { SearchModal, Search } from 'shared/Search'
 import { useFilterStore } from 'stores/useFilterStore'
 
 export function Header() {
@@ -24,18 +23,8 @@ export function Header() {
 				>
 					<img src='/icons/logo.svg' alt='Logo' width={32} height={32} />
 					<h1 className='text-xl font-bold'>
-						<span
-							className='font-medium text-primary'
-							style={{ fontFamily: 'DM Sans', fontWeight: '800' }}
-						>
-							Circles
-						</span>{' '}
-						<span
-							className='font-medium text-secondary'
-							style={{ fontFamily: 'DM Sans', fontWeight: '800' }}
-						>
-							Explorer
-						</span>
+						<span className='dm-sans font-bold text-primary'>Circles</span>{' '}
+						<span className='dm-sans font-bold text-secondary'>Explorer</span>
 					</h1>
 				</div>
 
