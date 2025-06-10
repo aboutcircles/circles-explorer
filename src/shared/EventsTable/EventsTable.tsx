@@ -1,10 +1,12 @@
 import { Button } from '@nextui-org/react'
 import type { ReactElement } from 'react'
+import { useMemo } from 'react'
 
 import type { Column, Row } from 'components/VirtualizedTable'
 import { VirtualizedTable } from 'components/VirtualizedTable'
+import { useEventsCoordinator } from 'coordinators'
 import useBreakpoint from 'hooks/useBreakpoint'
-import { useCirclesEvents } from 'hooks/useCirclesEvents'
+import { useFilterStore } from 'stores/useFilterStore'
 
 import { TotalLabel } from './TotalLabel'
 import { useRenderCell } from './useRenderCell'
@@ -52,10 +54,20 @@ export function EventsTable({ address }: { address?: string }): ReactElement {
 		isLoadingMore,
 		loadMoreEvents,
 		hasMoreEvents
-	} = useCirclesEvents(address)
+	} = useEventsCoordinator(address ?? null)
 
 	const renderCell = useRenderCell()
 	const { isSmScreen } = useBreakpoint()
+	const eventTypesAmount = useFilterStore.use.eventTypesAmount()
+
+	// Calculate total events from eventTypesAmount (more efficient)
+	const totalEventsWithSubEvents = useMemo(() => {
+		let total = 0
+		for (const count of eventTypesAmount.values()) {
+			total += count
+		}
+		return total
+	}, [eventTypesAmount])
 
 	const loadMoreButton = (
 		<div className='my-4 flex justify-center'>
@@ -88,7 +100,9 @@ export function EventsTable({ address }: { address?: string }): ReactElement {
 						topContent={
 							<div className='flex w-full justify-between'>
 								<div className='flex flex-row'>
-									<TotalLabel eventsLength={events.length} />
+									<TotalLabel
+										totalEventsWithSubEvents={totalEventsWithSubEvents}
+									/>
 								</div>
 							</div>
 						}
@@ -101,7 +115,7 @@ export function EventsTable({ address }: { address?: string }): ReactElement {
 				<div className='mb-9'>
 					<div className='flex flex-col items-center justify-center'>
 						<div className='mb-2'>
-							<TotalLabel eventsLength={events.length} />
+							<TotalLabel totalEventsWithSubEvents={totalEventsWithSubEvents} />
 						</div>
 
 						<VirtualizedEventCards

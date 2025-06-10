@@ -2,7 +2,7 @@ import type { CirclesEventType } from '@circles-sdk/data'
 import { isNil } from 'utils/isNil'
 import { create } from 'zustand'
 
-import { EVENTS } from 'constants/events'
+import { DEFAULT_FILTER_EVENTS, EVENTS } from 'constants/events'
 import { ONE } from '../constants/common'
 
 import { createSelectors } from './createSelectors'
@@ -18,6 +18,7 @@ interface Action {
 	updateEventTypes: (event: CirclesEventType) => void
 	updateEventTypesBatch: (events: CirclesEventType[]) => void
 	toggleAllEvents: () => void
+	resetToDefault: () => void
 	updateEventTypesAmount: (
 		eventTypesAmount: Map<CirclesEventType, number>
 	) => void
@@ -44,10 +45,20 @@ const updateURLWithPush = (state: State) => {
 	window.history.pushState({}, '', url.toString())
 }
 
+// Helper function to check if current selection equals default
+const isDefaultSelection = (eventTypes: Set<CirclesEventType>): boolean => {
+	if (eventTypes.size !== DEFAULT_FILTER_EVENTS.length) return false
+	return DEFAULT_FILTER_EVENTS.every((event) => eventTypes.has(event))
+}
+
 const updateURL = (state: State) => {
 	const url = new URL(window.location.href)
 
-	if (state.eventTypes.size < EVENTS.length && state.eventTypes.size > 0) {
+	// Only add filter param if selection is not default and not all events
+	const isDefault = isDefaultSelection(state.eventTypes)
+	const isAllEvents = state.eventTypes.size === EVENTS.length
+
+	if (!isDefault && !isAllEvents && state.eventTypes.size > 0) {
 		url.searchParams.set('filter', [...state.eventTypes].join(','))
 	} else {
 		url.searchParams.delete('filter')
@@ -64,7 +75,7 @@ const updateURL = (state: State) => {
 }
 
 const useFilterStoreBase = create<Action & State>((set, get) => ({
-	eventTypes: new Set(EVENTS),
+	eventTypes: new Set(DEFAULT_FILTER_EVENTS),
 	eventTypesAmount: new Map(),
 	search: null,
 	startBlock: 0,
@@ -126,14 +137,35 @@ const useFilterStoreBase = create<Action & State>((set, get) => ({
 		set(() => ({ eventTypesAmount })),
 	toggleAllEvents: () =>
 		set((state) => {
-			const newEventTypes =
-				state.eventTypes.size === EVENTS.length
-					? new Set<CirclesEventType>()
-					: new Set(EVENTS)
+			const isDefault = isDefaultSelection(state.eventTypes)
+			const isAllEvents = state.eventTypes.size === EVENTS.length
+
+			let newEventTypes: Set<CirclesEventType>
+
+			if (isDefault) {
+				// Default → All
+				newEventTypes = new Set(EVENTS)
+			} else if (isAllEvents) {
+				// All → None
+				newEventTypes = new Set<CirclesEventType>()
+			} else {
+				// None/Partial → Default
+				newEventTypes = new Set(DEFAULT_FILTER_EVENTS)
+			}
 
 			const newState = {
 				...state,
 				eventTypes: newEventTypes
+			}
+
+			updateURL(newState)
+			return newState
+		}),
+	resetToDefault: () =>
+		set((state) => {
+			const newState = {
+				...state,
+				eventTypes: new Set(DEFAULT_FILTER_EVENTS)
 			}
 
 			updateURL(newState)
@@ -148,7 +180,7 @@ const useFilterStoreBase = create<Action & State>((set, get) => ({
 			const newState = {
 				...updatedState,
 				search,
-				eventTypes: new Set(EVENTS)
+				eventTypes: new Set(DEFAULT_FILTER_EVENTS)
 			}
 
 			updateURLWithPush(newState)
