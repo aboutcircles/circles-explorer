@@ -25,7 +25,6 @@ export function SearchModal({
 			placement='top'
 			onOpenChange={onOpenChange}
 			size='full'
-			hideCloseButton
 		>
 			<ModalContent className='overflow-auto'>
 				{(onClose) => (

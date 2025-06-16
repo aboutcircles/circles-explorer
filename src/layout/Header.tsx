@@ -29,11 +29,13 @@ export function Header() {
 				</div>
 
 				<Search onOpen={onOpen} />
-				<SearchModal
-					onOpen={onOpen}
-					isOpen={isOpen}
-					onOpenChange={onOpenChange}
-				/>
+				{isOpen ? (
+					<SearchModal
+						onOpen={onOpen}
+						isOpen={isOpen}
+						onOpenChange={onOpenChange}
+					/>
+				) : null}
 			</div>
 
 			<Divider />
