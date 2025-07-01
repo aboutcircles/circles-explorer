@@ -5,7 +5,6 @@ import { isAddress } from 'viem'
 import { avatarFields } from 'constants/avatarFields'
 import { botRepository } from 'domains/bots/repository'
 import { profileRepository } from 'domains/profiles/repository'
-import type { Profile } from 'domains/profiles/types'
 import logger from 'services/logger'
 import { useProfileStore } from 'stores/useProfileStore'
 import type { ProcessedEvent } from 'types/events'
@@ -25,35 +24,6 @@ export function useProfilesCoordinator() {
 	const setIsLoading = useProfileStore.use.setIsLoading()
 	const setBotVerdicts = useProfileStore.use.setBotVerdicts()
 	const getBotVerdict = useProfileStore.use.getBotVerdict()
-
-	/**
-	 * Fetch a single profile
-	 */
-	const fetchProfile = useCallback(
-		async (address: string): Promise<Profile | null | undefined> => {
-			if (!isAddress(address)) return undefined
-
-			// Check cache first (including null profiles)
-			const cachedProfile = getProfile(address.toLowerCase())
-			if (cachedProfile !== undefined) return cachedProfile
-
-			try {
-				setIsLoading(true)
-				const profile = await profileRepository.getProfile(address)
-
-				// Store in cache (even if null)
-				setProfile(address, profile)
-
-				return profile
-			} catch (error) {
-				logger.error('[Coordinator] Failed to fetch profile:', error)
-				return undefined
-			} finally {
-				setIsLoading(false)
-			}
-		},
-		[getProfile, setProfile, setIsLoading]
-	)
 
 	/**
 	 * Fetch multiple profiles
@@ -202,7 +172,6 @@ export function useProfilesCoordinator() {
 
 	return {
 		profiles,
-		fetchProfile,
 		fetchProfiles,
 		getProfile,
 		getBotVerdict,

@@ -1,23 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Address } from 'viem'
-import { isAddress } from 'viem'
 
-import {
-	DECIMAL_RADIX,
-	DEFAULT_BATCH_SIZE,
-	DEFAULT_IMAGE_BATCH_SIZE,
-	MIN_BATCH_SIZE,
-	ONE
-} from 'constants/common'
+import { DEFAULT_BATCH_SIZE, MIN_BATCH_SIZE, ONE } from 'constants/common'
 import { MILLISECONDS_IN_A_MINUTE } from 'constants/time'
-import { circlesProfiles } from 'services/circlesData'
-import type { CirclesAvatarFromEnvio, IPFSData } from 'services/envio/indexer'
-import { getProfilesForAddresses } from 'services/envio/indexer'
+import { circlesRpc } from 'services/circlesRpc'
 import logger from 'services/logger'
 
-import type { SearchResultProfile } from '@circles-sdk/profiles'
-import { adaptProfileFromSdk, convertEnvioProfileToProfile } from './adapters'
+import { adaptNullableProfileFromRpc, adaptProfileFromRpc } from './adapters'
 import type { Profile } from './types'
+
+/*
+todo:
+- rpc batch for chunks
+- react query for profiles
+- remove envio and fallback relation at all (later, after check on dev)
+ */
 
 // Query keys
 export const profileKeys = {
@@ -28,258 +25,101 @@ export const profileKeys = {
 	search: (query: string) => [...profileKeys.all, 'search', query] as const
 }
 
-/**
- * Process batches of addresses to fetch profiles
- */
-const processBatches = async (
-	addressList: string[],
-	currentBatchSize: number
-): Promise<Profile[][]> => {
-	// Split addresses into batches
-	const addressBatches: Address[][] = []
-	for (let index = 0; index < addressList.length; index += currentBatchSize) {
-		addressBatches.push(
-			addressList.slice(index, index + currentBatchSize) as Address[]
-		)
-	}
-
-	try {
-		// Create an array of promises for each batch
-		const batchPromises = addressBatches.map(async (batch) => {
-			logger.log(
-				`[Repository] Fetching profiles batch of ${batch.length} addresses`
-			)
-			const results = await circlesProfiles.searchByAddresses(batch, {
-				fetchComplete: true
-			})
-			return results.map((profile) => adaptProfileFromSdk(profile))
-		})
-
-		// Execute all batch requests in parallel
-		return await Promise.all(batchPromises)
-	} catch (error) {
-		// Check if the error is about exceeding the maximum number of addresses
-		const errorMessage = String(error)
-		const limitMatch = errorMessage.match(
-			/Maximum number of addresses exceeded\. Limit is (\d+)/
-		)
-
-		if (limitMatch?.[ONE]) {
-			// Extract the limit from the error message and subtract MIN_BATCH_SIZE for safety
-			const newBatchSize = Math.max(
-				MIN_BATCH_SIZE,
-				Number.parseInt(limitMatch[ONE], DECIMAL_RADIX) - MIN_BATCH_SIZE
-			)
-			logger.log(
-				`[Repository] Adjusting batch size to ${newBatchSize} based on API limit`
-			)
-
-			// Retry with the new batch size
-			return processBatches(addressList, newBatchSize)
-		}
-
-		logger.error('[Repository] Failed to fetch profiles:', error)
-	}
-
-	return []
-}
+// Constants
+const MAX_SEARCH_OFFSET = 10_000
+const RPC_SEARCH_LIMIT = 100
+const CHUNK_NUMBER_OFFSET = 1
 
 /**
- * Fetch profiles by CIDs
+ * Extract batch size limit from RPC error message and return adjusted batch size
+ * Error format: "Batch size exceeds 100 (Parameter 'avatars')"
+ * Returns the new batch size limit or null if not a batch size error
  */
-const getProfileByCids = async (
-	cids: string[],
-	currentBatchSize: number
-): Promise<Record<string, Profile>> => {
-	// Split CIDs into batches
-	const cidBatches: string[][] = []
-	for (let index = 0; index < cids.length; index += currentBatchSize) {
-		cidBatches.push(cids.slice(index, index + currentBatchSize))
-	}
-
-	try {
-		// Create an array of promises for each batch
-		const batchPromises = cidBatches.map(async (batch) => {
-			logger.log(`[Repository] Fetching profiles batch of ${batch.length} CIDs`)
-			const results = await circlesProfiles.getMany(batch)
-
-			// Convert to our domain type
-			const profiles: Record<string, Profile> = {}
-			for (const [cid, profile] of Object.entries(results)) {
-				profiles[cid] = adaptProfileFromSdk(profile as SearchResultProfile)
-			}
-
-			return profiles
-		})
-
-		// Execute all batch requests in parallel
-		const batchResults = await Promise.all(batchPromises)
-
-		// Merge all batch results into a single record
-		const mergedProfiles: Record<string, Profile> = {}
-		for (const batchResult of batchResults) {
-			Object.assign(mergedProfiles, batchResult)
-		}
-
-		return mergedProfiles
-	} catch (error) {
-		// Check if the error is about exceeding the maximum number of CIDs
-		const errorMessage = String(error)
-		const limitMatch = errorMessage.match(
-			/Maximum number of (?:cids|CIDs) exceeded\. Limit is (\d+)/
-		)
-
-		if (limitMatch?.[ONE]) {
-			// Extract the limit from the error message and subtract MIN_BATCH_SIZE for safety
-			const newBatchSize = Math.max(
-				MIN_BATCH_SIZE,
-				Number.parseInt(limitMatch[ONE], DECIMAL_RADIX) - MIN_BATCH_SIZE
-			)
-			logger.log(
-				`[Repository] Adjusting batch size to ${newBatchSize} based on API limit`
-			)
-
-			// Retry with the new batch size
-			return getProfileByCids(cids, newBatchSize)
-		}
-
-		logger.error('[Repository] Failed to fetch profiles preview image:', error)
-		return {}
-	}
+const getBatchSizeFromError = (errorMessage: string): number | null => {
+	const match = errorMessage.match(/Batch size exceeds (\d+)/)
+	return match
+		? Math.max(Number.parseInt(match[ONE], 10), MIN_BATCH_SIZE)
+		: null
 }
 
 // Repository methods
 export const profileRepository = {
-	// Get a single profile
-	getProfile: async (address: Address): Promise<Profile | null> => {
-		try {
-			if (!isAddress(address)) return null
-
-			const results = await circlesProfiles.searchByAddress(address, {
-				fetchComplete: true
-			})
-
-			if (results.length > 0) {
-				return adaptProfileFromSdk(results[0])
-			}
-
-			// Try fallback to envio
-			try {
-				const envioProfiles = await getProfilesForAddresses([address])
-				if (envioProfiles.length > 0) {
-					return convertEnvioProfileToProfile(envioProfiles[0])
-				}
-			} catch (envioError) {
-				logger.error(
-					'[Repository] Failed to fetch profile from envio:',
-					envioError
-				)
-			}
-
-			return null
-		} catch (error) {
-			logger.error('[Repository] Failed to fetch profile:', error)
-			throw new Error('Failed to fetch profile')
-		}
-	},
-
-	// Get multiple profiles
+	// Get multiple profiles with optional batch size parameter
 	getProfiles: async (
-		addresses: Address[]
+		addresses: Address[],
+		batchSize: number = DEFAULT_BATCH_SIZE
 	): Promise<Record<string, Profile | null>> => {
 		try {
 			if (addresses.length === 0) return {}
 
+			// Split addresses into chunks to respect batch size limit
+			const chunks: string[][] = []
+			for (let index = 0; index < addresses.length; index += batchSize) {
+				chunks.push(addresses.slice(index, index + batchSize))
+			}
+
+			logger.log(
+				`[Repository] Fetching ${addresses.length} profiles in ${chunks.length} chunks (batch size: ${batchSize})`
+			)
+
+			// Process chunks in parallel and maintain address-to-result mapping
+			const chunkPromises = chunks.map(async (chunk, chunkIndex) => {
+				try {
+					const chunkNumber = chunkIndex + CHUNK_NUMBER_OFFSET
+					logger.log(
+						`[Repository] Processing chunk ${chunkNumber}/${chunks.length} with ${chunk.length} addresses`
+					)
+					const profiles = await circlesRpc.getProfileByAddressBatch(chunk)
+
+					// Return chunk with its addresses for proper mapping
+					return { chunk, profiles, chunkIndex }
+				} catch (error) {
+					const chunkNumber = chunkIndex + CHUNK_NUMBER_OFFSET
+					logger.error(
+						`[Repository] Failed to fetch chunk ${chunkNumber}/${chunks.length}:`,
+						error
+					)
+
+					// Check if this is a batch size error and we can retry with smaller batch
+					const newBatchSize = getBatchSizeFromError((error as Error).message)
+					if (newBatchSize && newBatchSize < batchSize) {
+						logger.log(
+							`[Repository] Retrying chunk ${chunkNumber} with smaller batch size: ${newBatchSize} (was ${batchSize})`
+						)
+						// Recursive call with new batch size for this specific chunk
+						const retryResult = await profileRepository.getProfiles(
+							chunk as Address[],
+							newBatchSize
+						)
+
+						// Convert result back to chunk format
+						const retryProfiles = chunk.map((address) => retryResult[address])
+						return { chunk, profiles: retryProfiles, chunkIndex }
+					}
+
+					// Return null array for failed chunk, maintaining order
+					const nullProfiles = Array.from({ length: chunk.length }).fill(
+						null
+					) as null[]
+					return { chunk, profiles: nullProfiles, chunkIndex }
+				}
+			})
+
+			const chunkResults = await Promise.all(chunkPromises)
+
+			// Map results back to addresses, preserving order
 			const result: Record<string, Profile | null> = {}
 
-			// Filter out addresses that are not valid
-			const validAddresses = addresses.filter((addr) => isAddress(addr))
-			if (validAddresses.length === 0) return {}
-
-			// Fetch profiles from primary service
-			const batchResults = await processBatches(
-				validAddresses.map((addr) => addr.toLowerCase()),
-				DEFAULT_BATCH_SIZE
-			)
-
-			// Create a map of addresses that were fetched but not found
-			const notFoundAddresses = new Set(
-				validAddresses.map((addr) => addr.toLowerCase())
-			)
-
-			// Process successful results from primary service
-			for (const results of batchResults) {
-				for (const profile of results) {
-					if (profile.address) {
-						result[profile.address.toLowerCase()] = profile
-						notFoundAddresses.delete(profile.address.toLowerCase())
-					}
+			for (const { chunk, profiles } of chunkResults) {
+				for (const [index, address] of chunk.entries()) {
+					const profile = profiles[index]
+					result[address] = adaptNullableProfileFromRpc(profile)
 				}
 			}
 
-			// If we have addresses with no profiles, try envio as fallback
-			if (notFoundAddresses.size > 0) {
-				try {
-					const envioProfiles = await getProfilesForAddresses([
-						...notFoundAddresses
-					] as Address[])
-
-					// Extract valid CIDs
-					const cidsToExtract: string[] = []
-					for (const account of envioProfiles) {
-						if (account.profile?.cidV0) {
-							cidsToExtract.push(account.profile.cidV0)
-						}
-					}
-
-					// Fetch profiles by CIDs
-					const profileResults =
-						cidsToExtract.length > 0
-							? await getProfileByCids(
-									cidsToExtract,
-									DEFAULT_IMAGE_BATCH_SIZE as number
-								)
-							: {}
-
-					// Process profiles in a single pass
-					for (const envioProfile of envioProfiles) {
-						// Get CID safely
-						const cidV0 = envioProfile.profile?.cidV0 ?? ''
-
-						// Get preview image safely
-						let profilePreviewImage = ''
-						if (cidV0 && Object.hasOwn(profileResults, cidV0)) {
-							profilePreviewImage = profileResults[cidV0].previewImageUrl ?? ''
-						}
-
-						// Create merged profile with preview image
-						const mergedEnvioProfile: CirclesAvatarFromEnvio = {
-							...envioProfile,
-							profile: envioProfile.profile
-								? ({
-										...envioProfile.profile,
-										previewImageUrl: profilePreviewImage
-									} as IPFSData)
-								: undefined
-						}
-
-						// Convert and set profile
-						const profile = convertEnvioProfileToProfile(mergedEnvioProfile)
-						result[envioProfile.id.toLowerCase()] = profile
-						notFoundAddresses.delete(envioProfile.id.toLowerCase())
-					}
-				} catch (envioError) {
-					logger.error(
-						'[Repository] Failed to fetch profiles from envio:',
-						envioError
-					)
-				}
-			}
-
-			// For any remaining addresses not found in either service, set them to null
-			for (const address of notFoundAddresses) {
-				result[address] = null
-			}
+			logger.log(
+				`[Repository] Successfully fetched ${Object.keys(result).length} profiles`
+			)
 
 			return result
 		} catch (error) {
@@ -288,11 +128,45 @@ export const profileRepository = {
 		}
 	},
 
-	// Search profiles by query
+	// Search profiles by query with pagination to get all results
 	searchProfiles: async (query: string): Promise<Profile[]> => {
 		try {
-			const results = await circlesProfiles.search({ name: query })
-			return results.map((profile) => adaptProfileFromSdk(profile))
+			const allProfiles: Profile[] = []
+			let offset = 0
+			let hasMore = true
+
+			// eslint-disable-next-line no-await-in-loop
+			while (hasMore) {
+				logger.log(
+					`[Repository] Fetching profiles batch: offset=${offset}, limit=${RPC_SEARCH_LIMIT}`
+				)
+
+				// eslint-disable-next-line no-await-in-loop
+				const results = await circlesRpc.searchProfiles(
+					query,
+					RPC_SEARCH_LIMIT,
+					offset
+				)
+				const profiles = results.map((profile) => adaptProfileFromRpc(profile))
+
+				allProfiles.push(...profiles)
+
+				// If we got fewer results than the limit, we've reached the end
+				hasMore = results.length === RPC_SEARCH_LIMIT
+				offset += RPC_SEARCH_LIMIT
+
+				// Safety check to prevent infinite loops
+				if (offset > MAX_SEARCH_OFFSET) {
+					logger.warn('[Repository] Search reached maximum offset limit')
+					break
+				}
+			}
+
+			logger.log(
+				`[Repository] Search completed: found ${allProfiles.length} profiles total`
+			)
+
+			return allProfiles
 		} catch (error) {
 			logger.error('[Repository] Failed to search profiles:', error)
 			throw new Error('Failed to search profiles')
@@ -304,19 +178,6 @@ export const profileRepository = {
 const PROFILE_CACHE_MINUTES = 10
 
 // React Query hooks
-export const useProfile = (address?: Address) =>
-	useQuery({
-		queryKey: address
-			? profileKeys.detail(address.toLowerCase())
-			: profileKeys.all,
-		queryFn: async () => {
-			if (!address) throw new Error('Address is required')
-			return profileRepository.getProfile(address)
-		},
-		enabled: !!address,
-		staleTime: PROFILE_CACHE_MINUTES * MILLISECONDS_IN_A_MINUTE
-	})
-
 export const useProfiles = (addresses: Address[] = []) =>
 	useQuery({
 		queryKey: profileKeys.list(addresses.map((a) => a.toLowerCase())),

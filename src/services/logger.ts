@@ -2,7 +2,9 @@
 export default {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	log(...arguments_: unknown[]): void {
-		// console.log(...arguments_)
+		if (import.meta.env.VITE_LOG_LEVEL === 'info') {
+			console.log(...arguments_)
+		}
 	},
 	error(...arguments_: unknown[]): void {
 		console.error(...arguments_)

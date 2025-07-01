@@ -1,8 +1,9 @@
 import { Avatar, Button, Input } from '@nextui-org/react'
+import { useSearchProfiles } from 'domains/profiles/repository'
+import type { Profile } from 'domains/profiles/types'
 import debounce from 'lodash.debounce'
 import type React from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchProfileByName, type Profile } from 'services/circlesIndex'
 import { isAddress, isHash } from 'viem'
 
 const MIN_SEARCH_LENGTH = 2
@@ -28,17 +29,14 @@ export function SearchBox({
 	const [isOpen, setIsOpen] = useState(false)
 	const inputReference = useRef<HTMLInputElement>(null)
 	const dropdownReference = useRef<HTMLDivElement>(null)
-	const { data: searchResults, isLoading } = useSearchProfileByName(
+	const { data: searchResults, isLoading } = useSearchProfiles(
 		nameSearch &&
 			nameSearch.length >= MIN_SEARCH_LENGTH &&
 			!isAddress(nameSearch) &&
 			!isHash(nameSearch)
 			? nameSearch
 			: ''
-	) as {
-		data: Profile[] | undefined
-		isLoading: boolean
-	}
+	)
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -194,6 +192,7 @@ export function SearchBox({
 					className='absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-default-200 bg-content1 p-2 shadow-lg'
 				>
 					<div className='max-h-[300px] w-full overflow-auto'>
+						{/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
 						{isLoading ? (
 							<div className='py-2 text-center'>Loading...</div>
 						) : (
