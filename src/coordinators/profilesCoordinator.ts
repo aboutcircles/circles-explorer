@@ -1,83 +1,81 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { Address } from 'viem'
 import { isAddress } from 'viem'
 
 import { avatarFields } from 'constants/avatarFields'
 import { botRepository } from 'domains/bots/repository'
-import { profileRepository } from 'domains/profiles/repository'
+import { useProfiles } from 'domains/profiles/repository'
 import logger from 'services/logger'
 import { useProfileStore } from 'stores/useProfileStore'
 import type { ProcessedEvent } from 'types/events'
 import { isNil } from 'utils/isNil'
 
 /**
- * Coordinator for profiles data
+ * Coordinator for profiles data with React Query integration
  *
- * This coordinator orchestrates fetching profiles data from multiple sources
- * and manages the profile store.
+ * This coordinator orchestrates fetching profiles data using React Query
+ * and manages the profile store for caching and bot verdicts.
  */
 export function useProfilesCoordinator() {
+	const [addressesToFetch, setAddressesToFetch] = useState<Address[]>([])
+
+	// Use React Query hook for profiles
+	const { data: profilesData = {}, isLoading } = useProfiles(addressesToFetch)
+
+	// Store methods for bot verdicts and local caching
 	const setProfile = useProfileStore.use.setProfile()
 	const getProfile = useProfileStore.use.getProfile()
 	const profiles = useProfileStore.use.profiles()
-	const isLoading = useProfileStore.use.isLoading()
-	const setIsLoading = useProfileStore.use.setIsLoading()
 	const setBotVerdicts = useProfileStore.use.setBotVerdicts()
 	const getBotVerdict = useProfileStore.use.getBotVerdict()
 
+	// Update store when React Query data changes
+	useEffect(() => {
+		if (Object.keys(profilesData).length > 0) {
+			for (const [address, profile] of Object.entries(profilesData)) {
+				setProfile(address, profile)
+			}
+		}
+	}, [profilesData, setProfile])
+
 	/**
-	 * Fetch multiple profiles
+	 * Fetch multiple profiles using React Query
 	 */
 	const fetchProfiles = useCallback(
 		async (addresses: string[]): Promise<void> => {
 			if (addresses.length === 0) return
 
-			// Filter out addresses that are already in cache (including null profiles) or not valid
-			const addressesToFetch = addresses.filter(
+			// Filter out addresses that are already in cache or not valid
+			const validAddressesToFetch = addresses.filter(
 				(address) =>
 					isAddress(address) && getProfile(address.toLowerCase()) === undefined
 			)
 
-			if (addressesToFetch.length === 0) return
+			if (validAddressesToFetch.length === 0) return
 
-			setIsLoading(true)
+			// Set addresses for React Query to fetch
+			setAddressesToFetch(validAddressesToFetch as Address[])
+
+			// Fetch bot verdicts for all addresses
 			try {
-				// Fetch profiles
-				const profilesResult = await profileRepository.getProfiles(
-					addressesToFetch as Address[]
+				const addressesForBotCheck = addresses.filter(
+					(address) => getBotVerdict(address.toLowerCase()) === undefined
 				)
 
-				// Update store with results
-				for (const [address, profile] of Object.entries(profilesResult)) {
-					setProfile(address, profile)
-				}
-
-				// Fetch bot verdicts for all addresses
-				try {
-					// Only fetch bot verdicts for addresses that don't already have them
-					const addressesForBotCheck = addresses.filter(
-						(address) => getBotVerdict(address.toLowerCase()) === undefined
+				if (addressesForBotCheck.length > 0) {
+					logger.log(
+						`[Coordinator] Fetching bot verdicts for ${addressesForBotCheck.length} addresses`
 					)
-
-					if (addressesForBotCheck.length > 0) {
-						logger.log(
-							`[Coordinator] Fetching bot verdicts for ${addressesForBotCheck.length} addresses`
-						)
-						const botVerdicts = await botRepository.getBotVerdicts(
-							addressesForBotCheck as Address[]
-						)
-						setBotVerdicts(botVerdicts)
-					}
-				} catch (botError) {
-					logger.error('[Coordinator] Failed to fetch bot verdicts:', botError)
+					const botVerdicts = await botRepository.getBotVerdicts(
+						addressesForBotCheck as Address[]
+					)
+					setBotVerdicts(botVerdicts)
 				}
-			} catch (error) {
-				logger.error('[Coordinator] Failed to fetch profiles:', error)
-			} finally {
-				setIsLoading(false)
+			} catch (botError) {
+				logger.error('[Coordinator] Failed to fetch bot verdicts:', botError)
 			}
 		},
-		[getProfile, setProfile, setIsLoading, getBotVerdict, setBotVerdicts]
+		[getProfile, getBotVerdict, setBotVerdicts, setAddressesToFetch]
 	)
 
 	/**

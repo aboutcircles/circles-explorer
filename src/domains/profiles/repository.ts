@@ -11,7 +11,6 @@ import type { Profile } from './types'
 
 /*
 todo:
-- react query for profiles
 - remove envio and fallback relation at all (later, after check on dev)
  */
 
