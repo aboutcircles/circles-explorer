@@ -3,7 +3,7 @@ import type { Address } from 'viem'
 
 import { DEFAULT_BATCH_SIZE, MIN_BATCH_SIZE, ONE } from 'constants/common'
 import { MILLISECONDS_IN_A_MINUTE } from 'constants/time'
-import { circlesRpc } from 'services/circlesRpc'
+import { circlesRpc, type RpcProfile } from 'services/circlesRpc'
 import logger from 'services/logger'
 
 import { adaptNullableProfileFromRpc, adaptProfileFromRpc } from './adapters'
@@ -11,7 +11,6 @@ import type { Profile } from './types'
 
 /*
 todo:
-- rpc batch for chunks
 - react query for profiles
 - remove envio and fallback relation at all (later, after check on dev)
  */
@@ -62,50 +61,114 @@ export const profileRepository = {
 				`[Repository] Fetching ${addresses.length} profiles in ${chunks.length} chunks (batch size: ${batchSize})`
 			)
 
-			// Process chunks in parallel and maintain address-to-result mapping
-			const chunkPromises = chunks.map(async (chunk, chunkIndex) => {
-				try {
-					const chunkNumber = chunkIndex + CHUNK_NUMBER_OFFSET
-					logger.log(
-						`[Repository] Processing chunk ${chunkNumber}/${chunks.length} with ${chunk.length} addresses`
-					)
-					const profiles = await circlesRpc.getProfileByAddressBatch(chunk)
+			// Try batch RPC request first, fallback to Promise.all if batch fails
+			let chunkResults: {
+				chunk: string[]
+				profiles: (RpcProfile | null)[]
+				chunkIndex: number
+			}[]
 
-					// Return chunk with its addresses for proper mapping
-					return { chunk, profiles, chunkIndex }
-				} catch (error) {
-					const chunkNumber = chunkIndex + CHUNK_NUMBER_OFFSET
-					logger.error(
-						`[Repository] Failed to fetch chunk ${chunkNumber}/${chunks.length}:`,
-						error
-					)
+			try {
+				logger.log(`[Repository] Using batch RPC for ${chunks.length} chunks`)
 
-					// Check if this is a batch size error and we can retry with smaller batch
-					const newBatchSize = getBatchSizeFromError((error as Error).message)
-					if (newBatchSize && newBatchSize < batchSize) {
+				const batchResults =
+					await circlesRpc.getProfilesByAddressBatches(chunks)
+
+				// Process batch results with error handling
+				chunkResults = await Promise.all(
+					batchResults.map(async (result, index) => {
+						const chunk = chunks[index]
+						const chunkNumber = index + CHUNK_NUMBER_OFFSET
+
+						if (result.error) {
+							logger.error(
+								`[Repository] Batch chunk ${chunkNumber}/${chunks.length} failed:`,
+								result.error
+							)
+
+							// Check if this is a batch size error and we can retry with smaller batch
+							const newBatchSize = getBatchSizeFromError(result.error)
+							if (newBatchSize && newBatchSize < batchSize) {
+								logger.log(
+									`[Repository] Retrying chunk ${chunkNumber} with smaller batch size: ${newBatchSize} (was ${batchSize})`
+								)
+								// Recursive call with new batch size for this specific chunk
+								const retryResult = await profileRepository.getProfiles(
+									chunk as Address[],
+									newBatchSize
+								)
+
+								// Convert result back to chunk format
+								const retryProfiles = chunk.map(
+									(address) => retryResult[address]
+								)
+								return { chunk, profiles: retryProfiles, chunkIndex: index }
+							}
+
+							// Return null array for failed chunk, maintaining order
+							const nullProfiles = Array.from({ length: chunk.length }).fill(
+								null
+							) as null[]
+							return { chunk, profiles: nullProfiles, chunkIndex: index }
+						}
+
 						logger.log(
-							`[Repository] Retrying chunk ${chunkNumber} with smaller batch size: ${newBatchSize} (was ${batchSize})`
+							`[Repository] Batch chunk ${chunkNumber}/${chunks.length} completed with ${result.profiles.length} profiles`
 						)
-						// Recursive call with new batch size for this specific chunk
-						const retryResult = await profileRepository.getProfiles(
-							chunk as Address[],
-							newBatchSize
+						return { chunk, profiles: result.profiles, chunkIndex: index }
+					})
+				)
+			} catch (batchError) {
+				// Fallback to Promise.all approach if batch request fails entirely
+				logger.warn(
+					'[Repository] Batch RPC request failed, falling back to individual requests:',
+					batchError
+				)
+
+				const chunkPromises = chunks.map(async (chunk, chunkIndex) => {
+					try {
+						const chunkNumber = chunkIndex + CHUNK_NUMBER_OFFSET
+						logger.log(
+							`[Repository] Processing fallback chunk ${chunkNumber}/${chunks.length} with ${chunk.length} addresses`
+						)
+						const profiles = await circlesRpc.getProfileByAddressBatch(chunk)
+
+						// Return chunk with its addresses for proper mapping
+						return { chunk, profiles, chunkIndex }
+					} catch (error) {
+						const chunkNumber = chunkIndex + CHUNK_NUMBER_OFFSET
+						logger.error(
+							`[Repository] Failed to fetch fallback chunk ${chunkNumber}/${chunks.length}:`,
+							error
 						)
 
-						// Convert result back to chunk format
-						const retryProfiles = chunk.map((address) => retryResult[address])
-						return { chunk, profiles: retryProfiles, chunkIndex }
+						// Check if this is a batch size error and we can retry with smaller batch
+						const newBatchSize = getBatchSizeFromError((error as Error).message)
+						if (newBatchSize && newBatchSize < batchSize) {
+							logger.log(
+								`[Repository] Retrying fallback chunk ${chunkNumber} with smaller batch size: ${newBatchSize} (was ${batchSize})`
+							)
+							// Recursive call with new batch size for this specific chunk
+							const retryResult = await profileRepository.getProfiles(
+								chunk as Address[],
+								newBatchSize
+							)
+
+							// Convert result back to chunk format
+							const retryProfiles = chunk.map((address) => retryResult[address])
+							return { chunk, profiles: retryProfiles, chunkIndex }
+						}
+
+						// Return null array for failed chunk, maintaining order
+						const nullProfiles = Array.from({ length: chunk.length }).fill(
+							null
+						) as null[]
+						return { chunk, profiles: nullProfiles, chunkIndex }
 					}
+				})
 
-					// Return null array for failed chunk, maintaining order
-					const nullProfiles = Array.from({ length: chunk.length }).fill(
-						null
-					) as null[]
-					return { chunk, profiles: nullProfiles, chunkIndex }
-				}
-			})
-
-			const chunkResults = await Promise.all(chunkPromises)
+				chunkResults = await Promise.all(chunkPromises)
+			}
 
 			// Map results back to addresses, preserving order
 			const result: Record<string, Profile | null> = {}

@@ -63,6 +63,42 @@ class CirclesRpcClient {
 	}
 
 	/**
+	 * Make multiple RPC calls in a single HTTP request using JSON-RPC batch
+	 */
+	// eslint-disable-next-line class-methods-use-this,@typescript-eslint/class-methods-use-this
+	private async makeBatchRpcCall<T>(
+		requests: { method: string; params: unknown[]; id: number }[]
+	): Promise<
+		{ result?: T; error?: { code: number; message: string }; id: number }[]
+	> {
+		try {
+			const batchRequest = requests.map((request) => ({
+				jsonrpc: '2.0',
+				method: request.method,
+				params: request.params,
+				id: request.id
+			}))
+
+			const response = await fetch(CIRCLES_INDEXER_URL, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(batchRequest)
+			})
+
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`)
+			}
+
+			return await response.json()
+		} catch (error) {
+			logger.error('[CirclesRpc] Failed to make batch RPC call:', error)
+			throw error
+		}
+	}
+
+	/**
 	 * Search profiles by name, description or address
 	 */
 	public async searchProfiles(
@@ -117,6 +153,30 @@ class CirclesRpcClient {
 			'circles_getProfileByAddressBatch',
 			[addresses]
 		)
+	}
+
+	/**
+	 * Get profiles for multiple chunks in a single HTTP request using batch RPC
+	 */
+	public async getProfilesByAddressBatches(
+		chunks: string[][]
+	): Promise<
+		{ profiles: (RpcProfile | null)[]; error?: string; chunkIndex: number }[]
+	> {
+		const requests = chunks.map((chunk, index) => ({
+			method: 'circles_getProfileByAddressBatch',
+			params: [chunk],
+			id: index
+		}))
+
+		const responses =
+			await this.makeBatchRpcCall<(RpcProfile | null)[]>(requests)
+
+		return responses.map((response) => ({
+			profiles: response.result ?? [],
+			error: response.error?.message,
+			chunkIndex: response.id
+		}))
 	}
 }
 
