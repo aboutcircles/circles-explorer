@@ -10,9 +10,9 @@ import { FilterCheckBox } from 'components/FilterCheckBox'
 import { Loader } from 'components/Loader'
 import { ONE, TWO } from 'constants/common'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
-import { useProfiles } from 'hooks/useProfiles'
-import { type CirclesAvatarFromEnvio } from 'services/envio/indexer'
+import { useProfilesCoordinator } from 'coordinators'
 import type { TrustNetworkRelation } from 'domains/trust/types'
+import { type CirclesAvatarFromEnvio } from 'services/envio/indexer'
 import { TrustSearchBox } from 'shared/Search/TrustSearchBox'
 import type { GraphData, ProfileNode, TrustLink } from 'types/graph'
 import { truncateHex } from 'utils/eth'
@@ -77,7 +77,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 		}
 	}
 
-	const { getProfile, fetchProfiles } = useProfiles()
+	const { getProfile, fetchProfiles } = useProfilesCoordinator()
 
 	// First fetch the network relations to build a more comprehensive graph
 	useEffect(() => {

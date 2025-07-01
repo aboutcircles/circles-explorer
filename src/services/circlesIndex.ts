@@ -1,14 +1,9 @@
-import type {
-	Profile as SDKProfile,
-	SearchResultProfile
-} from '@circles-sdk/profiles'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { useQuery } from '@tanstack/react-query'
 import axios from 'axios'
 import type { Address } from 'viem'
 
 import { CIRCLES_INDEXER_URL, ONE } from 'constants/common'
-import { circlesProfiles } from 'services/circlesData'
 import logger from 'services/logger'
 import { useStatsStore } from 'stores/useStatsStore'
 import type { StatsResult } from 'types/stats'
@@ -84,8 +79,6 @@ async function makeCirclesQuery(
 	}
 }
 
-export type Profile = SearchResultProfile
-
 // query
 const CIRCLES_STATS_QUERY_KEY = 'circlesStats'
 export const useFetchCirclesStats = (): UseQueryResult<StatsResult> => {
@@ -136,33 +129,3 @@ export const fetchCrcV2TotalSupply = async (address: Address) => {
 
 	return mapTableResponse<TotalSupplyV2Row>(result)[0] ?? null
 }
-
-// query
-const CIRCLES_PROFILES_SEARCH_BY_NAME = 'circlesProfilesSearchByName'
-export const useSearchProfileByName = (
-	name: string
-): UseQueryResult<SDKProfile[]> =>
-	useQuery({
-		queryKey: [CIRCLES_PROFILES_SEARCH_BY_NAME, name],
-		queryFn: async () => {
-			try {
-				const results = await circlesProfiles.searchByName(name, {
-					fetchComplete: true
-				})
-
-				logger.log('[service][circles] queried circles profile by name', {
-					name,
-					resultCount: results.length
-				})
-
-				return results
-			} catch (error) {
-				logger.error(
-					'[service][circles] Failed to query circles profile by name',
-					error
-				)
-				throw new Error('Failed to query circles profile by name')
-			}
-		},
-		enabled: Boolean(name)
-	})

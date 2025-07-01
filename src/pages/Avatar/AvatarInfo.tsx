@@ -1,11 +1,7 @@
-import type { SearchResultProfile } from '@circles-sdk/profiles'
+import type { Profile } from 'domains/profiles/types'
 import { Avatar } from '@nextui-org/react'
 
-export function AvatarInfo({
-	profile
-}: {
-	profile?: SearchResultProfile | null
-}) {
+export function AvatarInfo({ profile }: { profile?: Profile | null }) {
 	const avatarImageSource = profile?.previewImageUrl ?? profile?.imageUrl
 
 	return (

@@ -1,15 +1,15 @@
-import type { SearchResultProfile } from '@circles-sdk/profiles'
 import type { BotVerdict } from 'domains/bots/types'
+import type { Profile } from 'domains/profiles/types'
 import { create } from 'zustand'
 import { createSelectors } from './createSelectors'
 
 interface ProfileState {
-	profiles: Record<string, SearchResultProfile | null>
+	profiles: Record<string, Profile | null>
 	botVerdicts: Record<string, BotVerdict | null>
 	isLoading: boolean
-	setProfile: (address: string, profile: SearchResultProfile | null) => void
-	setProfiles: (profiles: Record<string, SearchResultProfile | null>) => void
-	getProfile: (address: string) => SearchResultProfile | null | undefined
+	setProfile: (address: string, profile: Profile | null) => void
+	setProfiles: (profiles: Record<string, Profile | null>) => void
+	getProfile: (address: string) => Profile | null | undefined
 	setBotVerdict: (address: string, verdict: BotVerdict | null) => void
 	setBotVerdicts: (verdicts: Record<string, BotVerdict | null>) => void
 	getBotVerdict: (address: string) => BotVerdict | null | undefined

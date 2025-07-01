@@ -4,7 +4,7 @@ import { Link as RouterLink, useParams } from 'react-router-dom'
 import { isAddress } from 'viem'
 
 import { BotLabel } from 'components/BotLabel'
-import { useProfiles } from 'hooks/useProfiles'
+import { useProfilesCoordinator } from 'coordinators'
 import { truncateHex } from 'utils/eth'
 
 interface AvatarAddressProperties {
@@ -33,7 +33,7 @@ function AvatarAddressBase({
 	className = '',
 	isAddressVisible = true
 }: AvatarAddressProperties) {
-	const { getProfile, getBotVerdict } = useProfiles()
+	const { getProfile, getBotVerdict } = useProfilesCoordinator()
 	const parameters = useParams<{ tab?: string }>()
 
 	// Use current tab or default to 'events'

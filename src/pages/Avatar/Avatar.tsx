@@ -23,12 +23,6 @@ import { AvatarInfo } from './AvatarInfo'
 import { AvatarStats } from './AvatarStats'
 import { TrustRelations } from './TrustRelations'
 
-/*
-todo:
-- totalSupply (refactor)
-- graph
- */
-
 // Use lazy loading for the SocialGraph component since it's heavy
 const SocialGraph = lazy(async () => import('./SocialGraph/index'))
 
