@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import type { Address } from 'viem'
 
 import { FilterCheckBox } from 'components/FilterCheckBox'
+import { GoToTopButton } from 'components/GoToTopButton'
 import { Loader } from 'components/Loader'
 import { ONE, TWO } from 'constants/common'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
@@ -499,6 +500,8 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 				handleNodeClick={handleNodeClick}
 				width={containerWidth}
 			/>
+			{/* Go to top button for easier navigation when graph is full screen */}
+			<GoToTopButton className='' threshold={200} />
 		</div>
 	)
 }
