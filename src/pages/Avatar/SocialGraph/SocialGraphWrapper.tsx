@@ -2,6 +2,7 @@
 // @ts-nocheck
 /* eslint-disable */
 
+import { Chip } from '@nextui-org/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import type { Address } from 'viem'
@@ -10,9 +11,9 @@ import { FilterCheckBox } from 'components/FilterCheckBox'
 import { Loader } from 'components/Loader'
 import { ONE, TWO } from 'constants/common'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
+import type { TrustNetworkRelation } from 'domains/trust/types'
 import { useProfiles } from 'hooks/useProfiles'
 import { type CirclesAvatarFromEnvio } from 'services/envio/indexer'
-import type { TrustNetworkRelation } from 'domains/trust/types'
 import { TrustSearchBox } from 'shared/Search/TrustSearchBox'
 import type { GraphData, ProfileNode, TrustLink } from 'types/graph'
 import { truncateHex } from 'utils/eth'
@@ -67,6 +68,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 	const [showRecursive, setShowRecursive] = useState(false)
 	const [showOnlyWithProfiles, setShowOnlyWithProfiles] = useState(true)
 	const [searchTerm, setSearchTerm] = useState('')
+	const [isGeneratingImage, setIsGeneratingImage] = useState(false)
 
 	// Handle toggle of recursive view to refresh graph completely
 	const handleRecursiveToggle = (value: boolean) => {
@@ -461,6 +463,118 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 		return () => window.removeEventListener('resize', handleResize)
 	}, [])
 
+	// Social share handler
+	const handleShareGraph = async () => {
+		setIsGeneratingImage(true)
+
+		try {
+			// Find the canvas element specifically (react-force-graph-2d uses canvas)
+			const canvasElement = containerReference.current?.querySelector('canvas')
+
+			if (!canvasElement) {
+				console.error('Canvas element not found')
+				setIsGeneratingImage(false)
+				return
+			}
+
+			// Create a new canvas with white background
+			const originalCanvas = canvasElement as HTMLCanvasElement
+			const newCanvas = document.createElement('canvas')
+			const ctx = newCanvas.getContext('2d')
+
+			if (!ctx) {
+				setIsGeneratingImage(false)
+				return
+			}
+
+			// Calculate square dimensions (crop to 1:1 ratio)
+			const originalWidth = originalCanvas.width
+			const originalHeight = originalCanvas.height
+			const squareSize = Math.min(originalWidth, originalHeight)
+
+			// Calculate crop offsets to center the crop
+			const cropX = (originalWidth - squareSize) / 2
+			const cropY = (originalHeight - squareSize) / 2
+
+			// Set canvas to square size
+			newCanvas.width = squareSize
+			newCanvas.height = squareSize
+
+			// Fill with white background
+			ctx.fillStyle = '#ffffff'
+			ctx.fillRect(0, 0, squareSize, squareSize)
+
+			// Draw the cropped original canvas (centered square crop)
+			ctx.drawImage(
+				originalCanvas,
+				cropX,
+				cropY,
+				squareSize,
+				squareSize, // source crop area
+				0,
+				0,
+				squareSize,
+				squareSize // destination area
+			)
+
+			// Convert to blob
+			const blob = await new Promise<Blob>((resolve, reject) => {
+				newCanvas.toBlob(
+					(result) => {
+						if (result) {
+							resolve(result)
+						} else {
+							reject(new Error('Failed to create blob'))
+						}
+					},
+					'image/png',
+					0.9
+				)
+			})
+
+			// Download the image
+			const url = URL.createObjectURL(blob)
+			const a = document.createElement('a')
+			a.href = url
+			a.download = 'my-trust-graph.png'
+			a.style.display = 'none'
+			document.body.appendChild(a)
+			a.click()
+			document.body.removeChild(a)
+			URL.revokeObjectURL(url)
+
+			// Copy personalized share message to clipboard
+			const currentUrl = window.location.href
+			const shareMessage = `Hey, check out my Trust Graph on the Circles Explorer!
+
+${currentUrl}
+
+#CirclesUBI #TrustGraph`
+
+			if (navigator.clipboard) {
+				try {
+					await navigator.clipboard.writeText(shareMessage)
+					alert(
+						'✅ Image downloaded!\n📋 Share message copied to clipboard!\n\nYou can now paste this message anywhere and attach the downloaded image.'
+					)
+				} catch {
+					alert(
+						`✅ Image downloaded!\n\n📝 Copy this message to share:\n"${shareMessage}"`
+					)
+				}
+			} else {
+				alert(
+					`✅ Image downloaded!\n\n📝 Copy this message to share:\n"${shareMessage}"`
+				)
+			}
+		} catch (error) {
+			console.error('Error sharing graph:', error)
+			alert('❌ Failed to generate image. Please try again.')
+		} finally {
+			setIsGeneratingImage(false)
+		}
+	}
+
 	if (isLoading) {
 		return <Loader />
 	}
@@ -489,6 +603,27 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 					isDefaultSelected={showOnlyWithProfiles}
 					handleChange={setShowOnlyWithProfiles}
 				/>
+				<Chip
+					as='button'
+					onClick={handleShareGraph}
+					disabled={isGeneratingImage}
+					variant='faded'
+					classNames={{
+						base: `border-default rounded-md h-[33px] my-1 cursor-pointer transition-colors ${
+							isGeneratingImage
+								? 'bg-gray-200 border-gray-300 cursor-not-allowed'
+								: 'bg-gray-50 hover:bg-primary-100 hover:border-primary-200'
+						}`,
+						content: `${
+							isGeneratingImage
+								? 'text-gray-400'
+								: 'text-gray-300 hover:text-primary-400 font-medium'
+						}`
+					}}
+					aria-label='Share Trust Graph'
+				>
+					{isGeneratingImage ? 'Generating...' : 'Share'}
+				</Chip>
 			</div>
 			<SocialGraph
 				graphReference={graphReference}
