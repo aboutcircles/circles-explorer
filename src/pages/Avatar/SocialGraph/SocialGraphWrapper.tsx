@@ -80,6 +80,53 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 
 	const { getProfile, fetchProfiles } = useProfilesCoordinator()
 
+	// Handle graph export as PNG image
+	const handleExportGraph = useCallback(() => {
+		if (graphReference.current) {
+			try {
+				// Get the canvas element from the ForceGraph2D component
+				// Try different ways to access the canvas
+				let canvas = null
+
+				// Method 1: Try renderer().domElement
+				if (graphReference.current.renderer) {
+					canvas = graphReference.current.renderer().domElement
+				}
+
+				// Method 2: Try accessing canvas directly
+				if (!canvas && graphReference.current.canvas) {
+					canvas = graphReference.current.canvas()
+				}
+
+				// Method 3: Try finding canvas in the DOM
+				if (!canvas) {
+					const graphContainer = document.querySelector(
+						'.social-graph-container'
+					)
+					if (graphContainer) {
+						canvas = graphContainer.querySelector('canvas')
+					}
+				}
+
+				if (canvas) {
+					// Create download link
+					const link = document.createElement('a')
+					link.download = `trust-graph-${truncateHex(avatar.id)}-${Date.now()}.png`
+					link.href = canvas.toDataURL('image/png', 1.0) // High quality PNG
+					document.body.appendChild(link)
+					link.click()
+					document.body.removeChild(link)
+				} else {
+					console.error('Could not find canvas element for export')
+				}
+			} catch (error) {
+				console.error('Error exporting graph:', error)
+				// Fallback: try to use browser print
+				window.print()
+			}
+		}
+	}, [avatar.id])
+
 	// First fetch the network relations to build a more comprehensive graph
 	useEffect(() => {
 		const fetchNetworkRelations = async () => {
@@ -117,14 +164,20 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 				}
 			} catch (error) {
 				console.error('Error fetching network relations:', error)
+				setNetworkRelations([])
 			} finally {
 				setIsLoading(false)
 			}
 		}
 
-		// Only fetch network relations if showing recursive view
-		if (avatar && showRecursive) {
+		if (!avatar) return
+
+		// Fetch network relations if showing recursive view, otherwise clear them
+		if (showRecursive) {
 			void fetchNetworkRelations()
+		} else {
+			// Clear network relations immediately when turning off recursive view
+			setNetworkRelations([])
 		}
 	}, [avatar, showRecursive])
 
@@ -489,6 +542,12 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 					className='mr-2'
 					isDefaultSelected={showOnlyWithProfiles}
 					handleChange={setShowOnlyWithProfiles}
+				/>
+				<FilterCheckBox
+					label='Export Graph'
+					className='mr-2'
+					isDefaultSelected={true}
+					handleChange={handleExportGraph}
 				/>
 			</div>
 			<SocialGraph
