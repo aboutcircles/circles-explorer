@@ -11,6 +11,8 @@ import { useFilterStore } from 'stores/useFilterStore'
 
 import { createFilterOptions, type FilterOption } from './filterOptions'
 
+const DROPDOWN_Z_INDEX = 1000
+
 export function Filter({
 	className
 }: {
@@ -93,9 +95,22 @@ export function Filter({
 						)}
 						className={cn(
 							className,
-							'min-w-[140px] overflow-scroll rounded-md'
+							'min-w-[140px] rounded-md border border-gray-300 bg-white'
 						)}
 						groupBy='category'
+						style={{
+							minHeight: '2.5rem',
+							maxHeight: '80px',
+							overflow: 'visible'
+						}}
+						menuStyle={{
+							zIndex: DROPDOWN_Z_INDEX,
+							maxHeight: '300px',
+							border: '1px solid #e5e7eb',
+							borderRadius: '0.5rem',
+							boxShadow:
+								'0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+						}}
 					/>
 
 					<FilterCheckBox
