@@ -22,6 +22,31 @@ interface AvatarStatsProperties {
 	avatar?: Avatar
 }
 
+// Blank stats component for when avatar data fails to load
+function BlankAvatarStats() {
+	return (
+		<div className='m-5'>
+			<div className='mb-5 text-center md:text-left'>
+				<Card className='mb-2 mr-2 inline-flex w-[240px] flex-row p-4 text-center'>
+					<b>Last mint</b>:<span className='pl-1'>n/a</span>
+				</Card>
+
+				<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
+					<b>Total CRC supply (V1)</b>:<span className='pl-1'>n/a</span>
+				</Card>
+
+				<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
+					<b>Total CRC supply (V2)</b>:<span className='pl-1'>n/a</span>
+				</Card>
+
+				<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
+					<b>Avatar type</b>: n/a
+				</Card>
+			</div>
+		</div>
+	)
+}
+
 export function AvatarStats({
 	address,
 	avatar: initialAvatar
@@ -41,16 +66,52 @@ export function AvatarStats({
 	} = useAvatarTokenData(avatarData ?? initialAvatar)
 
 	const isLoading = avatarLoading || tokenLoading
-	const error = avatarError ?? tokenError
 
 	if (isLoading) return <Loader />
-	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-	if (error || !avatarData || !tokenData)
+
+	// If avatar data fails to load, show blank stats but don't block the page
+	if (avatarError ?? !avatarData) {
+		return <BlankAvatarStats />
+	}
+
+	// If token data fails, continue with avatar data but show empty token stats
+	if (tokenError ?? !tokenData) {
 		return (
 			<div className='m-5'>
-				<Card className='p-4 text-danger'>Error loading avatar stats</Card>
+				<div className='mb-5 text-center md:text-left'>
+					<Card className='mb-2 mr-2 inline-flex w-[240px] flex-row p-4 text-center'>
+						<b>Last mint</b>:
+						<span className='pl-1'>
+							{avatarData.lastMint ? (
+								<Timestamp value={avatarData.lastMint} />
+							) : (
+								'n/a'
+							)}
+						</span>
+					</Card>
+
+					{avatarData.invitedBy && !isDeadAddress(avatarData.invitedBy) ? (
+						<Card className='mb-2 mr-2 inline-flex flex-row p-4 text-center align-middle'>
+							<b>Invited by: </b>
+							<span className='ml-2 inline'>
+								<AvatarAddress
+									address={avatarData.invitedBy}
+									size='sm'
+									className='inline'
+								/>
+							</span>
+						</Card>
+					) : null}
+
+					{formatAvatarType(avatarData.type) ? (
+						<Card className='mb-2 mr-2 inline-table flex-row p-4 text-center'>
+							<b>Avatar type</b>: {formatAvatarType(avatarData.type)}
+						</Card>
+					) : null}
+				</div>
 			</div>
 		)
+	}
 
 	const { v1Token, v2Token, v1MigrationAmount } = tokenData
 

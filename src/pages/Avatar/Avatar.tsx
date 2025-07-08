@@ -96,7 +96,10 @@ export default function Avatar() {
 			<div
 				className={`flex ${isMdScreen ? 'flex-row items-start' : 'flex-col items-center'}`}
 			>
-				{avatar ? <AvatarInfo profile={getProfile(avatar.id)} /> : null}
+				<AvatarInfo
+					profile={avatar ? getProfile(avatar.id) : null}
+					address={address as Address}
+				/>
 				<AvatarStats address={address as Address} avatar={avatar} />
 			</div>
 
