@@ -3,6 +3,7 @@ import { Code, Link, Snippet } from '@nextui-org/react'
 import { useCallback } from 'react'
 import { formatUnits } from 'viem'
 
+import { CirclesBackingTransferDetails } from 'components/CirclesBackingTransferDetails'
 import { Timestamp } from 'components/Timestamp'
 import type { Key, Row } from 'components/VirtualizedTable'
 import { avatarFields } from 'constants/avatarFields'
@@ -105,6 +106,17 @@ export const useRenderCell = () => {
 					)
 				}
 				case 'details': {
+					// Handle CirclesBackingDeployed events with ERC-20 transfer details
+					if (item.event === 'CrcV2_CirclesBackingDeployed') {
+						return (
+							<div className='flex flex-col'>
+								<CirclesBackingTransferDetails
+									transactionHash={String(item.transactionHash)}
+								/>
+							</div>
+						)
+					}
+
 					// Handle Summary events with special display
 					if (
 						item.event === 'CrcV1_TransferSummary' ||
