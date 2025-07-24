@@ -1,12 +1,15 @@
 import type { ReactElement } from 'react'
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import LoadingOrError from 'components/LoadingOrError'
 import { Header } from 'layout/Header'
 
 const MainPage = lazy(async () => import('pages/Main/Main'))
 const AvatarPage = lazy(async () => import('pages/Avatar/Avatar'))
+const TransactionPage = lazy(
+	async () => import('pages/Transaction/Transaction')
+)
 
 export default function App(): ReactElement {
 	return (
@@ -22,6 +25,7 @@ export default function App(): ReactElement {
 							element={<Navigate to='events' replace />}
 						/>
 						<Route path='/avatar/:address/:tab' element={<AvatarPage />} />
+						<Route path='/transaction/:txHash' element={<TransactionPage />} />
 					</Routes>
 				</div>
 			</Suspense>

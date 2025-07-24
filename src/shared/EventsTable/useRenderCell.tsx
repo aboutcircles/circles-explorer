@@ -1,6 +1,7 @@
 import type { CirclesEventType } from '@circles-sdk/data'
 import { Code, Link, Snippet } from '@nextui-org/react'
 import { useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { formatUnits } from 'viem'
 
 import { CirclesBackingTransferDetails } from 'components/CirclesBackingTransferDetails'
@@ -25,12 +26,20 @@ const DECIMAL_PLACES = 4
 
 export const useRenderCell = () => {
 	const updateEventTypes = useFilterStore.use.updateEventTypes()
+	const navigate = useNavigate()
 
 	const onEventClick = useCallback(
 		(event: CirclesEventType) => {
 			updateEventTypes(event)
 		},
 		[updateEventTypes]
+	)
+
+	const onTransactionClick = useCallback(
+		(txHash: string) => {
+			navigate(`/transaction/${txHash}`)
+		},
+		[navigate]
 	)
 
 	// Helper function to collect unique avatars from sub-events
@@ -62,33 +71,22 @@ export const useRenderCell = () => {
 				}
 				case 'transactionHash': {
 					return (
-						<>
-							<div className='flex w-[152px] items-center space-x-2'>
-								<Link
-									target='_blank'
-									isExternal
-									href={`${EXPLORER_URL}/tx/${cellValue}`}
-									className='font-mono text-sm'
-								>
-									{truncateHex(String(cellValue))}
-								</Link>
-								<Snippet
-									symbol=''
-									variant='flat'
-									className='min-w-0 bg-transparent p-0'
-									size='sm'
-									codeString={String(cellValue)}
-								/>
-							</div>
-							{item.isExpandable ? (
-								<span
-									className='ml-2 block cursor-help text-xs text-primary'
-									title={`Click to view ${item.subEvents?.length} individual transfers`}
-								>
-									{item.subEvents?.length} events
-								</span>
-							) : null}
-						</>
+						<div className='flex w-[152px] items-center space-x-2'>
+							<button
+								type='button'
+								className='font-mono cursor-pointer border-none bg-transparent p-0 text-sm text-primary hover:text-primary-600 hover:underline'
+								onClick={() => onTransactionClick(String(cellValue))}
+							>
+								{truncateHex(String(cellValue))}
+							</button>
+							<Snippet
+								symbol=''
+								variant='flat'
+								className='min-w-0 bg-transparent p-0'
+								size='sm'
+								codeString={String(cellValue)}
+							/>
+						</div>
 					)
 				}
 				case 'event': {
@@ -290,6 +288,6 @@ export const useRenderCell = () => {
 				}
 			}
 		},
-		[onEventClick, collectAvatarsFromSubEvents]
+		[onEventClick, onTransactionClick, collectAvatarsFromSubEvents]
 	)
 }

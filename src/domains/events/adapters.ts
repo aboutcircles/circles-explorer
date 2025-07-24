@@ -8,7 +8,8 @@ import { isAddress, isHash } from 'viem'
  */
 export const processEvents = (
 	events: Event[],
-	eventTypes: Set<CirclesEventType>
+	eventTypes: Set<CirclesEventType>,
+	isTransactionPage = false
 ): ProcessedEvent[] => {
 	if (events.length === 0) return []
 
@@ -35,17 +36,28 @@ export const processEvents = (
 				event.event === 'CrcV2_TransferSummary'
 		)
 
-		if (summaryEvent) {
-			// Add the summary event with its sub-events
+		if (summaryEvent && !isTransactionPage) {
+			// For main/avatar pages: show summary event with link to transaction details
+			// Include subEvents for potential future use
+			const subEvents = eventGroup.filter((event) => event !== summaryEvent)
 			const processedEvent: ProcessedEvent = {
 				...summaryEvent,
-				isExpandable: true,
-				subEvents: eventGroup.filter((event) => event !== summaryEvent)
+				isExpandable: false,
+				subEvents
 			}
 			result.push(processedEvent)
 		} else {
-			// Add all events individually
-			for (const event of eventGroup) {
+			// For transaction pages: skip summary events, show all individual events
+			// For main/avatar pages without summary: show all events individually
+			const eventsToProcess = isTransactionPage
+				? eventGroup.filter(
+						(event) =>
+							event.event !== 'CrcV1_TransferSummary' &&
+							event.event !== 'CrcV2_TransferSummary'
+					)
+				: eventGroup
+
+			for (const event of eventsToProcess) {
 				const processedEvent: ProcessedEvent = {
 					...event,
 					isExpandable: false,
