@@ -2,6 +2,8 @@ import type { CirclesEventType } from '@circles-sdk/data'
 import type { Event, ProcessedEvent } from 'types/events'
 import { isAddress, isHash } from 'viem'
 
+const MIN_EVENTS_FOR_VIRTUAL_SUMMARY = 2
+
 /**
  * Process events by grouping related events by transaction hash
  * and identifying summary events and their sub-events
@@ -46,6 +48,20 @@ export const processEvents = (
 				subEvents
 			}
 			result.push(processedEvent)
+		} else if (
+			!isTransactionPage &&
+			eventGroup.length >= MIN_EVENTS_FOR_VIRTUAL_SUMMARY
+		) {
+			// Create virtual summary event for multiple events in same transaction (no real summary exists)
+			const [firstEvent] = eventGroup
+			const virtualSummaryEvent: ProcessedEvent = {
+				...firstEvent,
+				event: 'CrcV2_TransferSummary' as CirclesEventType,
+				isExpandable: false,
+				subEvents: eventGroup,
+				key: `${firstEvent.transactionHash}-virtual-summary`
+			}
+			result.push(virtualSummaryEvent)
 		} else {
 			// For transaction pages: skip summary events, show all individual events
 			// For main/avatar pages without summary: show all events individually
