@@ -452,7 +452,7 @@ export const useEvents = (
 
 	// Process and filter events
 	const filteredEvents = useMemo(
-		() => processEvents(allEvents, eventTypes, txHash !== null),
+		() => processEvents(allEvents, eventTypes, Boolean(txHash)),
 		[allEvents, eventTypes, txHash]
 	)
 

@@ -3,17 +3,14 @@ import type { ReactElement } from 'react'
 import { useParams } from 'react-router-dom'
 
 import LoadingOrError from 'components/LoadingOrError'
-import useBreakpoint from 'hooks/useBreakpoint'
 import { useTransactionEvents } from 'hooks/useTransactionEvents'
+import { EventsTable } from 'shared/EventsTable/EventsTable'
 
-import { TransactionEventCards } from './TransactionEventCards'
-import { TransactionEventsTable } from './TransactionEventsTable'
 import { TransactionHeader } from './TransactionHeader'
 
 export default function Transaction(): ReactElement {
 	const { txHash } = useParams<{ txHash: string }>()
 	const { transactionData, isLoading } = useTransactionEvents(txHash ?? '')
-	const { isSmScreen } = useBreakpoint()
 
 	if (isLoading) {
 		return <LoadingOrError />
@@ -50,11 +47,19 @@ export default function Transaction(): ReactElement {
 				>
 					<Tab key='events' title='Events'>
 						<div className='mt-6'>
-							{isSmScreen ? (
-								<TransactionEventCards events={transactionData.events} />
-							) : (
-								<TransactionEventsTable events={transactionData.events} />
-							)}
+							{/* Custom title before EventsTable */}
+							<div className='mb-4'>
+								<h3 className='text-lg font-medium text-gray-900'>
+									Transaction Events ({transactionData.events.length})
+								</h3>
+							</div>
+
+							{/* Use refactored EventsTable with transaction-specific props */}
+							<EventsTable
+								txHash={txHash}
+								isLoadMoreEnabled={false}
+								isTotalLabelVisible={false}
+							/>
 						</div>
 					</Tab>
 
