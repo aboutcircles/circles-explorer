@@ -35,7 +35,7 @@ export const useRenderCell = () => {
 
 	const onTransactionClick = useCallback(
 		(txHash: string) => {
-			navigate(`/transaction/${txHash}`)
+			navigate(`/tx/${txHash}`)
 		},
 		[navigate]
 	)
