@@ -377,12 +377,19 @@ export const useClearEventsCache = () => {
 /**
  * Hook to use events
  */
-export const useEvents = (address: string | null = null): EventsQueryResult => {
+export const useEvents = (
+	address: string | null = null,
+	txHash: string | null = null
+): EventsQueryResult => {
 	const eventTypes = useFilterStore.use.eventTypes()
 	const search = useFilterStore.use.search()
 	const { currentStartBlock } = useStartBlock()
 	const updateStartBlock = useFilterStore.use.updateStartBlock()
 	const blockNumber = useBlockNumber()
+
+	// Prioritize txHash over search for transaction pages
+	const searchParameter =
+		txHash ?? (isNil(search) || search === '' ? address : search)
 
 	// Use the infinite query
 	const {
@@ -394,8 +401,8 @@ export const useEvents = (address: string | null = null): EventsQueryResult => {
 	} = useEventsInfinite(
 		currentStartBlock,
 		Boolean(blockNumber),
-		!search || isAddress(String(address)),
-		isNil(search) || search === '' ? address : search
+		!searchParameter || isAddress(String(address)),
+		searchParameter
 	)
 
 	// Extract all events from all pages
@@ -445,8 +452,8 @@ export const useEvents = (address: string | null = null): EventsQueryResult => {
 
 	// Process and filter events
 	const filteredEvents = useMemo(
-		() => processEvents(allEvents, eventTypes),
-		[allEvents, eventTypes]
+		() => processEvents(allEvents, eventTypes, Boolean(txHash)),
+		[allEvents, eventTypes, txHash]
 	)
 
 	// Load more events function
