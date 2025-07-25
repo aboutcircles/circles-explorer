@@ -2,6 +2,8 @@ import { Chip, Link, Snippet } from '@nextui-org/react'
 import type { ReactElement } from 'react'
 import { formatUnits } from 'viem'
 
+import { TransactionParticipants } from 'shared/TransactionParticipants'
+import type { Event } from 'types/events'
 import { Timestamp } from 'components/Timestamp'
 import {
 	CRC_TOKEN_DECIMALS,
@@ -16,10 +18,12 @@ const DECIMAL_PLACES = 4
 
 interface TransactionHeaderProperties {
 	metadata: TransactionMetadata
+	events: Event[]
 }
 
 export function TransactionHeader({
-	metadata
+	metadata,
+	events
 }: TransactionHeaderProperties): ReactElement {
 	const {
 		hash,
@@ -133,6 +137,8 @@ export function TransactionHeader({
 							</div>
 						</div>
 					) : null}
+
+					<TransactionParticipants events={events} />
 				</div>
 			</div>
 		</div>

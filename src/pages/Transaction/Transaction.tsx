@@ -31,7 +31,10 @@ export default function Transaction(): ReactElement {
 
 	return (
 		<div className='mx-auto max-w-7xl px-4 py-6'>
-			<TransactionHeader metadata={transactionData.metadata} />
+			<TransactionHeader
+				metadata={transactionData.metadata}
+				events={transactionData.events}
+			/>
 
 			<div className='mt-8'>
 				<Tabs
