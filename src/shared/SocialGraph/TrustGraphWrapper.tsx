@@ -558,6 +558,7 @@ export function TrustGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 				handleNodeHover={handleNodeHover}
 				handleNodeClick={handleNodeClick}
 				width={containerWidth}
+				zoom={4}
 			/>
 			{/* Go to top button for easier navigation when graph is full screen */}
 			<GoToTopButton className='' threshold={200} />

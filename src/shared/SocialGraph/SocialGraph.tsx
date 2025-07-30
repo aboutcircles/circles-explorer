@@ -3,7 +3,7 @@
 /* eslint-disable */
 
 import * as d3 from 'd3-force'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import ForceGraph2D from 'react-force-graph-2d'
 
 import type { GraphData, ProfileNode } from 'types/graph'
@@ -27,6 +27,7 @@ interface SocialGraphProps {
 	onTransferClick?: (transfer: AnimatedTransfer) => void
 	showTransferTooltips?: boolean
 	height?: number
+	zoom: number
 }
 
 export function SocialGraph({
@@ -41,8 +42,23 @@ export function SocialGraph({
 	isAnimationPlaying = false,
 	onTransferClick,
 	showTransferTooltips = false,
-	height = 800
+	height = 800,
+	zoom
 }: SocialGraphProps) {
+	// Set initial zoom level to 5x after graph loads
+	useEffect(() => {
+		if (graphReference.current && graphData.nodes.length > 0) {
+			// Wait for the graph to initialize, then set zoom
+			const timer = setTimeout(() => {
+				if (graphReference.current && graphReference.current.zoom) {
+					graphReference.current.zoom(zoom, 1000) // 5x zoom with 1000ms transition
+				}
+			}, 1000) // Wait 1.5 seconds for graph to stabilize
+
+			return () => clearTimeout(timer)
+		}
+	}, [graphData.nodes.length, graphReference])
+
 	// Custom node rendering with profile images
 	const nodeCanvasObject = useCallback(
 		(node: ProfileNode, context: unknown, globalScale: number) => {

@@ -122,6 +122,7 @@ export function TransactionGraph({
 				isAnimationPlaying={isAnimationPlaying}
 				showTransferTooltips={showTransferTooltips}
 				height={600}
+				zoom={3}
 			/>
 
 			{/* Info Panel */}
