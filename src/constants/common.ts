@@ -11,6 +11,7 @@ export const ENVIO_API_TOKEN = import.meta.env.VITE_ENVIO_API_TOKEN as string
 export const ONE = 1
 export const TWO = 2
 export const MINUS_ONE = -1
+export const PERCENTAGE_DIVIDER = 100
 
 export const DEAD_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const CRC_TOKEN_ADDRESS = '0x208204e9797f09B540460013afbf5F6d8b5c9F98'

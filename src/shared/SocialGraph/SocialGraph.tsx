@@ -7,9 +7,11 @@ import { useCallback, useMemo } from 'react'
 import ForceGraph2D from 'react-force-graph-2d'
 
 import type { GraphData, ProfileNode } from 'types/graph'
+import type { AnimatedTransfer } from './types'
 
 const NODE_SIZE = 15
 const FONT_SIZE = 12
+const DOT_SIZE = 4
 
 interface SocialGraphProps {
 	graphReference: React.RefObject<unknown>
@@ -19,6 +21,12 @@ interface SocialGraphProps {
 	handleNodeHover: (node?: ProfileNode) => void
 	handleNodeClick: (node: ProfileNode) => void
 	width: number
+	// NEW: Animation props
+	animatedTransfers?: AnimatedTransfer[]
+	isAnimationPlaying?: boolean
+	onTransferClick?: (transfer: AnimatedTransfer) => void
+	showTransferTooltips?: boolean
+	height?: number
 }
 
 export function SocialGraph({
@@ -28,7 +36,12 @@ export function SocialGraph({
 	highlightLinks,
 	handleNodeHover,
 	handleNodeClick,
-	width
+	width,
+	animatedTransfers = [],
+	isAnimationPlaying = false,
+	onTransferClick,
+	showTransferTooltips = false,
+	height = 800
 }: SocialGraphProps) {
 	// Custom node rendering with profile images
 	const nodeCanvasObject = useCallback(
@@ -94,7 +107,18 @@ export function SocialGraph({
 		[highlightNodes]
 	)
 
-	// Custom link rendering with varying opacity and width
+	// Helper function to calculate position along a link
+	const getPositionOnLink = useCallback(
+		(start: any, end: any, position: number) => {
+			return {
+				x: start.x + (end.x - start.x) * position,
+				y: start.y + (end.y - start.y) * position
+			}
+		},
+		[]
+	)
+
+	// Custom link rendering with varying opacity and width + animated dots
 	const linkCanvasObject = useCallback(
 		(link: any, context: any, globalScale: number) => {
 			const start = link.source
@@ -103,7 +127,7 @@ export function SocialGraph({
 			// Determine if this link should be highlighted
 			const isHighlighted = highlightLinks.has(link)
 
-			// Draw the link with appropriate styling
+			// Draw the static link with appropriate styling
 			context.beginPath()
 			context.moveTo(start.x, start.y)
 			context.lineTo(end.x, end.y)
@@ -113,8 +137,77 @@ export function SocialGraph({
 			context.globalAlpha = isHighlighted ? 1 : 0.6
 			context.stroke()
 			context.globalAlpha = 1
+
+			// Draw animated transfer dots if any exist for this link
+			if (animatedTransfers && animatedTransfers.length > 0) {
+				const linkId = `${typeof start === 'string' ? start : start.id}-${typeof end === 'string' ? end : end.id}`
+				const transfersForLink = animatedTransfers.filter(
+					(transfer) => transfer.linkId === linkId && transfer.isVisible
+				)
+
+				for (const transfer of transfersForLink) {
+					const dotPosition = getPositionOnLink(start, end, transfer.position)
+
+					// Draw animated dot
+					context.beginPath()
+					context.arc(
+						dotPosition.x,
+						dotPosition.y,
+						DOT_SIZE / globalScale,
+						0,
+						2 * Math.PI
+					)
+
+					// Color based on transfer type
+					const dotColor =
+						transfer.transferData.eventType === 'CrcV1_Transfer' ||
+						transfer.transferData.eventType === 'CrcV2_Transfer'
+							? '#4CAF50'
+							: '#FF9800'
+
+					context.fillStyle = dotColor
+					context.fill()
+
+					// Add white border for visibility
+					context.strokeStyle = 'white'
+					context.lineWidth = 1 / globalScale
+					context.stroke()
+
+					// Show tooltip moving with dot when enabled
+					if (showTransferTooltips) {
+						const fontSize = 10 / globalScale
+						context.font = `${fontSize}px Sans-Serif`
+						context.textAlign = 'center'
+						context.textBaseline = 'bottom'
+
+						// Tooltip background
+						const tooltipText = `${transfer.transferData.amount} CRC`
+						const textWidth = context.measureText(tooltipText).width
+						const tooltipX = dotPosition.x
+						const tooltipY = dotPosition.y - DOT_SIZE / globalScale - 5
+
+						context.fillStyle = 'rgba(0, 0, 0, 0.8)'
+						context.fillRect(
+							tooltipX - textWidth / 2 - 4,
+							tooltipY - fontSize - 2,
+							textWidth + 8,
+							fontSize + 4
+						)
+
+						// Tooltip text
+						context.fillStyle = 'white'
+						context.fillText(tooltipText, tooltipX, tooltipY)
+					}
+				}
+			}
 		},
-		[highlightLinks]
+		[
+			highlightLinks,
+			animatedTransfers,
+			getPositionOnLink,
+			showTransferTooltips,
+			isAnimationPlaying
+		]
 	)
 
 	// Handle D3 force simulation with dynamic parameters based on network size
@@ -278,7 +371,7 @@ export function SocialGraph({
 
 	return (
 		<ForceGraph2D
-			height={800}
+			height={height}
 			width={width}
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-expect-error

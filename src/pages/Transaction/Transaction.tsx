@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom'
 import LoadingOrError from 'components/LoadingOrError'
 import { useTransactionEvents } from 'hooks/useTransactionEvents'
 import { EventsTable } from 'shared/EventsTable/EventsTable'
+import { TransactionGraph } from 'shared/SocialGraph'
 
 import { TransactionHeader } from './TransactionHeader'
 
@@ -79,16 +80,12 @@ export default function Transaction(): ReactElement {
 						</div>
 					</Tab>
 
-					<Tab key='trust-graph' title='Trust Graph'>
+					<Tab key='social-graph' title='Social Graph'>
 						<div className='mt-6'>
-							<div className='flex min-h-[400px] items-center justify-center rounded-lg border-2 border-dashed border-gray-300'>
-								<div className='text-center'>
-									<h3 className='mb-2 text-lg font-medium text-gray-900'>
-										Trust Graph
-									</h3>
-									<p className='text-gray-500'>Coming soon...</p>
-								</div>
-							</div>
+							<TransactionGraph
+								transactionData={transactionData}
+								isLoading={isLoading}
+							/>
 						</div>
 					</Tab>
 				</Tabs>

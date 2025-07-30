@@ -45,7 +45,7 @@ interface SocialGraphWrapperProperties {
 	avatar: CirclesAvatarFromEnvio
 }
 
-export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
+export function TrustGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 	const graphReference = useRef<unknown>()
 	const navigate = useNavigate()
 	const { tab } = useParams<{ tab?: string }>()
