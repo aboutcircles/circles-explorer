@@ -6,6 +6,7 @@ import { CRC_TOKEN_DECIMALS, ONE, TWO } from 'constants/common'
 import { useProfilesCoordinator } from 'coordinators'
 import type { TransactionData } from 'types/transaction'
 import { truncateHex } from 'utils/eth'
+import { useProfileStore } from 'stores/useProfileStore'
 
 import type {
 	AnimatedTransfer,
@@ -30,6 +31,7 @@ export const useTransactionGraphData = (
 	transactionData: TransactionData | null
 ) => {
 	const { getProfile } = useProfilesCoordinator()
+	const profiles = useProfileStore.use.profiles() // Make graph reactive to profile changes
 	const [animatedTransfers, setAnimatedTransfers] = useState<
 		AnimatedTransfer[]
 	>([])
@@ -139,7 +141,8 @@ export const useTransactionGraphData = (
 			nodes: [...nodeMap.values()],
 			links
 		}
-	}, [transactionData, extractEventFields, ensureNode, getLinkColor])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [transactionData, extractEventFields, ensureNode, getLinkColor, profiles])
 
 	// Create animated transfers from ALL events with from/to fields
 	const createAnimatedTransfers = useCallback(() => {
