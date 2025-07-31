@@ -25,7 +25,11 @@ export default function App(): ReactElement {
 							element={<Navigate to='events' replace />}
 						/>
 						<Route path='/avatar/:address/:tab' element={<AvatarPage />} />
-						<Route path='/tx/:txHash' element={<TransactionPage />} />
+						<Route
+							path='/tx/:txHash'
+							element={<Navigate to='events' replace />}
+						/>
+						<Route path='/tx/:txHash/:tab' element={<TransactionPage />} />
 					</Routes>
 				</div>
 			</Suspense>

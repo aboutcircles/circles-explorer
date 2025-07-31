@@ -45,7 +45,7 @@ interface SocialGraphWrapperProperties {
 	avatar: CirclesAvatarFromEnvio
 }
 
-export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
+export function TrustGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 	const graphReference = useRef<unknown>()
 	const navigate = useNavigate()
 	const { tab } = useParams<{ tab?: string }>()
@@ -558,6 +558,7 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 				handleNodeHover={handleNodeHover}
 				handleNodeClick={handleNodeClick}
 				width={containerWidth}
+				zoom={4}
 			/>
 			{/* Go to top button for easier navigation when graph is full screen */}
 			<GoToTopButton className='' threshold={200} />
