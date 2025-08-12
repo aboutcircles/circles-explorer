@@ -32,3 +32,18 @@ export interface TokenMigration {
 	migrationAmount: number
 	migrationPercentage: number // Percentage of total supply that has been migrated
 }
+
+/**
+ * Represents a single holder of a CRC V2 token
+ */
+export interface TokenHolder {
+	account: Address
+	tokenId: Address
+	tokenAddress: Address
+	lastActivity: number
+	totalBalance: string
+	demurragedTotalBalance: string
+	circlesDemurraged: number
+	circlesTotal: number
+	sharePercent?: number
+}
