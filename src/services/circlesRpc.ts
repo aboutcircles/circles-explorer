@@ -178,6 +178,14 @@ class CirclesRpcClient {
 			chunkIndex: response.id
 		}))
 	}
+
+	/**
+	 * Generic passthrough for circles_query to query tabular data
+	 * The query object should follow indexer schema: { Namespace, Table, Columns, Filter, Order, Limit }
+	 */
+	public async circlesQuery<T>(query: unknown): Promise<T> {
+		return this.makeRpcCall<T>('circles_query', [query])
+	}
 }
 
 /**
