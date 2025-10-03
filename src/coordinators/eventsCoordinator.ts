@@ -8,7 +8,10 @@ import { useProfilesCoordinator } from './profilesCoordinator'
  *
  * This coordinator orchestrates fetching events data and related profiles.
  */
-export function useEventsCoordinator(address: string | null = null) {
+export function useEventsCoordinator(
+	address: string | null = null,
+	txHash: string | null = null
+) {
 	// Get events data
 	const {
 		events,
@@ -16,7 +19,7 @@ export function useEventsCoordinator(address: string | null = null) {
 		isLoadingMore,
 		loadMoreEvents,
 		hasMoreEvents
-	} = useEvents(address)
+	} = useEvents(address, txHash)
 
 	// Get profiles coordinator
 	const { loadProfilesForEvents } = useProfilesCoordinator()

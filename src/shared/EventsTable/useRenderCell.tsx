@@ -1,29 +1,30 @@
 import type { CirclesEventType } from '@circles-sdk/data'
 import { Code, Link, Snippet } from '@nextui-org/react'
 import { useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { formatUnits } from 'viem'
 
+import { TransactionParticipants } from 'shared/TransactionParticipants'
+import type { ProcessedEvent } from 'types/events'
+import { CirclesBackingTransferDetails } from 'components/CirclesBackingTransferDetails'
 import { Timestamp } from 'components/Timestamp'
 import type { Key, Row } from 'components/VirtualizedTable'
-import { avatarFields } from 'constants/avatarFields'
 import {
 	CRC_TOKEN_DECIMALS,
 	CRC_TOKEN_SYMBOL,
-	DEAD_ADDRESS,
 	EXPLORER_URL
 } from 'constants/common'
 import { LABELS_MAPPER } from 'constants/events'
 import { AvatarAddress } from 'shared/AvatarAddress'
 import { EyePopoverDetails } from 'shared/EyePopoverDetails'
 import { useFilterStore } from 'stores/useFilterStore'
-import type { ProcessedEvent } from 'types/events'
 import { truncateHex } from 'utils/eth'
 
-const MAX_AVATARS_DISPLAY = 5
 const DECIMAL_PLACES = 4
 
 export const useRenderCell = () => {
 	const updateEventTypes = useFilterStore.use.updateEventTypes()
+	const navigate = useNavigate()
 
 	const onEventClick = useCallback(
 		(event: CirclesEventType) => {
@@ -32,23 +33,11 @@ export const useRenderCell = () => {
 		[updateEventTypes]
 	)
 
-	// Helper function to collect unique avatars from sub-events
-	const collectAvatarsFromSubEvents = useCallback(
-		(subEvents: Record<string, unknown>[]) => {
-			const uniqueAddresses = new Set<string>()
-
-			for (const subEvent of subEvents) {
-				for (const field of avatarFields) {
-					const value = subEvent[field]
-					if (value && typeof value === 'string' && value !== DEAD_ADDRESS) {
-						uniqueAddresses.add(value)
-					}
-				}
-			}
-
-			return [...uniqueAddresses]
+	const onTransactionClick = useCallback(
+		(txHash: string) => {
+			navigate(`/tx/${txHash}`)
 		},
-		[]
+		[navigate]
 	)
 
 	return useCallback(
@@ -61,33 +50,22 @@ export const useRenderCell = () => {
 				}
 				case 'transactionHash': {
 					return (
-						<>
-							<div className='flex w-[152px] items-center space-x-2'>
-								<Link
-									target='_blank'
-									isExternal
-									href={`${EXPLORER_URL}/tx/${cellValue}`}
-									className='font-mono text-sm'
-								>
-									{truncateHex(String(cellValue))}
-								</Link>
-								<Snippet
-									symbol=''
-									variant='flat'
-									className='min-w-0 bg-transparent p-0'
-									size='sm'
-									codeString={String(cellValue)}
-								/>
-							</div>
-							{item.isExpandable ? (
-								<span
-									className='ml-2 block cursor-help text-xs text-primary'
-									title={`Click to view ${item.subEvents?.length} individual transfers`}
-								>
-									{item.subEvents?.length} events
-								</span>
-							) : null}
-						</>
+						<div className='flex w-[152px] items-center space-x-2'>
+							<button
+								type='button'
+								className='font-mono cursor-pointer border-none bg-transparent p-0 text-sm text-primary hover:text-primary-600 hover:underline'
+								onClick={() => onTransactionClick(String(cellValue))}
+							>
+								{truncateHex(String(cellValue))}
+							</button>
+							<Snippet
+								symbol=''
+								variant='flat'
+								className='min-w-0 bg-transparent p-0'
+								size='sm'
+								codeString={String(cellValue)}
+							/>
+						</div>
 					)
 				}
 				case 'event': {
@@ -105,40 +83,27 @@ export const useRenderCell = () => {
 					)
 				}
 				case 'details': {
+					// Handle CirclesBackingDeployed events with ERC-20 transfer details
+					if (item.event === 'CrcV2_CirclesBackingDeployed') {
+						return (
+							<div className='flex flex-col'>
+								<CirclesBackingTransferDetails
+									transactionHash={String(item.transactionHash)}
+								/>
+							</div>
+						)
+					}
+
 					// Handle Summary events with special display
 					if (
 						item.event === 'CrcV1_TransferSummary' ||
 						item.event === 'CrcV2_TransferSummary'
 					) {
 						const processedEvent = item as unknown as ProcessedEvent
-						const uniqueAvatars = collectAvatarsFromSubEvents(
-							// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-							(processedEvent.subEvents || []) as unknown as Record<
-								string,
-								unknown
-							>[]
-						)
 
 						return (
 							<div className='flex flex-row items-center justify-start md:w-[400px]'>
-								<div className='flex items-center space-x-1'>
-									{uniqueAvatars
-										.slice(0, MAX_AVATARS_DISPLAY)
-										.map((address) => (
-											<AvatarAddress
-												key={address}
-												address={address}
-												className='mr-1'
-												size='sm'
-												isAddressVisible={false}
-											/>
-										))}
-									{uniqueAvatars.length > MAX_AVATARS_DISPLAY && (
-										<span className='text-xs text-gray-500'>
-											+{uniqueAvatars.length - MAX_AVATARS_DISPLAY}
-										</span>
-									)}
-								</div>
+								<TransactionParticipants events={processedEvent.subEvents} />
 
 								{item.amount ? (
 									<div className='ml-2'>
@@ -278,6 +243,6 @@ export const useRenderCell = () => {
 				}
 			}
 		},
-		[onEventClick, collectAvatarsFromSubEvents]
+		[onEventClick, onTransactionClick]
 	)
 }

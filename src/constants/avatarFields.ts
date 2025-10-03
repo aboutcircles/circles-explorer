@@ -24,5 +24,7 @@ export const avatarFields = new Set([
 	'singleton',
 
 	'sender',
-	'receiver'
+	'receiver',
+
+	'backer'
 ])

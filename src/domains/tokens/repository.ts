@@ -1,11 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Address } from 'viem'
-import { erc20Abi } from 'viem'
+import { erc20Abi, formatUnits } from 'viem'
 
 import tokenAbi from 'abis/tokenAbi.json'
-import { MIGRATION_CONTRACT, ONE } from 'constants/common'
+import {
+	CRC_TOKEN_DECIMALS,
+	MIGRATION_CONTRACT,
+	ONE,
+	PERCENTAGE_DIVIDER
+} from 'constants/common'
 import { MILLISECONDS_IN_A_MINUTE } from 'constants/time'
 import { circlesData } from 'services/circlesData'
+import { circlesRpc } from 'services/circlesRpc'
 import logger from 'services/logger'
 import { viemClient } from 'services/viemClient'
 
@@ -18,10 +24,12 @@ import {
 	createTokenBalance,
 	formatTokenMigrationAmount
 } from './adapters'
-import type { Token, TokenBalance } from './types'
+import type { Token, TokenBalance, TokenHolder } from './types'
 
 const VERSION_ONE = 1
 const VERSION_TWO = 2
+
+const DEFAULT_HOLDERS_LIMIT = 1000
 
 // Query keys
 export const tokenKeys = {
@@ -29,7 +37,8 @@ export const tokenKeys = {
 	detail: (id: string) => [...tokenKeys.all, id] as const,
 	balance: (id: string, owner: string) =>
 		[...tokenKeys.detail(id), 'balance', owner] as const,
-	migration: (id: string) => [...tokenKeys.detail(id), 'migration'] as const
+	migration: (id: string) => [...tokenKeys.detail(id), 'migration'] as const,
+	holders: (id: string) => [...tokenKeys.detail(id), 'holders'] as const
 }
 
 // Repository methods
@@ -287,6 +296,187 @@ export const tokenRepository = {
 		}
 
 		return result
+	},
+
+	// Get holders for a CRC V2 token using circles_query
+	getTokenHoldersV2: async (
+		tokenAddress: Address,
+		limit = DEFAULT_HOLDERS_LIMIT
+	): Promise<TokenHolder[]> => {
+		try {
+			interface RpcTabularResult {
+				columns: string[]
+				rows: (number | string)[][]
+			}
+
+			const queryPayload = {
+				Namespace: 'V_CrcV2',
+				Table: 'BalancesByAccountAndToken',
+				Columns: [] as string[],
+				Filter: [
+					{
+						Type: 'FilterPredicate',
+						FilterType: 'Equals',
+						Column: 'tokenAddress',
+						Value: tokenAddress.toLowerCase()
+					}
+				],
+				Order: [
+					{
+						Column: 'demurragedTotalBalance',
+						SortOrder: 'DESC'
+					}
+				],
+				Limit: limit
+			}
+
+			const result =
+				await circlesRpc.circlesQuery<RpcTabularResult>(queryPayload)
+
+			const index = (name: string) => result.columns.indexOf(name)
+
+			const indexAccount = index('account')
+			const indexTokenId = index('tokenId')
+			const indexTokenAddress = index('tokenAddress')
+			const indexLastActivity = index('lastActivity')
+			const indexTotal = index('totalBalance')
+			const indexDemTotal = index('demurragedTotalBalance')
+
+			if (
+				indexAccount < 0 ||
+				indexTokenId < 0 ||
+				indexTokenAddress < 0 ||
+				indexLastActivity < 0 ||
+				indexTotal < 0 ||
+				indexDemTotal < 0
+			) {
+				logger.error(
+					'[Repository] Unexpected columns from circles_query BalancesByAccountAndToken:',
+					result.columns
+				)
+				return []
+			}
+
+			const holders: TokenHolder[] = result.rows.map((row) => {
+				const account = String(row[indexAccount]) as Address
+				const tokenId = String(row[indexTokenId]) as Address
+				const tAddress = String(row[indexTokenAddress]) as Address
+				const lastActivity = Number(row[indexLastActivity])
+				const totalBalance = String(row[indexTotal])
+				const demurragedTotalBalance = String(row[indexDemTotal])
+
+				const circlesTotal = Number(
+					formatUnits(BigInt(totalBalance || '0'), CRC_TOKEN_DECIMALS)
+				)
+				const circlesDemurraged = Number(
+					formatUnits(BigInt(demurragedTotalBalance || '0'), CRC_TOKEN_DECIMALS)
+				)
+
+				return {
+					account,
+					tokenId,
+					tokenAddress: tAddress,
+					lastActivity,
+					totalBalance,
+					demurragedTotalBalance,
+					circlesDemurraged,
+					circlesTotal
+				}
+			})
+
+			return holders
+		} catch (error) {
+			logger.error('[Repository] Failed to fetch token holders V2:', error)
+			return []
+		}
+	},
+
+	// Get holders for a CRC V1 token using circles_query
+	getTokenHoldersV1: async (
+		tokenAddress: Address,
+		limit = DEFAULT_HOLDERS_LIMIT
+	): Promise<TokenHolder[]> => {
+		try {
+			interface RpcTabularResult {
+				columns: string[]
+				rows: (number | string)[][]
+			}
+
+			const queryPayload = {
+				Namespace: 'V_CrcV1',
+				Table: 'BalancesByAccountAndToken',
+				Columns: [] as string[],
+				Filter: [
+					{
+						Type: 'FilterPredicate',
+						FilterType: 'Equals',
+						Column: 'tokenAddress',
+						Value: tokenAddress.toLowerCase()
+					}
+				],
+				Order: [
+					{
+						Column: 'totalBalance',
+						SortOrder: 'DESC'
+					}
+				],
+				Limit: limit
+			}
+
+			const result =
+				await circlesRpc.circlesQuery<RpcTabularResult>(queryPayload)
+
+			const index = (name: string) => result.columns.indexOf(name)
+
+			const indexAccount = index('account')
+			const indexTokenAddress = index('tokenAddress')
+			const indexLastActivity = index('lastActivity')
+			const indexTotal = index('totalBalance')
+
+			if (
+				indexAccount < 0 ||
+				indexTokenAddress < 0 ||
+				indexLastActivity < 0 ||
+				indexTotal < 0
+			) {
+				logger.error(
+					'[Repository] Unexpected columns from circles_query BalancesByAccountAndToken (V1):',
+					result.columns
+				)
+				return []
+			}
+
+			const holders: TokenHolder[] = result.rows.map((row) => {
+				const account = String(row[indexAccount]) as Address
+				const tAddress = String(row[indexTokenAddress]) as Address
+				const lastActivity = Number(row[indexLastActivity])
+				const totalBalance = String(row[indexTotal])
+
+				// V1 has no demurrage; treat demurraged = total
+				const demurragedTotalBalance = totalBalance
+
+				const circlesTotal = Number(
+					formatUnits(BigInt(totalBalance || '0'), CRC_TOKEN_DECIMALS)
+				)
+				const circlesDemurraged = circlesTotal
+
+				return {
+					account,
+					tokenId: tAddress,
+					tokenAddress: tAddress,
+					lastActivity,
+					totalBalance,
+					demurragedTotalBalance,
+					circlesDemurraged,
+					circlesTotal
+				}
+			})
+
+			return holders
+		} catch (error) {
+			logger.error('[Repository] Failed to fetch token holders V1:', error)
+			return []
+		}
 	}
 }
 
@@ -330,6 +520,64 @@ export const useTokenMigration = (token?: Token) =>
 			return tokenRepository.getTokenMigration(token)
 		},
 		enabled: !!token,
+		staleTime: TOKEN_CACHE_MINUTES * MILLISECONDS_IN_A_MINUTE
+	})
+
+export const useTokenHoldersV1 = (
+	tokenAddress?: Address,
+	limit = DEFAULT_HOLDERS_LIMIT
+) =>
+	useQuery({
+		queryKey: tokenAddress ? tokenKeys.holders(tokenAddress) : tokenKeys.all,
+		queryFn: async () => {
+			if (!tokenAddress) throw new Error('Token address is required')
+			const holders = await tokenRepository.getTokenHoldersV1(
+				tokenAddress,
+				limit
+			)
+			const totalDem = holders.reduce(
+				(sum, h) => sum + (h.circlesDemurraged || 0),
+				0
+			)
+			// derive share percent
+			return holders.map((h) => ({
+				...h,
+				sharePercent:
+					totalDem > 0
+						? (h.circlesDemurraged / totalDem) * PERCENTAGE_DIVIDER
+						: 0
+			}))
+		},
+		enabled: !!tokenAddress,
+		staleTime: TOKEN_CACHE_MINUTES * MILLISECONDS_IN_A_MINUTE
+	})
+
+export const useTokenHoldersV2 = (
+	tokenAddress?: Address,
+	limit = DEFAULT_HOLDERS_LIMIT
+) =>
+	useQuery({
+		queryKey: tokenAddress ? tokenKeys.holders(tokenAddress) : tokenKeys.all,
+		queryFn: async () => {
+			if (!tokenAddress) throw new Error('Token address is required')
+			const holders = await tokenRepository.getTokenHoldersV2(
+				tokenAddress,
+				limit
+			)
+			const totalDem = holders.reduce(
+				(sum, h) => sum + (h.circlesDemurraged || 0),
+				0
+			)
+			// derive share percent
+			return holders.map((h) => ({
+				...h,
+				sharePercent:
+					totalDem > 0
+						? (h.circlesDemurraged / totalDem) * PERCENTAGE_DIVIDER
+						: 0
+			}))
+		},
+		enabled: !!tokenAddress,
 		staleTime: TOKEN_CACHE_MINUTES * MILLISECONDS_IN_A_MINUTE
 	})
 

@@ -1,10 +1,10 @@
-import type { SearchResultProfile } from '@circles-sdk/profiles'
+import type { RpcProfile } from 'services/circlesRpc'
 import type { Address } from 'viem'
 
 /**
  * Represents a profile with user information
  */
-export type Profile = SearchResultProfile
+export type Profile = RpcProfile
 
 /**
  * Repository interface for profile-related operations

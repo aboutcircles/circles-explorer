@@ -20,7 +20,8 @@ import { VirtualizedEventCards } from './VirtualizedEventCards'
 // virtualized event cards (mobile)
 // filters
 
-const columns: Column[] = [
+// Default columns for main page
+const defaultColumns: Column[] = [
 	{
 		key: 'transactionHash',
 		label: 'Tx Hash'
@@ -47,18 +48,57 @@ const columns: Column[] = [
 	}
 ]
 
-export function EventsTable({ address }: { address?: string }): ReactElement {
+// Transaction page columns (no transactionHash)
+const transactionColumns: Column[] = [
+	{
+		key: 'event',
+		label: 'Event'
+	},
+	{
+		key: 'details',
+		label: 'Details'
+	},
+	{
+		key: 'blockNumber',
+		label: 'Block'
+	},
+	{
+		key: 'timestamp',
+		label: 'Age'
+	},
+	{
+		key: 'info',
+		label: ''
+	}
+]
+
+interface EventsTableProperties {
+	address?: string
+	txHash?: string
+	isLoadMoreEnabled?: boolean
+	isTotalLabelVisible?: boolean
+}
+
+export function EventsTable({
+	address,
+	txHash,
+	isLoadMoreEnabled = true,
+	isTotalLabelVisible = true
+}: EventsTableProperties): ReactElement {
 	const {
 		events,
 		isEventsLoading,
 		isLoadingMore,
 		loadMoreEvents,
 		hasMoreEvents
-	} = useEventsCoordinator(address ?? null)
+	} = useEventsCoordinator(address ?? null, txHash ?? null)
 
 	const renderCell = useRenderCell()
 	const { isSmScreen } = useBreakpoint()
 	const eventTypesAmount = useFilterStore.use.eventTypesAmount()
+
+	// Choose columns based on context
+	const columns = txHash ? transactionColumns : defaultColumns
 
 	// Calculate total events from eventTypesAmount (more efficient)
 	const totalEventsWithSubEvents = useMemo(() => {
@@ -69,7 +109,7 @@ export function EventsTable({ address }: { address?: string }): ReactElement {
 		return total
 	}, [eventTypesAmount])
 
-	const loadMoreButton = (
+	const loadMoreButton = isLoadMoreEnabled && (
 		<div className='my-4 flex justify-center'>
 			<Button
 				color='primary'
@@ -98,15 +138,17 @@ export function EventsTable({ address }: { address?: string }): ReactElement {
 						renderCell={renderCell}
 						isLoading={events.length === 0 && isEventsLoading}
 						topContent={
-							<div className='flex w-full justify-between'>
-								<div className='flex flex-row'>
-									<TotalLabel
-										totalEventsWithSubEvents={totalEventsWithSubEvents}
-									/>
+							isTotalLabelVisible ? (
+								<div className='flex w-full justify-between'>
+									<div className='flex flex-row'>
+										<TotalLabel
+											totalEventsWithSubEvents={totalEventsWithSubEvents}
+										/>
+									</div>
 								</div>
-							</div>
+							) : undefined
 						}
-						bottomContent={loadMoreButton}
+						bottomContent={loadMoreButton || undefined}
 					/>
 				</div>
 			) : null}
@@ -114,9 +156,13 @@ export function EventsTable({ address }: { address?: string }): ReactElement {
 			{!isSmScreen && (
 				<div className='mb-9'>
 					<div className='flex flex-col items-center justify-center'>
-						<div className='mb-2'>
-							<TotalLabel totalEventsWithSubEvents={totalEventsWithSubEvents} />
-						</div>
+						{isTotalLabelVisible ? (
+							<div className='mb-2'>
+								<TotalLabel
+									totalEventsWithSubEvents={totalEventsWithSubEvents}
+								/>
+							</div>
+						) : null}
 
 						<VirtualizedEventCards
 							events={events}
@@ -125,7 +171,9 @@ export function EventsTable({ address }: { address?: string }): ReactElement {
 							height={500}
 						/>
 
-						<div className='mt-4'>{loadMoreButton}</div>
+						{loadMoreButton ? (
+							<div className='mt-4'>{loadMoreButton}</div>
+						) : null}
 					</div>
 				</div>
 			)}
@@ -134,5 +182,8 @@ export function EventsTable({ address }: { address?: string }): ReactElement {
 }
 
 EventsTable.defaultProps = {
-	address: ''
+	address: '',
+	isLoadMoreEnabled: true,
+	isTotalLabelVisible: true,
+	txHash: undefined
 }

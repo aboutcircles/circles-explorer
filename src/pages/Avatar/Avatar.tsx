@@ -21,19 +21,14 @@ import { useProfileStore } from 'stores/useProfileStore'
 
 import { AvatarInfo } from './AvatarInfo'
 import { AvatarStats } from './AvatarStats'
+import TokenHolders from './TokenHolders'
 import { TrustRelations } from './TrustRelations'
-
-/*
-todo:
-- totalSupply (refactor)
-- graph
- */
 
 // Use lazy loading for the SocialGraph component since it's heavy
 const SocialGraph = lazy(async () => import('./SocialGraph/index'))
 
 // Tab keys must match the URL paths
-const TABS = ['events', 'trust', 'graph'] as const
+const TABS = ['events', 'holders', 'trust', 'graph'] as const
 type TabKey = (typeof TABS)[number]
 
 export default function Avatar() {
@@ -102,7 +97,10 @@ export default function Avatar() {
 			<div
 				className={`flex ${isMdScreen ? 'flex-row items-start' : 'flex-col items-center'}`}
 			>
-				{avatar ? <AvatarInfo profile={getProfile(avatar.id)} /> : null}
+				<AvatarInfo
+					profile={avatar ? getProfile(avatar.id) : null}
+					address={address as Address}
+				/>
 				<AvatarStats address={address as Address} avatar={avatar} />
 			</div>
 
@@ -121,6 +119,9 @@ export default function Avatar() {
 						</div>
 					) : null}
 					{address ? <EventsTable address={address} /> : null}
+				</Tab>
+				<Tab key='holders' title='CRC Holders'>
+					{avatar ? <TokenHolders avatar={avatar} /> : <Loader />}
 				</Tab>
 				<Tab key='trust' title='Trust Relations'>
 					{address && !isLoading ? (

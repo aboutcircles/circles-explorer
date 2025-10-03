@@ -7,12 +7,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import type { Address } from 'viem'
 
 import { FilterCheckBox } from 'components/FilterCheckBox'
+import { GoToTopButton } from 'components/GoToTopButton'
 import { Loader } from 'components/Loader'
 import { ONE, TWO } from 'constants/common'
 import { MILLISECONDS_IN_A_SECOND } from 'constants/time'
-import { useProfiles } from 'hooks/useProfiles'
-import { type CirclesAvatarFromEnvio } from 'services/envio/indexer'
+import { useProfilesCoordinator } from 'coordinators'
 import type { TrustNetworkRelation } from 'domains/trust/types'
+import { type CirclesAvatarFromEnvio } from 'services/envio/indexer'
 import { TrustSearchBox } from 'shared/Search/TrustSearchBox'
 import type { GraphData, ProfileNode, TrustLink } from 'types/graph'
 import { truncateHex } from 'utils/eth'
@@ -44,7 +45,7 @@ interface SocialGraphWrapperProperties {
 	avatar: CirclesAvatarFromEnvio
 }
 
-export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
+export function TrustGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 	const graphReference = useRef<unknown>()
 	const navigate = useNavigate()
 	const { tab } = useParams<{ tab?: string }>()
@@ -77,7 +78,54 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 		}
 	}
 
-	const { getProfile, fetchProfiles } = useProfiles()
+	const { getProfile, fetchProfiles } = useProfilesCoordinator()
+
+	// Handle graph export as PNG image
+	const handleExportGraph = useCallback(() => {
+		if (graphReference.current) {
+			try {
+				// Get the canvas element from the ForceGraph2D component
+				// Try different ways to access the canvas
+				let canvas = null
+
+				// Method 1: Try renderer().domElement
+				if (graphReference.current.renderer) {
+					canvas = graphReference.current.renderer().domElement
+				}
+
+				// Method 2: Try accessing canvas directly
+				if (!canvas && graphReference.current.canvas) {
+					canvas = graphReference.current.canvas()
+				}
+
+				// Method 3: Try finding canvas in the DOM
+				if (!canvas) {
+					const graphContainer = document.querySelector(
+						'.social-graph-container'
+					)
+					if (graphContainer) {
+						canvas = graphContainer.querySelector('canvas')
+					}
+				}
+
+				if (canvas) {
+					// Create download link
+					const link = document.createElement('a')
+					link.download = `trust-graph-${truncateHex(avatar.id)}-${Date.now()}.png`
+					link.href = canvas.toDataURL('image/png', 1.0) // High quality PNG
+					document.body.appendChild(link)
+					link.click()
+					document.body.removeChild(link)
+				} else {
+					console.error('Could not find canvas element for export')
+				}
+			} catch (error) {
+				console.error('Error exporting graph:', error)
+				// Fallback: try to use browser print
+				window.print()
+			}
+		}
+	}, [avatar.id])
 
 	// First fetch the network relations to build a more comprehensive graph
 	useEffect(() => {
@@ -116,14 +164,20 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 				}
 			} catch (error) {
 				console.error('Error fetching network relations:', error)
+				setNetworkRelations([])
 			} finally {
 				setIsLoading(false)
 			}
 		}
 
-		// Only fetch network relations if showing recursive view
-		if (avatar && showRecursive) {
+		if (!avatar) return
+
+		// Fetch network relations if showing recursive view, otherwise clear them
+		if (showRecursive) {
 			void fetchNetworkRelations()
+		} else {
+			// Clear network relations immediately when turning off recursive view
+			setNetworkRelations([])
 		}
 	}, [avatar, showRecursive])
 
@@ -489,6 +543,12 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 					isDefaultSelected={showOnlyWithProfiles}
 					handleChange={setShowOnlyWithProfiles}
 				/>
+				<FilterCheckBox
+					label='Export Graph'
+					className='mr-2'
+					isDefaultSelected={true}
+					handleChange={handleExportGraph}
+				/>
 			</div>
 			<SocialGraph
 				graphReference={graphReference}
@@ -498,7 +558,10 @@ export function SocialGraphWrapper({ avatar }: SocialGraphWrapperProperties) {
 				handleNodeHover={handleNodeHover}
 				handleNodeClick={handleNodeClick}
 				width={containerWidth}
+				zoom={4}
 			/>
+			{/* Go to top button for easier navigation when graph is full screen */}
+			<GoToTopButton className='' threshold={200} />
 		</div>
 	)
 }

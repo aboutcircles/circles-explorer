@@ -1,10 +1,11 @@
 import { Avatar, Code, Tooltip } from '@nextui-org/react'
+import { MIGRATION_CONTRACT } from 'constants/common'
 import { memo } from 'react'
 import { Link as RouterLink, useParams } from 'react-router-dom'
 import { isAddress } from 'viem'
 
 import { BotLabel } from 'components/BotLabel'
-import { useProfiles } from 'hooks/useProfiles'
+import { useProfilesCoordinator } from 'coordinators'
 import { truncateHex } from 'utils/eth'
 
 interface AvatarAddressProperties {
@@ -33,7 +34,7 @@ function AvatarAddressBase({
 	className = '',
 	isAddressVisible = true
 }: AvatarAddressProperties) {
-	const { getProfile, getBotVerdict } = useProfiles()
+	const { getProfile, getBotVerdict } = useProfilesCoordinator()
 	const parameters = useParams<{ tab?: string }>()
 
 	// Use current tab or default to 'events'
@@ -42,6 +43,7 @@ function AvatarAddressBase({
 	const profile = getProfile(address.toLowerCase())
 	const botVerdict = getBotVerdict(address.toLowerCase())
 	const isBot = botVerdict?.is_bot === true
+	const isMigration = address.toLowerCase() === MIGRATION_CONTRACT.toLowerCase()
 
 	if (!isAddress(address)) {
 		return <span className={className}>{address}</span>
@@ -49,11 +51,16 @@ function AvatarAddressBase({
 
 	const displayAddress =
 		size === 'sm' || size === 'md' ? truncateHex(address) : address
-	const displayName =
-		profile?.name === '' ? displayAddress : profile?.name ?? displayAddress
-	const tooltipContent = profile?.name
-		? `${profile.name} (${truncateHex(address)})`
-		: address
+	const displayName = isMigration
+		? 'Migration Contract'
+		: (profile?.name === ''
+			? displayAddress
+			: profile?.name ?? displayAddress)
+	const tooltipContent = isMigration
+		? `Migration Contract (${truncateHex(address)})`
+		: (profile?.name
+			? `${profile.name} (${truncateHex(address)})`
+			: address)
 
 	return (
 		<RouterLink

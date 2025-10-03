@@ -3,7 +3,7 @@ import type { Avatar } from 'domains/avatars/types'
 import type { GroupedTrustRelations } from 'domains/trust/types'
 import React from 'react'
 
-import { SocialGraphWrapper } from './SocialGraphWrapper'
+import { TrustGraphWrapper } from 'shared/SocialGraph'
 
 interface SocialGraphProperties {
 	avatar: Avatar
@@ -19,7 +19,7 @@ function SocialGraph({
 	// Adapt the avatar to the CirclesAvatarFromEnvio type
 	const adaptedAvatar = adaptAvatarForGraph(avatar, trustRelations)
 
-	return React.createElement(SocialGraphWrapper, { avatar: adaptedAvatar })
+	return React.createElement(TrustGraphWrapper, { avatar: adaptedAvatar })
 }
 
 export default SocialGraph
