@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import LoadingOrError from 'components/LoadingOrError'
 import { Header } from 'layout/Header'
+import { Terms } from 'pages/Legal'
 
 const MainPage = lazy(async () => import('pages/Main/Main'))
 const AvatarPage = lazy(async () => import('pages/Avatar/Avatar'))
@@ -30,6 +31,7 @@ export default function App(): ReactElement {
 							element={<Navigate to='events' replace />}
 						/>
 						<Route path='/tx/:txHash/:tab' element={<TransactionPage />} />
+						<Route path='/terms' element={<Terms />} />
 					</Routes>
 				</div>
 			</Suspense>
