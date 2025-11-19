@@ -48,7 +48,7 @@ export function Header() {
 								isIconOnly
 								aria-label='Legal'
 								endContent={<ChevronDownIcon className='h-5 w-5' />}
-							 />
+							/>
 						</DropdownTrigger>
 						<DropdownMenu aria-label='Legal pages' className='min-w-40'>
 							<DropdownItem key='terms' onPress={() => navigate('/terms')}>
