@@ -9,7 +9,7 @@ import { useValidateTrust } from 'domains/trust/repository'
 import { AvatarAddress } from 'shared/AvatarAddress'
 
 // Constants for danger score thresholds
-const LOW_DANGER_THRESHOLD = 0.3
+const LOW_DANGER_THRESHOLD = 0.25
 const MEDIUM_DANGER_THRESHOLD = 0.7
 const DECIMAL_PLACES = 2
 
@@ -189,8 +189,8 @@ export function SimulateTrustForm({
 						<p className='text-sm text-gray-700'>
 							Danger score is an indicator between 0 and 1 that expresses how
 							risky a new trust connection is perceived by a trained Machine
-							Learning classifier. Danger scores lower than 0.25 are generally
-							regarded as safe.
+							Learning classifier. Danger scores lower than{' '}
+							{LOW_DANGER_THRESHOLD} are generally regarded as safe.
 						</p>
 					</div>
 
