@@ -1,10 +1,10 @@
-import { Avatar, Code, Tooltip, Button } from '@nextui-org/react'
+import { Avatar, Button, Code, Tooltip } from '@nextui-org/react'
 import { CopyIcon } from '@nextui-org/shared-icons'
 import { MIGRATION_CONTRACT } from 'constants/common'
 import type { Profile } from 'domains/profiles/types'
+import { useEffect, useRef, useState } from 'react'
 import { truncateHex } from 'utils/eth'
 import type { Address } from 'viem'
-import { useState, useEffect, useRef } from 'react'
 
 interface AvatarInfoProperties {
 	profile?: Profile | null
@@ -80,6 +80,17 @@ export function AvatarInfo({ profile, address }: AvatarInfoProperties) {
 				{displayName}
 			</h1>
 
+			<div className='max-h-[100px] max-w-[200px] overflow-auto break-words text-sm'>
+				{profile?.description}
+				{isMigration ? (
+					<div className='mt-2 inline-flex'>
+						<Code className='rounded-md border bg-gray-50 px-2 py-1 text-xs'>
+							Migration Contract
+						</Code>
+					</div>
+				) : null}
+			</div>
+
 			{address ? (
 				<div className='mt-2 flex items-center justify-center gap-1'>
 					<Code className='rounded-md border bg-gray-50 px-2 py-1 text-xs'>
@@ -92,24 +103,13 @@ export function AvatarInfo({ profile, address }: AvatarInfoProperties) {
 							variant='light'
 							aria-label='Copy address'
 							onPress={handleCopyAddress}
-							className='min-w-6 h-6 w-6'
+							className='h-6 w-6 min-w-6'
 						>
 							<CopyIcon className='h-4 w-4' />
 						</Button>
 					</Tooltip>
 				</div>
 			) : null}
-
-			<div className='max-h-[100px] max-w-[200px] overflow-auto break-words text-sm'>
-				{profile?.description}
-				{isMigration ? (
-					<div className='mt-2 inline-flex'>
-						<Code className='rounded-md border bg-gray-50 px-2 py-1 text-xs'>
-							Migration Contract
-						</Code>
-					</div>
-				) : null}
-			</div>
 		</div>
 	)
 }
