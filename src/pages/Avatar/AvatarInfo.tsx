@@ -4,7 +4,7 @@ import { MIGRATION_CONTRACT } from 'constants/common'
 import type { Profile } from 'domains/profiles/types'
 import { truncateHex } from 'utils/eth'
 import type { Address } from 'viem'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface AvatarInfoProperties {
 	profile?: Profile | null
@@ -19,21 +19,41 @@ export function AvatarInfo({ profile, address }: AvatarInfoProperties) {
 		? address.toLowerCase() === MIGRATION_CONTRACT.toLowerCase()
 		: false
 	const [copied, setCopied] = useState(false)
+	const timeoutReference = useRef<NodeJS.Timeout>()
 
 	const COPY_FEEDBACK_DURATION = 2000
 
+	// Cleanup timeout on unmount
+	useEffect(
+		() => () => {
+			if (timeoutReference.current) {
+				clearTimeout(timeoutReference.current)
+			}
+		},
+		[]
+	)
+
 	const handleCopyAddress = () => {
-		if (address) {
-			navigator.clipboard
-				.writeText(address)
-				.then(() => {
-					setCopied(true)
-					setTimeout(() => setCopied(false), COPY_FEEDBACK_DURATION)
-				})
-				.catch(() => {
-					// Silently fail if clipboard access is not available
-				})
+		if (!address) {
+			return
 		}
+
+		navigator.clipboard
+			.writeText(address)
+			.then(() => {
+				setCopied(true)
+				// Clear any existing timeout
+				if (timeoutReference.current) {
+					clearTimeout(timeoutReference.current)
+				}
+				// Set new timeout and store reference
+				timeoutReference.current = setTimeout(() => {
+					setCopied(false)
+				}, COPY_FEEDBACK_DURATION)
+			})
+			.catch(() => {
+				// Silently fail if clipboard access is not available
+			})
 	}
 
 	return (
