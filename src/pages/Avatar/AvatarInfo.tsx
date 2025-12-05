@@ -1,6 +1,8 @@
-import { Avatar, Code } from '@nextui-org/react'
+import { Avatar, Button, Code, Tooltip } from '@nextui-org/react'
+import { CopyIcon } from '@nextui-org/shared-icons'
 import { MIGRATION_CONTRACT } from 'constants/common'
 import type { Profile } from 'domains/profiles/types'
+import { useEffect, useRef, useState } from 'react'
 import { truncateHex } from 'utils/eth'
 import type { Address } from 'viem'
 
@@ -16,6 +18,43 @@ export function AvatarInfo({ profile, address }: AvatarInfoProperties) {
 	const isMigration = address
 		? address.toLowerCase() === MIGRATION_CONTRACT.toLowerCase()
 		: false
+	const [copied, setCopied] = useState(false)
+	const timeoutReference = useRef<NodeJS.Timeout>()
+
+	const COPY_FEEDBACK_DURATION = 2000
+
+	// Cleanup timeout on unmount
+	useEffect(
+		() => () => {
+			if (timeoutReference.current) {
+				clearTimeout(timeoutReference.current)
+			}
+		},
+		[]
+	)
+
+	const handleCopyAddress = () => {
+		if (!address) {
+			return
+		}
+
+		navigator.clipboard
+			.writeText(address)
+			.then(() => {
+				setCopied(true)
+				// Clear any existing timeout
+				if (timeoutReference.current) {
+					clearTimeout(timeoutReference.current)
+				}
+				// Set new timeout and store reference
+				timeoutReference.current = setTimeout(() => {
+					setCopied(false)
+				}, COPY_FEEDBACK_DURATION)
+			})
+			.catch(() => {
+				// Silently fail if clipboard access is not available
+			})
+	}
 
 	return (
 		<div className='m-5 text-center'>
@@ -51,6 +90,26 @@ export function AvatarInfo({ profile, address }: AvatarInfoProperties) {
 					</div>
 				) : null}
 			</div>
+
+			{address ? (
+				<div className='mt-2 flex items-center justify-center gap-1'>
+					<Code className='rounded-md border bg-gray-50 px-2 py-1 text-xs'>
+						{truncateHex(address)}
+					</Code>
+					<Tooltip content={copied ? 'Copied!' : 'Copy address'}>
+						<Button
+							isIconOnly
+							size='sm'
+							variant='light'
+							aria-label='Copy address'
+							onPress={handleCopyAddress}
+							className='h-6 w-6 min-w-6'
+						>
+							<CopyIcon className='h-4 w-4' />
+						</Button>
+					</Tooltip>
+				</div>
+			) : null}
 		</div>
 	)
 }
