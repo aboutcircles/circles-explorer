@@ -58,6 +58,8 @@ export const eventsRepository = {
 			const response = await axios.post<CirclesEventsResponse>(
 				CIRCLES_INDEXER_URL,
 				{
+					jsonrpc: '2.0',
+					id: 1,
 					method: 'circles_events',
 					params: filters
 						? [null, 0, null, null, filters]
