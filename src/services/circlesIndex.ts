@@ -52,6 +52,8 @@ async function makeCirclesQuery(
 		const response = await axios.post<{ result: TableResponse }>(
 			CIRCLES_INDEXER_URL,
 			{
+				jsonrpc: '2.0',
+				id: 1,
 				method: 'circles_query',
 				params: [
 					{
