@@ -67,8 +67,13 @@ export const eventsRepository = {
 				}
 			)
 
+			if (!response.data.result) {
+				const rpcError = (response.data as unknown as { error?: { message?: string } }).error
+				throw new Error(rpcError?.message ?? 'RPC returned no result')
+			}
+
 			const eventTypesAmount = new Map<CirclesEventType, number>()
-			const events = response.data.result.map((event) => {
+			const events = response.data.result.events.map((event) => {
 				eventTypesAmount.set(
 					event.event,
 					(eventTypesAmount.get(event.event) ?? 0) + ONE

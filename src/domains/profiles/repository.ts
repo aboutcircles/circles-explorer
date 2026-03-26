@@ -73,6 +73,14 @@ export const profileRepository = {
 				const batchResults =
 					await circlesRpc.getProfilesByAddressBatches(chunks)
 
+				// If all chunks failed with "not supported", throw to trigger fallback
+				const allUnsupported = batchResults.every(
+					(r) => r.error?.includes('is not supported')
+				)
+				if (allUnsupported) {
+					throw new Error('JSON-RPC batch not supported by server')
+				}
+
 				// Process batch results with error handling
 				chunkResults = await Promise.all(
 					batchResults.map(async (result, index) => {

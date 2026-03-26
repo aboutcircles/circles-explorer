@@ -66,7 +66,7 @@ export interface EventResponse {
 }
 
 export interface CirclesEventsResponse {
-	result: EventResponse[]
+	result: { events: EventResponse[] }
 }
 
 export type Event = EventResponse['values'] &
