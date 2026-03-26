@@ -73,7 +73,10 @@ export const eventsRepository = {
 			}
 
 			const eventTypesAmount = new Map<CirclesEventType, number>()
-			const events = response.data.result.events.map((event) => {
+			const rawEvents = Array.isArray(response.data.result)
+				? response.data.result
+				: response.data.result.events
+			const events = rawEvents.map((event) => {
 				eventTypesAmount.set(
 					event.event,
 					(eventTypesAmount.get(event.event) ?? 0) + ONE
