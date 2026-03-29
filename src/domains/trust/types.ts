@@ -69,3 +69,22 @@ export interface TrustNetworkRelation {
 		}
 	}
 }
+
+/**
+ * Request payload for trust validation
+ */
+export interface ValidateTrustRequest {
+	truster: string
+	trustee: string
+	expiration_time: number
+}
+
+/**
+ * Response from trust validation API
+ */
+export interface ValidateTrustResponse {
+	validation_id: string
+	overall_danger_score: number
+	tldr: string
+	summary: string
+}
