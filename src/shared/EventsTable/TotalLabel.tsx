@@ -9,10 +9,10 @@ import { useBlockNumber } from 'services/viemClient'
 import { useFilterStore } from 'stores/useFilterStore'
 
 interface TotalLabelProperties {
-	totalEventsWithSubEvents: number
+	totalEvents: number
 }
 
-export function TotalLabel({ totalEventsWithSubEvents }: TotalLabelProperties) {
+export function TotalLabel({ totalEvents }: TotalLabelProperties) {
 	const { currentStartBlock, defaultStartBlock } = useStartBlock()
 	const clearStartBlock = useFilterStore.use.clearStartBlock()
 	const blockNumber = useBlockNumber()
@@ -39,7 +39,7 @@ export function TotalLabel({ totalEventsWithSubEvents }: TotalLabelProperties) {
 			<span className='text-small text-default-400'>
 				<span className='font-semibold text-black'>
 					Total Events:{' '}
-					{totalEventsWithSubEvents === 0 ? '...' : totalEventsWithSubEvents}
+					{totalEvents === 0 ? '...' : totalEvents}
 				</span>
 				<span className='ml-2 text-small text-default-400'>
 					(From Block: {currentStartBlock}
