@@ -218,6 +218,20 @@ export const useRenderCell = () => {
 						)
 					}
 
+					// Handle FlowEdgesScope events
+					if (item.flowEdgeId || item.streamId) {
+						return (
+							<div className='flex flex-col text-sm text-default-500'>
+								{item.flowEdgeId ? (
+									<span>Flow Edge: {String(item.flowEdgeId)}</span>
+								) : null}
+								{item.streamId ? (
+									<span>Stream: {String(item.streamId)}</span>
+								) : null}
+							</div>
+						)
+					}
+
 					return ''
 				}
 				case 'blockNumber': {

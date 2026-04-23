@@ -105,7 +105,11 @@ export const DEFAULT_FILTER_EVENTS: CirclesEventType[] = [
 
 	// Group creation events
 	'CrcV2_RegisterGroup',
-	'CrcV2_BaseGroupCreated'
+	'CrcV2_BaseGroupCreated',
+
+	// Flow edges scope events
+	'CrcV2_FlowEdgesScopeLastEnded',
+	'CrcV2_FlowEdgesScopeSingleStarted'
 ]
 
 export const LABELS_MAPPER: Record<CirclesEventType, string> = {
