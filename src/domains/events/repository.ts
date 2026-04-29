@@ -32,6 +32,60 @@ import type {
 	PageResult
 } from './types'
 
+const INVITATION_MODULE_NAMESPACE = 'CrcV2_InvitationsAtScale'
+
+/**
+ * Queries the InvitationModule index for originInviter by transaction hash.
+ * Returns a map of transactionHash -> originInviter for any matches found.
+ * When an invitation was paid via a proxy account the Hub RegisterHuman event
+ * records the proxy as inviter; this lookup surfaces the true origin inviter.
+ */
+const fetchOriginInviters = async (
+	txHashes: string[]
+): Promise<Map<string, string>> => {
+	try {
+		const response = await axios.post<{
+			result: { columns: string[]; rows: string[][] }
+		}>(CIRCLES_INDEXER_URL, {
+			jsonrpc: '2.0',
+			id: 1,
+			method: 'circles_query',
+			params: [
+				{
+					Namespace: INVITATION_MODULE_NAMESPACE,
+					Table: 'RegisterHuman',
+					Columns: ['transactionHash', 'originInviter'],
+					Filter: [
+						{
+							Type: 'FilterPredicate',
+							FilterType: 'In',
+							Column: 'transactionHash',
+							Value: txHashes
+						}
+					],
+					Order: [],
+					Limit: txHashes.length
+				}
+			]
+		})
+
+		if (!response.data.result) return new Map()
+
+		const { columns, rows } = response.data.result
+		const txHashIdx = columns.indexOf('transactionHash')
+		const originInviterIdx = columns.indexOf('originInviter')
+
+		const map = new Map<string, string>()
+		for (const row of rows) {
+			map.set(row[txHashIdx], row[originInviterIdx])
+		}
+		return map
+	} catch (error) {
+		logger.error('[Repository] Failed to fetch origin inviters', error)
+		return new Map()
+	}
+}
+
 // Query keys
 const CIRCLES_EVENTS_INFINITE_QUERY_KEY = 'circlesEventsInfinite'
 export const eventsKeys = {
@@ -96,6 +150,34 @@ export const eventsRepository = {
 					)
 				}
 			})
+
+			// For any CrcV2_RegisterHuman events, replace the Hub-level proxy inviter
+			// with the true origin inviter from the InvitationModule when available.
+			const registerHumanTxHashes = events
+				.filter((e) => e.event === 'CrcV2_RegisterHuman')
+				.map((e) => e.transactionHash)
+
+			if (registerHumanTxHashes.length > 0) {
+				const originInviters =
+					await fetchOriginInviters(registerHumanTxHashes)
+
+				if (originInviters.size > 0) {
+					const enrichedEvents = events.map((event) => {
+						if (event.event !== 'CrcV2_RegisterHuman') return event
+						const originInviter = originInviters.get(event.transactionHash)
+						return originInviter
+							? { ...event, inviter: originInviter }
+							: event
+					})
+
+					logger.log(
+						'[Repository] Queried circles events',
+						`Event count: ${enrichedEvents.length}, startBlock: ${startBlock}, endBlock: ${endBlock}`
+					)
+
+					return { events: enrichedEvents, eventTypesAmount }
+				}
+			}
 
 			logger.log(
 				'[Repository] Queried circles events',

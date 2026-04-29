@@ -255,27 +255,18 @@ export const avatarRepository = {
 	getInvitedBy: async (address: Address): Promise<Address | undefined> => {
 		try {
 			const LIMIT_ONE = 1
-			// todo: it'll be changed to circlesData.getInvitedBy after sdk fix
-			const query = new CirclesQuery<{
-				blockNumber: number
-				timestamp: number
-				transactionIndex: number
-				logIndex: number
+
+			// Query Hub RegisterHuman and InvitationModule RegisterHuman in parallel.
+			// The InvitationModule stores the true originInviter when an invitation was
+			// paid via a proxy account; the Hub event only records the proxy inviter.
+			const hubQuery = new CirclesQuery<{
 				transactionHash: string
 				avatar: Address
 				inviter: Address
 			}>(circlesData.rpc, {
 				namespace: 'CrcV2',
 				table: 'RegisterHuman',
-				columns: [
-					'blockNumber',
-					'timestamp',
-					'transactionIndex',
-					'logIndex',
-					'transactionHash',
-					'avatar',
-					'inviter'
-				],
+				columns: ['transactionHash', 'avatar', 'inviter'],
 				filter: [
 					{
 						Type: 'FilterPredicate',
@@ -288,12 +279,39 @@ export const avatarRepository = {
 				limit: LIMIT_ONE
 			})
 
-			const hasResults = await query.queryNextPage()
-			if (!hasResults || !query.currentPage?.results.length) {
+			const moduleQuery = new CirclesQuery<{
+				human: Address
+				originInviter: Address
+			}>(circlesData.rpc, {
+				namespace: 'CrcV2_InvitationsAtScale',
+				table: 'RegisterHuman',
+				columns: ['human', 'originInviter'],
+				filter: [
+					{
+						Type: 'FilterPredicate',
+						FilterType: 'Equals',
+						Column: 'human',
+						Value: address.toLowerCase()
+					}
+				],
+				sortOrder: 'DESC',
+				limit: LIMIT_ONE
+			})
+
+			const [hasHubResults, hasModuleResults] = await Promise.all([
+				hubQuery.queryNextPage(),
+				moduleQuery.queryNextPage()
+			])
+
+			if (!hasHubResults || !hubQuery.currentPage?.results.length) {
 				return undefined
 			}
 
-			return query.currentPage.results[0].inviter
+			if (hasModuleResults && moduleQuery.currentPage?.results.length) {
+				return moduleQuery.currentPage.results[0].originInviter
+			}
+
+			return hubQuery.currentPage.results[0].inviter
 		} catch (error) {
 			logger.error('[Repository] Failed to fetch invited by:', error)
 			return undefined

@@ -28,5 +28,7 @@ export const DECIMAL_RADIX = 10
 
 export const MIGRATION_CONTRACT = '0xD44B8dcFBaDfC78EA64c55B705BFc68199B56376'
 
+export const INVITATION_MODULE_ADDRESS = '0x00738aca013b7b2e6cfe1690f0021c3182fa40b5'
+
 // eslint-disable-next-line @typescript-eslint/no-loss-of-precision
 export const CRC_MIGRATION_DENOMINATION = 2.216_690_071_905_145_5
