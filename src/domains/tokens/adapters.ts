@@ -14,20 +14,31 @@ import type { Token, TokenBalance } from './types'
  * Adapts a token from the SDK format to our domain model.
  * `timestamp` is not exposed by the new SDK's getTokenInfo; defaults to 0
  * (the field is currently unread anywhere in the explorer).
+ *
+ * Validates required fields at the boundary — a malformed RPC response
+ * (e.g. missing tokenAddress/tokenOwner) would silently produce a Token
+ * with undefined values that downstream code then casts to Address.
  */
 export const adaptTokenFromSdk = (
 	sdkToken: TokenInfo,
 	totalSupply = '0',
 	isStopped = false
-): Token => ({
-	address: sdkToken.tokenAddress,
-	owner: sdkToken.tokenOwner,
-	totalSupply,
-	type: sdkToken.type ?? sdkToken.tokenType,
-	version: sdkToken.version,
-	isStopped,
-	timestamp: 0
-})
+): Token => {
+	if (!sdkToken.tokenAddress || !sdkToken.tokenOwner) {
+		throw new Error(
+			`adaptTokenFromSdk: missing required field(s) — tokenAddress=${sdkToken.tokenAddress}, tokenOwner=${sdkToken.tokenOwner}`
+		)
+	}
+	return {
+		address: sdkToken.tokenAddress,
+		owner: sdkToken.tokenOwner,
+		totalSupply,
+		type: sdkToken.type ?? sdkToken.tokenType,
+		version: sdkToken.version,
+		isStopped,
+		timestamp: 0
+	}
+}
 
 /**
  * Creates a token balance object
