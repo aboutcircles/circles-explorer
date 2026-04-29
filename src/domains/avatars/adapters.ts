@@ -1,18 +1,19 @@
-import type { AvatarRow } from '@circles-sdk/data/dist/rows/avatarRow'
+import type { AvatarInfo } from '@aboutcircles/sdk-types'
 import type { Address } from 'viem'
 import type { Avatar } from './types'
 
 /**
- * Adapts an avatar from the SDK format to our domain model
+ * Adapts an avatar from the SDK format to our domain model.
+ * Falls back lastMint to 0 when the indexer omits the timestamp — the caller
+ * (avatarRepository.getAvatar) layers a more accurate `lastMint` from
+ * PersonalMint / V1 Transfer queries on top.
  */
-export const adaptAvatarFromSdk = (sdkAvatar: AvatarRow): Avatar => ({
+export const adaptAvatarFromSdk = (sdkAvatar: AvatarInfo): Avatar => ({
 	id: sdkAvatar.avatar,
 	address: sdkAvatar.avatar,
 	type: sdkAvatar.type,
 	version: sdkAvatar.version,
-	lastMint: sdkAvatar.timestamp,
-	// The SDK doesn't have invitedBy directly in AvatarRow
-	// We'll need to fetch this separately
+	lastMint: sdkAvatar.timestamp ?? 0,
 	invitedBy: undefined,
 	tokenId: sdkAvatar.tokenId as Address,
 	v1Token: sdkAvatar.v1Token,

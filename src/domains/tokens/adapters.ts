@@ -1,4 +1,4 @@
-import type { TokenInfoRow } from '@circles-sdk/data/dist/rows/tokenInfoRow'
+import type { TokenInfo } from '@aboutcircles/sdk-types'
 import type { Address } from 'viem'
 import { formatUnits } from 'viem'
 
@@ -11,20 +11,22 @@ import { formatTokenUnits } from 'utils/number'
 import type { Token, TokenBalance } from './types'
 
 /**
- * Adapts a token from the SDK format to our domain model
+ * Adapts a token from the SDK format to our domain model.
+ * `timestamp` is not exposed by the new SDK's getTokenInfo; defaults to 0
+ * (the field is currently unread anywhere in the explorer).
  */
 export const adaptTokenFromSdk = (
-	sdkToken: TokenInfoRow,
+	sdkToken: TokenInfo,
 	totalSupply = '0',
 	isStopped = false
 ): Token => ({
-	address: sdkToken.token,
+	address: sdkToken.tokenAddress,
 	owner: sdkToken.tokenOwner,
 	totalSupply,
-	type: sdkToken.type,
+	type: sdkToken.type ?? sdkToken.tokenType,
 	version: sdkToken.version,
 	isStopped,
-	timestamp: sdkToken.timestamp
+	timestamp: 0
 })
 
 /**

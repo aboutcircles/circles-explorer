@@ -2,7 +2,7 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import type { Address, Hex } from 'viem'
 import { hexToNumber, isAddress } from 'viem'
 
-import type { CirclesEventType } from '@circles-sdk/data'
+import type { CirclesEventType } from 'types/events'
 import axios from 'axios'
 import {
 	DEFAULT_BLOCK_RANGE,
@@ -14,7 +14,7 @@ import {
 import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
 import { MILLISECONDS_IN_A_MINUTE } from 'constants/time'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { circlesData } from 'services/circlesData'
+import { circlesRpcV2 } from 'services/circlesData'
 import logger from 'services/logger'
 import { useFilterStore } from 'stores/useFilterStore'
 import type { CirclesEventsResponse, Event } from 'types/events'
@@ -109,11 +109,12 @@ export const eventsRepository = {
 		}
 	},
 
-	// Subscribe to events
+	// Subscribe to events. Uses @aboutcircles/sdk-rpc which fixes 2 of 3 known
+	// WS bugs in the legacy SDK (connect() now rejects on error; clean close
+	// schedules reconnect). Re-subscription after reconnect is still TBD —
+	// see ws-subscription-investigation.md.
 	subscribeToEvents: async (address?: Address) =>
-		address
-			? circlesData.subscribeToEvents(address)
-			: circlesData.subscribeToEvents()
+		circlesRpcV2.client.subscribe(address)
 }
 
 /**
@@ -245,18 +246,21 @@ const watchEventUpdates = async (
 
 			// add new event
 			if (eventIndex === MINUS_ONE) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-expect-error
+				// The new SDK's CirclesEventType union differs from the legacy
+				// one used throughout the cache (legacy includes V1 + several
+				// V2 types not in the new SDK). Cast at the boundary; the
+				// runtime parser passes through any $event string verbatim.
+				const eventName = event.$event as unknown as CirclesEventType
 				updatedEventsData.unshift({
 					...event,
 					key,
-					event: event.$event
-				})
+					event: eventName
+				} as unknown as Event)
 
 				// update eventTypesAmount
 				eventTypesAmount.set(
-					event.$event,
-					(eventTypesAmount.get(event.$event) ?? 0) + ONE
+					eventName,
+					(eventTypesAmount.get(eventName) ?? 0) + ONE
 				)
 			}
 
@@ -460,10 +464,13 @@ export const useEvents = (
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data, updateEventTypesAmount, updateStartBlock])
 
-	// Process and filter events
+	// Process and filter events. Pass `address` so profile pages drop tx groups
+	// that don't actually involve the avatar — works around an indexer bug where
+	// `circles_events(address, ...)` over-returns flow-scope events from
+	// transactions the avatar isn't a participant in.
 	const filteredEvents = useMemo(
-		() => processEvents(allEvents, eventTypes, Boolean(txHash)),
-		[allEvents, eventTypes, txHash]
+		() => processEvents(allEvents, eventTypes, Boolean(txHash), address),
+		[allEvents, eventTypes, txHash, address]
 	)
 
 	// Load more events function

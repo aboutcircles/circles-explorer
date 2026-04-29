@@ -1,4 +1,4 @@
-import type { CirclesEventType } from '@circles-sdk/data'
+import type { CirclesEventType } from 'types/events'
 import { Code, Link, Snippet } from '@nextui-org/react'
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
