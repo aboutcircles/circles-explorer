@@ -60,6 +60,17 @@ export const subscribeWithResubscribe = async (
 					.then((next) => {
 						resubscribePending = false
 						if (stopped) return
+						// The SDK can resolve subscribe even if the underlying
+						// socket dropped between request and response. Verify
+						// before flipping lastConnected, otherwise a stale
+						// success masks the disconnect for one full poll cycle.
+						if (!isClientConnected()) {
+							lastConnected = false
+							logger.warn(
+								`[Repository] Subscribe (${reason}) resolved on disconnected socket; will retry`
+							)
+							return
+						}
 						currentUnsubscribe = (
 							next as Observable<CirclesEvent>
 						).subscribe(handler)

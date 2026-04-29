@@ -247,13 +247,15 @@ const watchEventUpdates = async (
 
 			// add new event
 			if (eventIndex === MINUS_ONE) {
-				// SDK emits the type under `event` for HTTP responses and
-				// `$event` for WS payloads. Prefer `event`, fall back to
-				// `$event`. Cast at the boundary because the cache uses a
-				// legacy union that's a strict superset of the new SDK's.
+				// WS payloads from the SDK land here parsed as `{ $event, ... }`
+				// (see @aboutcircles/sdk-rpc parseRpcEvent). Read `$event`
+				// first; the `event` fallback is purely defensive in case a
+				// future SDK version changes the field name. Cast at the
+				// boundary because the cache uses a legacy union that's a
+				// strict superset of the new SDK's CirclesEventType.
 				const eventNameRaw =
-					(event as { event?: unknown }).event ??
-					(event as { $event?: unknown }).$event
+					(event as { $event?: unknown }).$event ??
+					(event as { event?: unknown }).event
 				if (typeof eventNameRaw !== 'string') {
 					logger.error(
 						'[Repository] Subscription event missing event name',
@@ -323,6 +325,10 @@ export const useEventsInfinite = (
 
 		// Flag to track if effect is still active
 		let isActive = true
+		// Tracked so cleanup can cancel a pending backoff timer; otherwise the
+		// closure (with captured queryClient/queryKey/search) stays alive for
+		// up to MAX_DELAY_MS after unmount.
+		let retryTimer: ReturnType<typeof setTimeout> | null = null
 
 		// Setup subscription with retry+backoff. A single failure here used to
 		// kill live updates for the whole page session — now we retry until
@@ -359,7 +365,10 @@ export const useEventsInfinite = (
 					)
 					if (attempt === MAX_ATTEMPTS) return
 					await new Promise<void>((resolve) => {
-						setTimeout(resolve, delayMs)
+						retryTimer = setTimeout(() => {
+							retryTimer = null
+							resolve()
+						}, delayMs)
 					})
 				}
 			}
@@ -371,6 +380,10 @@ export const useEventsInfinite = (
 		// Clean up function
 		return function cleanup() {
 			isActive = false
+			if (retryTimer) {
+				clearTimeout(retryTimer)
+				retryTimer = null
+			}
 			if (subscriptionReference.current) {
 				const unsubscribe = subscriptionReference.current
 				subscriptionReference.current = null
