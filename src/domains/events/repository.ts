@@ -14,7 +14,6 @@ import {
 import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
 import { MILLISECONDS_IN_A_MINUTE } from 'constants/time'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { circlesRpcV2 } from 'services/circlesData'
 import logger from 'services/logger'
 import { useFilterStore } from 'stores/useFilterStore'
 import type { CirclesEventsResponse, Event } from 'types/events'
@@ -24,6 +23,7 @@ import { useStartBlock } from 'hooks/useStartBlock'
 import { useParams } from 'react-router-dom'
 import { useBlockNumber } from 'services/viemClient'
 import { defineFiltersFromSearch, getEventKey, processEvents } from './adapters'
+import { subscribeWithResubscribe } from './resilientSubscription'
 import type {
 	EventsInfiniteData,
 	EventsQueryResult,
@@ -109,12 +109,13 @@ export const eventsRepository = {
 		}
 	},
 
-	// Subscribe to events. Uses @aboutcircles/sdk-rpc which fixes 2 of 3 known
-	// WS bugs in the legacy SDK (connect() now rejects on error; clean close
-	// schedules reconnect). Re-subscription after reconnect is still TBD —
-	// see ws-subscription-investigation.md.
+	// Subscribe to events. The SDK reconnects on close but never re-issues
+	// circles_subscribe, so the server forgets the subscription on the first
+	// reconnect. The wrapper polls the SDK's WS state and re-issues subscribe
+	// on disconnect→reconnect transitions. Cache deduplication in
+	// watchEventUpdates absorbs any transient overlap.
 	subscribeToEvents: async (address?: Address) =>
-		circlesRpcV2.client.subscribe(address)
+		subscribeWithResubscribe(address)
 }
 
 /**
