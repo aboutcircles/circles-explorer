@@ -147,7 +147,16 @@ export function useVirtualScroll({
 		return () => element.removeEventListener('scroll', handleScroll)
 	}, [containerRef, handleScroll])
 
-	// Set up infinite scroll using scroll event
+	// Latch onReachEnd so it fires once per "scrolled-into-range" episode. The
+	// scroll handler runs many times while the user lingers near the bottom;
+	// without a latch we'd spam the callback before the next page can land.
+	// The latch resets when itemCount grows (next page arrived) or when the
+	// user scrolls back out of the threshold window.
+	const reachEndLatched = useRef(false)
+	useEffect(() => {
+		reachEndLatched.current = false
+	}, [itemCount])
+
 	useEffect(() => {
 		if (!onReachEnd || !containerRef.current) return void 0
 
@@ -155,13 +164,18 @@ export function useVirtualScroll({
 
 		const handleInfiniteScroll = () => {
 			const { scrollTop, scrollHeight, clientHeight } = element
-			// If we're within endThreshold pixels of the end, trigger the callback
-			if (
+			const inRange =
 				scrollHeight - scrollTop - clientHeight < endThreshold &&
 				itemCount > 0
-			) {
-				onReachEnd()
+
+			if (!inRange) {
+				reachEndLatched.current = false
+				return
 			}
+
+			if (reachEndLatched.current) return
+			reachEndLatched.current = true
+			onReachEnd()
 		}
 
 		element.addEventListener('scroll', handleInfiniteScroll)

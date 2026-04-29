@@ -1,5 +1,5 @@
 import { Button } from '@nextui-org/react'
-import type { ReactElement } from 'react'
+import { useCallback, type ReactElement } from 'react'
 
 import type { Column, Row } from 'components/VirtualizedTable'
 import { VirtualizedTable } from 'components/VirtualizedTable'
@@ -12,7 +12,6 @@ import { VirtualizedEventCards } from './VirtualizedEventCards'
 
 // todo:
 // write documentation how it works (with some specific details on other things)
-// infinite scroll (fetching events)
 // fetching profiles
 // virtualized table
 // virtualized event cards (mobile)
@@ -97,6 +96,14 @@ export function EventsTable({
 	// Choose columns based on context
 	const columns = txHash ? transactionColumns : defaultColumns
 
+	// Auto-load next page when scrolling near the end. The scroll listener in
+	// useVirtualScroll fires repeatedly while in range; gate explicitly so we
+	// don't queue redundant fetches between renders.
+	const handleAutoLoad = useCallback(() => {
+		if (!isLoadMoreEnabled || isLoadingMore || !hasMoreEvents) return
+		void loadMoreEvents()
+	}, [isLoadMoreEnabled, isLoadingMore, hasMoreEvents, loadMoreEvents])
+
 	const loadMoreButton = isLoadMoreEnabled && (
 		<div className='my-4 flex justify-center'>
 			<Button
@@ -135,6 +142,7 @@ export function EventsTable({
 							) : undefined
 						}
 						bottomContent={loadMoreButton || undefined}
+						onLoadMore={handleAutoLoad}
 					/>
 				</div>
 			) : null}
@@ -153,6 +161,7 @@ export function EventsTable({
 							renderCell={renderCell}
 							isLoading={isEventsLoading}
 							height={500}
+							onLoadMore={handleAutoLoad}
 						/>
 
 						{loadMoreButton ? (
