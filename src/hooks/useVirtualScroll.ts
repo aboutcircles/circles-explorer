@@ -179,7 +179,20 @@ export function useVirtualScroll({
 		}
 
 		element.addEventListener('scroll', handleInfiniteScroll)
-		return () => element.removeEventListener('scroll', handleInfiniteScroll)
+
+		// Also check on mount / itemCount change. When the rendered content
+		// doesn't fill the virtualized container (e.g. only a handful of
+		// events match the current filter or block range), the inner scroll
+		// never fires and the user can't reach the bottom. Auto-load until
+		// the container fills or the consumer reports `hasMoreEvents=false`.
+		// rAF defers the check until layout has run so scrollHeight reflects
+		// the just-rendered virtual items.
+		const rafId = requestAnimationFrame(handleInfiniteScroll)
+
+		return () => {
+			cancelAnimationFrame(rafId)
+			element.removeEventListener('scroll', handleInfiniteScroll)
+		}
 	}, [containerRef, itemCount, onReachEnd, endThreshold])
 
 	// Calculate padding values
