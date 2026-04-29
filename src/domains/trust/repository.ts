@@ -1,3 +1,4 @@
+import { PagedQuery } from '@aboutcircles/sdk-rpc'
 import { useQuery } from '@tanstack/react-query'
 import type { Address } from 'viem'
 
@@ -13,14 +14,19 @@ interface TrustRow {
 	version: number
 	trustee: Address
 	truster: Address
+	blockNumber: number
+	transactionIndex: number
+	logIndex: number
 }
 
-// Indexer's hard cap on circles_query is 10_000. The legacy SDK paginated at
-// pageSize=1000 looping until exhausted; we use a single-page query at the cap
-// instead. No avatar in production currently approaches this (largest pinned
-// groups are well under 5k trust counterparts) and using one query avoids the
-// extra round-trips. If this ever truncates, switch to circles_paginated_query.
-const TRUST_QUERY_LIMIT = 10_000
+// Cursor-paginated; loops until the indexer reports `hasMore: false`. Page size
+// stays under the indexer's per-call cap. The legacy SDK paginated identically.
+const TRUST_PAGE_SIZE = 1000
+// Soft warning threshold — well below any current avatar's actual trust count.
+// If we ever cross this, the trust UI is already showing thousands of rows and
+// we should think about server-side aggregation instead of paginating in the
+// browser.
+const TRUST_PAGE_WARN_THRESHOLD = 9500
 
 // Aggregate raw V1+V2 trust event rows into per-counterpart `TrustRelation`s.
 // Replaces the legacy SDK's `getAggregatedTrustRelations` so we can compute the
@@ -98,11 +104,20 @@ export const trustRepository = {
 	getTrustRelations: async (address: Address): Promise<TrustRelation[]> => {
 		try {
 			const lowerAddress = address.toLowerCase()
-			const rows = await circlesRpcV2.query.query<TrustRow>({
-				Namespace: 'V_Crc',
-				Table: 'TrustRelations',
-				Columns: ['timestamp', 'version', 'trustee', 'truster'],
-				Filter: [
+			const pagedQuery = new PagedQuery<TrustRow>(circlesRpcV2.client, {
+				namespace: 'V_Crc',
+				table: 'TrustRelations',
+				sortOrder: 'DESC',
+				columns: [
+					'blockNumber',
+					'transactionIndex',
+					'logIndex',
+					'timestamp',
+					'version',
+					'trustee',
+					'truster'
+				],
+				filter: [
 					{
 						Type: 'Conjunction',
 						ConjunctionType: 'Or',
@@ -122,9 +137,22 @@ export const trustRepository = {
 						]
 					}
 				],
-				Order: [{ Column: 'blockNumber', SortOrder: 'DESC' }],
-				Limit: TRUST_QUERY_LIMIT
+				limit: TRUST_PAGE_SIZE
 			})
+
+			const rows: TrustRow[] = []
+			while (await pagedQuery.queryNextPage()) {
+				const page = pagedQuery.currentPage
+				if (!page) break
+				rows.push(...page.results)
+				if (!page.hasMore) break
+			}
+
+			if (rows.length >= TRUST_PAGE_WARN_THRESHOLD) {
+				logger.warn(
+					`[Repository] Trust relations near indexer cap for ${lowerAddress}: ${rows.length} rows`
+				)
+			}
 
 			return aggregateTrustRows(lowerAddress, rows)
 		} catch (error) {
