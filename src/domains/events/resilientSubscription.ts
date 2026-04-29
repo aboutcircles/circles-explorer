@@ -10,14 +10,14 @@ interface ResilientSubscription {
 	subscribe: (handler: (event: CirclesEvent) => void) => () => void
 }
 
-// Polls the SDK's private websocketConnected flag because @aboutcircles/sdk-rpc
-// does not expose a reconnect event. The SDK reconnects internally on close,
-// but never re-issues circles_subscribe — so the server forgets about the
-// subscription and live updates silently die. This wrapper detects the
-// disconnect→reconnect transition and re-subscribes, keeping the same
-// downstream handler. The cache layer in watchEventUpdates already dedupes
-// by event key, so any transient overlap between old and new subscriptions
-// is absorbed there.
+// @aboutcircles/sdk-rpc does not expose a reconnect event or a documented
+// connection-status API. The SDK reconnects internally on close, but never
+// re-issues circles_subscribe — so the server forgets the subscription and
+// live updates silently die. We poll the SDK's internal websocketConnected
+// flag as a best-effort signal and combine it with try/catch around every
+// subscribe call so failures (initial or post-reconnect) are retried on
+// the next poll tick. Cache deduplication in watchEventUpdates absorbs any
+// transient overlap between old and new subscriptions.
 const isClientConnected = (): boolean =>
 	Boolean(
 		(circlesRpcV2.client as unknown as { websocketConnected?: boolean })
@@ -27,16 +27,58 @@ const isClientConnected = (): boolean =>
 export const subscribeWithResubscribe = async (
 	address?: Address
 ): Promise<ResilientSubscription> => {
-	const initialObservable = (await circlesRpcV2.client.subscribe(
-		address
-	)) as Observable<CirclesEvent>
+	let initialObservable: Observable<CirclesEvent> | null = null
+	try {
+		initialObservable = (await circlesRpcV2.client.subscribe(
+			address
+		)) as Observable<CirclesEvent>
+	} catch (error) {
+		logger.error(
+			'[Repository] Initial WebSocket subscribe failed; will retry via poll loop',
+			error
+		)
+	}
 
 	return {
 		subscribe(handler) {
 			let currentUnsubscribe: (() => void) | null =
-				initialObservable.subscribe(handler)
+				initialObservable?.subscribe(handler) ?? null
 			let stopped = false
-			let lastConnected = isClientConnected()
+			// Start "connected" only if the initial subscribe actually landed.
+			// If it failed, lastConnected = false so the first poll tick that
+			// sees the socket up will trigger a fresh subscribe.
+			let lastConnected = currentUnsubscribe !== null
+			let resubscribePending = false
+
+			const trySubscribe = (reason: string) => {
+				if (stopped || resubscribePending) return
+				resubscribePending = true
+				currentUnsubscribe?.()
+				currentUnsubscribe = null
+				circlesRpcV2.client
+					.subscribe(address)
+					.then((next) => {
+						resubscribePending = false
+						if (stopped) return
+						currentUnsubscribe = (
+							next as Observable<CirclesEvent>
+						).subscribe(handler)
+						lastConnected = true
+						logger.log(
+							`[Repository] WebSocket subscribed (${reason})`
+						)
+					})
+					.catch((error) => {
+						resubscribePending = false
+						// Reset lastConnected so the next poll tick that sees a
+						// connected socket attempts another subscribe.
+						lastConnected = false
+						logger.error(
+							`[Repository] Subscribe failed (${reason}); will retry on next poll tick`,
+							error
+						)
+					})
+			}
 
 			const pollTimer = setInterval(() => {
 				if (stopped) return
@@ -52,26 +94,7 @@ export const subscribeWithResubscribe = async (
 				}
 
 				if (!lastConnected && connected) {
-					lastConnected = true
-					logger.log(
-						'[Repository] WebSocket reconnected, re-issuing circles_subscribe'
-					)
-					currentUnsubscribe?.()
-					currentUnsubscribe = null
-					circlesRpcV2.client
-						.subscribe(address)
-						.then((next) => {
-							if (stopped) return
-							currentUnsubscribe = (
-								next as Observable<CirclesEvent>
-							).subscribe(handler)
-						})
-						.catch((error) => {
-							logger.error(
-								'[Repository] Failed to re-subscribe after reconnect',
-								error
-							)
-						})
+					trySubscribe('reconnect')
 				}
 			}, HEALTH_CHECK_INTERVAL_MS)
 

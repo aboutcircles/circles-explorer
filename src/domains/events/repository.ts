@@ -247,11 +247,21 @@ const watchEventUpdates = async (
 
 			// add new event
 			if (eventIndex === MINUS_ONE) {
-				// The new SDK's CirclesEventType union differs from the legacy
-				// one used throughout the cache (legacy includes V1 + several
-				// V2 types not in the new SDK). Cast at the boundary; the
-				// runtime parser passes through any $event string verbatim.
-				const eventName = event.$event as unknown as CirclesEventType
+				// SDK emits the type under `event` for HTTP responses and
+				// `$event` for WS payloads. Prefer `event`, fall back to
+				// `$event`. Cast at the boundary because the cache uses a
+				// legacy union that's a strict superset of the new SDK's.
+				const eventNameRaw =
+					(event as { event?: unknown }).event ??
+					(event as { $event?: unknown }).$event
+				if (typeof eventNameRaw !== 'string') {
+					logger.error(
+						'[Repository] Subscription event missing event name',
+						event
+					)
+					return cacheData
+				}
+				const eventName = eventNameRaw as CirclesEventType
 				updatedEventsData.unshift({
 					...event,
 					key,
@@ -314,25 +324,44 @@ export const useEventsInfinite = (
 		// Flag to track if effect is still active
 		let isActive = true
 
-		// Setup subscription
+		// Setup subscription with retry+backoff. A single failure here used to
+		// kill live updates for the whole page session — now we retry until
+		// the effect is torn down or we hit the cap.
 		const setupSubscription = async () => {
-			try {
-				const addressToUse = isAddress(search ?? '') ? search : null
-				const cleanup = await watchEventUpdates(
-					queryKey,
-					queryClient,
-					addressToUse as Address | null
-				)
+			const MAX_ATTEMPTS = 6
+			const BASE_DELAY_MS = 1000
+			const MAX_DELAY_MS = 30_000
 
-				// Store cleanup function only if effect is still active
-				if (isActive) {
-					subscriptionReference.current = cleanup
-				} else {
-					// If effect was cleaned up during async operation, call cleanup directly
-					cleanup()
+			for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+				if (!isActive) return
+				try {
+					const addressToUse = isAddress(search ?? '') ? search : null
+					const cleanup = await watchEventUpdates(
+						queryKey,
+						queryClient,
+						addressToUse as Address | null
+					)
+
+					if (isActive) {
+						subscriptionReference.current = cleanup
+					} else {
+						cleanup()
+					}
+					return
+				} catch (error) {
+					const delayMs = Math.min(
+						MAX_DELAY_MS,
+						BASE_DELAY_MS * 2 ** (attempt - 1)
+					)
+					logger.error(
+						`[Repository] Subscription setup failed (attempt ${attempt}/${MAX_ATTEMPTS}); retrying in ${delayMs}ms`,
+						error
+					)
+					if (attempt === MAX_ATTEMPTS) return
+					await new Promise<void>((resolve) => {
+						setTimeout(resolve, delayMs)
+					})
 				}
-			} catch (error) {
-				logger.error('[Repository] Failed to set up event subscription', error)
 			}
 		}
 
