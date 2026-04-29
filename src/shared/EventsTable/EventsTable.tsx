@@ -1,5 +1,5 @@
 import { Button } from '@nextui-org/react'
-import { useCallback, type ReactElement } from 'react'
+import { useCallback, useEffect, useRef, type ReactElement } from 'react'
 
 import type { Column, Row } from 'components/VirtualizedTable'
 import { VirtualizedTable } from 'components/VirtualizedTable'
@@ -104,8 +104,38 @@ export function EventsTable({
 		void loadMoreEvents()
 	}, [isLoadMoreEnabled, isLoadingMore, hasMoreEvents, loadMoreEvents])
 
+	// IntersectionObserver on a sentinel placed where the Load More button
+	// sits. Triggers regardless of whether the user is scrolling the page or
+	// the inner virtualized container. Re-fires while the sentinel stays in
+	// view as new pages arrive (events.length changes), so the list keeps
+	// loading until either the sentinel scrolls out or hasMoreEvents=false.
+	const sentinelRef = useRef<HTMLDivElement>(null)
+	const handleAutoLoadRef = useRef(handleAutoLoad)
+	const isIntersectingRef = useRef(false)
+	handleAutoLoadRef.current = handleAutoLoad
+
+	useEffect(() => {
+		const sentinel = sentinelRef.current
+		if (!sentinel || !isLoadMoreEnabled) return undefined
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const intersecting = entries[0]?.isIntersecting ?? false
+				isIntersectingRef.current = intersecting
+				if (intersecting) handleAutoLoadRef.current()
+			},
+			{ rootMargin: '200px 0px' }
+		)
+		observer.observe(sentinel)
+		return () => observer.disconnect()
+	}, [isLoadMoreEnabled])
+
+	useEffect(() => {
+		if (isIntersectingRef.current) handleAutoLoadRef.current()
+	}, [events.length])
+
 	const loadMoreButton = isLoadMoreEnabled && (
-		<div className='my-4 flex justify-center'>
+		<div className='my-4 flex flex-col items-center'>
+			<div ref={sentinelRef} aria-hidden className='h-px w-full' />
 			<Button
 				color='primary'
 				isLoading={isLoadingMore}
