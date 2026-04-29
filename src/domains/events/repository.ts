@@ -32,6 +32,74 @@ import type {
 	PageResult
 } from './types'
 
+const INVITATION_TYPE_AT_SCALE = 'v2_at_scale'
+
+/**
+ * For CrcV2_RegisterHuman and CrcV2_InviteHuman events that were created via the
+ * InvitationModule (v2_at_scale), replace the Hub-level proxy inviter with the
+ * originInviter returned by circles_getInvitationOrigin.
+ */
+const resolveOriginInviters = async (events: Event[]): Promise<Event[]> => {
+	// Collect unique human addresses from registration / invite events
+	const humanAddresses = new Set<string>()
+	for (const event of events) {
+		if (event.event === 'CrcV2_RegisterHuman') {
+			const { avatar } = event as unknown as Record<string, unknown>
+			if (avatar) humanAddresses.add(String(avatar).toLowerCase())
+		} else if (event.event === 'CrcV2_InviteHuman') {
+			const { invited } = event as unknown as Record<string, unknown>
+			if (invited) humanAddresses.add(String(invited).toLowerCase())
+		}
+	}
+
+	if (humanAddresses.size === 0) return events
+
+	// Fetch invitation origins in parallel and build address → originInviter map
+	const originInviterMap = new Map<string, string>()
+	await Promise.all(
+		[...humanAddresses].map(async (humanAddress) => {
+			try {
+				const response = await circlesData.rpc.call<{
+					invitationType: string
+					inviter?: string | null
+				}>('circles_getInvitationOrigin', [humanAddress])
+
+				if (
+					response.result.invitationType === INVITATION_TYPE_AT_SCALE &&
+					response.result.inviter
+				) {
+					originInviterMap.set(humanAddress, response.result.inviter)
+				}
+			} catch {
+				// Fall back to the Hub-level inviter already on the event
+			}
+		})
+	)
+
+	if (originInviterMap.size === 0) return events
+
+	return events.map((event) => {
+		if (event.event === 'CrcV2_RegisterHuman') {
+			const { avatar } = event as unknown as Record<string, unknown>
+			const originInviter = avatar
+				? originInviterMap.get(String(avatar).toLowerCase())
+				: undefined
+			if (originInviter) {
+				return { ...event, inviter: originInviter } as unknown as Event
+			}
+		} else if (event.event === 'CrcV2_InviteHuman') {
+			const { invited } = event as unknown as Record<string, unknown>
+			const originInviter = invited
+				? originInviterMap.get(String(invited).toLowerCase())
+				: undefined
+			if (originInviter) {
+				return { ...event, inviter: originInviter } as unknown as Event
+			}
+		}
+		return event
+	})
+}
+
 // Query keys
 const CIRCLES_EVENTS_INFINITE_QUERY_KEY = 'circlesEventsInfinite'
 export const eventsKeys = {
@@ -76,7 +144,7 @@ export const eventsRepository = {
 			const rawEvents = Array.isArray(response.data.result)
 				? response.data.result
 				: response.data.result.events
-			const events = rawEvents.map((event) => {
+			let events = rawEvents.map((event) => {
 				eventTypesAmount.set(
 					event.event,
 					(eventTypesAmount.get(event.event) ?? 0) + ONE
@@ -96,6 +164,8 @@ export const eventsRepository = {
 					)
 				}
 			})
+
+			events = await resolveOriginInviters(events as unknown as Event[])
 
 			logger.log(
 				'[Repository] Queried circles events',

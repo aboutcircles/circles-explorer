@@ -251,49 +251,16 @@ export const avatarRepository = {
 		}
 	},
 
-	// Fetch invited by information
+	// Fetch invited by information, resolving originInviter for at-scale (InvitationModule) registrations
 	getInvitedBy: async (address: Address): Promise<Address | undefined> => {
 		try {
-			const LIMIT_ONE = 1
-			// todo: it'll be changed to circlesData.getInvitedBy after sdk fix
-			const query = new CirclesQuery<{
-				blockNumber: number
-				timestamp: number
-				transactionIndex: number
-				logIndex: number
-				transactionHash: string
-				avatar: Address
-				inviter: Address
-			}>(circlesData.rpc, {
-				namespace: 'CrcV2',
-				table: 'RegisterHuman',
-				columns: [
-					'blockNumber',
-					'timestamp',
-					'transactionIndex',
-					'logIndex',
-					'transactionHash',
-					'avatar',
-					'inviter'
-				],
-				filter: [
-					{
-						Type: 'FilterPredicate',
-						FilterType: 'Equals',
-						Column: 'avatar',
-						Value: address.toLowerCase()
-					}
-				],
-				sortOrder: 'DESC',
-				limit: LIMIT_ONE
-			})
+			const response = await circlesData.rpc.call<{
+				invitationType: string
+				inviter?: string | null
+			}>('circles_getInvitationOrigin', [address.toLowerCase()])
 
-			const hasResults = await query.queryNextPage()
-			if (!hasResults || !query.currentPage?.results.length) {
-				return undefined
-			}
-
-			return query.currentPage.results[0].inviter
+			const { inviter } = response.result
+			return inviter ? (inviter as Address) : undefined
 		} catch (error) {
 			logger.error('[Repository] Failed to fetch invited by:', error)
 			return undefined
