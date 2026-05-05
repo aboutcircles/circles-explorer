@@ -1,4 +1,4 @@
-import type { CirclesEventType } from '@circles-sdk/data'
+import type { CirclesEventType } from 'types/events'
 import { StatCard } from 'components/StatCard'
 import { TWO } from 'constants/common'
 import useBreakpoint from 'hooks/useBreakpoint'

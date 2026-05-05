@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => ({
 						'@tanstack/react-virtual'
 					],
 					'eth-vendor': ['ethers', 'viem'],
-					'circles-sdk': ['@circles-sdk/adapter-ethers', '@circles-sdk/data'],
+					'circles-sdk': ['@aboutcircles/sdk-rpc'],
 					'rsuite-vendor': ['rsuite']
 				}
 			}

@@ -1,23 +1,8 @@
-import type { TrustRelationRow } from '@circles-sdk/data/dist/rows/trustRelationRow'
 import type {
 	GroupedTrustRelations,
 	TransformedTrustRelation,
 	TrustRelation
 } from './types'
-
-/**
- * Adapts a trust relation from the SDK format to our domain model
- */
-export const adaptTrustRelationFromSdk = (
-	sdkTrustRelation: TrustRelationRow
-): TrustRelation => ({
-	subjectAvatar: sdkTrustRelation.subjectAvatar,
-	objectAvatar: sdkTrustRelation.objectAvatar,
-	relation: sdkTrustRelation.relation,
-	timestamp: sdkTrustRelation.timestamp,
-	versions: sdkTrustRelation.versions,
-	isMutual: sdkTrustRelation.relation === 'mutuallyTrusts'
-})
 
 /**
  * Transforms a trust relation to include type and address for UI convenience

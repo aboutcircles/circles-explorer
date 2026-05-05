@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Address } from 'viem'
 
+import { DEAD_ADDRESS } from 'constants/common'
 import { MILLISECONDS_IN_A_MINUTE } from 'constants/time'
-import { circlesData } from 'services/circlesData'
+import { circlesRpcV2 } from 'services/circlesData'
 import logger from 'services/logger'
 
-import { CirclesQuery } from '@circles-sdk/data'
-import { DEAD_ADDRESS } from 'constants/common'
 import { adaptAvatarFromSdk } from './adapters'
 import type { Avatar } from './types'
 
@@ -17,26 +16,54 @@ export const avatarKeys = {
 	stats: (id: string) => [...avatarKeys.detail(id), 'stats'] as const
 }
 
+const LIMIT_ONE = 1
+const VERSION_ONE = 1
+
+interface V1TokenRow {
+	token: Address
+	tokenOwner: Address
+	version: number
+}
+
+interface V1MintRow {
+	timestamp: number
+	from: Address
+	to: Address
+	tokenAddress: Address
+}
+
+interface V2MintRow {
+	timestamp: number
+	human: Address
+}
+
+interface AvatarRegRow {
+	timestamp: number
+	avatar: Address
+}
+
 // Repository methods
 export const avatarRepository = {
 	// Fetch avatar info with invitedBy and lastMint
 	getAvatar: async (address: Address): Promise<Avatar> => {
 		try {
-			// Fetch avatar info, invitedBy, and lastMint in parallel
-			const [avatarInfo, invitedBy, lastMint] = await Promise.all([
-				circlesData.getAvatarInfo(address),
-				avatarRepository.getInvitedBy(address),
-				avatarRepository.getLastMint(address)
-			])
+			const [avatarInfo, invitedBy, lastMint, registrationTimestamp] =
+				await Promise.all([
+					circlesRpcV2.avatar.getAvatarInfo(address),
+					avatarRepository.getInvitedBy(address),
+					avatarRepository.getLastMint(address),
+					avatarRepository.getRegistrationTimestamp(address)
+				])
 
 			if (!avatarInfo) throw new Error('Avatar not found')
 
-			// Create avatar with invitedBy and lastMint information
 			const avatar = adaptAvatarFromSdk(avatarInfo)
 			return {
 				...avatar,
 				invitedBy,
-				lastMint: lastMint ?? avatar.lastMint // Use the fetched lastMint if available, otherwise fall back to the creation timestamp
+				// Prefer last personal mint; fall back to registration time so
+				// groups/orgs (which never mint personally) still show a date.
+				lastMint: lastMint ?? registrationTimestamp ?? avatar.lastMint
 			}
 		} catch (error) {
 			logger.error('[Repository] Failed to fetch avatar:', error)
@@ -44,38 +71,43 @@ export const avatarRepository = {
 		}
 	},
 
+	// Fetch the on-chain registration timestamp for any avatar (human/group/org).
+	// circles_getAvatarInfoBatch doesn't return a timestamp, so we read it from
+	// the V_Crc.Avatars view directly.
+	getRegistrationTimestamp: async (
+		address: Address
+	): Promise<number | undefined> => {
+		try {
+			const rows = await circlesRpcV2.query.query<AvatarRegRow>({
+				Namespace: 'V_Crc',
+				Table: 'Avatars',
+				Columns: ['timestamp', 'avatar'],
+				Filter: [
+					{
+						Type: 'FilterPredicate',
+						FilterType: 'Equals',
+						Column: 'avatar',
+						Value: address.toLowerCase()
+					}
+				],
+				Order: [{ Column: 'blockNumber', SortOrder: 'DESC' }],
+				Limit: LIMIT_ONE
+			})
+			return rows[0]?.timestamp
+		} catch (error) {
+			logger.error('[Repository] Failed to fetch registration timestamp:', error)
+			return undefined
+		}
+	},
+
 	// Fetch last mint timestamp for V1 tokens
 	getLastMintV1: async (address: Address): Promise<number | undefined> => {
 		try {
-			const LIMIT_ONE = 1
-			const VERSION_ONE = 1
-
-			// Step 1: First query to get the token address for this avatar
-			const tokenQuery = new CirclesQuery<{
-				blockNumber: number
-				timestamp: number
-				transactionIndex: number
-				logIndex: number
-				transactionHash: string
-				version: number
-				type: string
-				token: Address
-				tokenOwner: Address
-			}>(circlesData.rpc, {
-				namespace: 'V_Crc',
-				table: 'Tokens',
-				columns: [
-					'blockNumber',
-					'timestamp',
-					'transactionIndex',
-					'logIndex',
-					'transactionHash',
-					'version',
-					'type',
-					'token',
-					'tokenOwner'
-				],
-				filter: [
+			const tokens = await circlesRpcV2.query.query<V1TokenRow>({
+				Namespace: 'V_Crc',
+				Table: 'Tokens',
+				Columns: ['token', 'tokenOwner', 'version'],
+				Filter: [
 					{
 						Type: 'Conjunction',
 						ConjunctionType: 'And',
@@ -90,48 +122,23 @@ export const avatarRepository = {
 								Type: 'FilterPredicate',
 								FilterType: 'Equals',
 								Column: 'version',
-								Value: VERSION_ONE // V1 tokens only
+								Value: VERSION_ONE
 							}
 						]
 					}
 				],
-				sortOrder: 'DESC',
-				limit: LIMIT_ONE
+				Order: [{ Column: 'blockNumber', SortOrder: 'DESC' }],
+				Limit: LIMIT_ONE
 			})
 
-			const hasTokenResults = await tokenQuery.queryNextPage()
-			if (!hasTokenResults || !tokenQuery.currentPage?.results.length) {
-				return undefined // No V1 token found for this avatar
-			}
+			const tokenAddress = tokens[0]?.token
+			if (!tokenAddress) return undefined
 
-			const tokenAddress = tokenQuery.currentPage.results[0].token
-
-			// Step 2: Now query for mint events using the token address
-			const mintQuery = new CirclesQuery<{
-				blockNumber: number
-				timestamp: number
-				transactionIndex: number
-				logIndex: number
-				transactionHash: string
-				tokenAddress: Address
-				from: Address
-				to: Address
-				amount: string
-			}>(circlesData.rpc, {
-				namespace: 'CrcV1',
-				table: 'Transfer',
-				columns: [
-					'blockNumber',
-					'timestamp',
-					'transactionIndex',
-					'logIndex',
-					'transactionHash',
-					'tokenAddress',
-					'from',
-					'to',
-					'amount'
-				],
-				filter: [
+			const mints = await circlesRpcV2.query.query<V1MintRow>({
+				Namespace: 'CrcV1',
+				Table: 'Transfer',
+				Columns: ['timestamp', 'from', 'to', 'tokenAddress'],
+				Filter: [
 					{
 						Type: 'Conjunction',
 						ConjunctionType: 'And',
@@ -152,21 +159,18 @@ export const avatarRepository = {
 								Type: 'FilterPredicate',
 								FilterType: 'Equals',
 								Column: 'tokenAddress',
-								Value: tokenAddress
+								// new SDK returns checksummed addresses; the indexer stores
+								// them lowercased — must normalize for the filter to match.
+								Value: tokenAddress.toLowerCase()
 							}
 						]
 					}
 				],
-				sortOrder: 'DESC',
-				limit: LIMIT_ONE
+				Order: [{ Column: 'blockNumber', SortOrder: 'DESC' }],
+				Limit: LIMIT_ONE
 			})
 
-			const hasMintResults = await mintQuery.queryNextPage()
-			if (!hasMintResults || !mintQuery.currentPage?.results.length) {
-				return undefined
-			}
-
-			return mintQuery.currentPage.results[0].timestamp
+			return mints[0]?.timestamp
 		} catch (error) {
 			logger.error('[Repository] Failed to fetch V1 last mint:', error)
 			return undefined
@@ -176,32 +180,11 @@ export const avatarRepository = {
 	// Fetch last mint timestamp for V2 tokens
 	getLastMintV2: async (address: Address): Promise<number | undefined> => {
 		try {
-			const LIMIT_ONE = 1
-			const query = new CirclesQuery<{
-				blockNumber: number
-				timestamp: number
-				transactionIndex: number
-				logIndex: number
-				transactionHash: string
-				human: Address
-				amount: string
-				startPeriod: number
-				endPeriod: number
-			}>(circlesData.rpc, {
-				namespace: 'CrcV2',
-				table: 'PersonalMint',
-				columns: [
-					'blockNumber',
-					'timestamp',
-					'transactionIndex',
-					'logIndex',
-					'transactionHash',
-					'human',
-					'amount',
-					'startPeriod',
-					'endPeriod'
-				],
-				filter: [
+			const mints = await circlesRpcV2.query.query<V2MintRow>({
+				Namespace: 'CrcV2',
+				Table: 'PersonalMint',
+				Columns: ['timestamp', 'human'],
+				Filter: [
 					{
 						Type: 'FilterPredicate',
 						FilterType: 'Equals',
@@ -209,16 +192,11 @@ export const avatarRepository = {
 						Value: address.toLowerCase()
 					}
 				],
-				sortOrder: 'DESC',
-				limit: LIMIT_ONE
+				Order: [{ Column: 'blockNumber', SortOrder: 'DESC' }],
+				Limit: LIMIT_ONE
 			})
 
-			const hasResults = await query.queryNextPage()
-			if (!hasResults || !query.currentPage?.results.length) {
-				return undefined
-			}
-
-			return query.currentPage.results[0].timestamp
+			return mints[0]?.timestamp
 		} catch (error) {
 			logger.error('[Repository] Failed to fetch V2 last mint:', error)
 			return undefined
@@ -228,22 +206,14 @@ export const avatarRepository = {
 	// Combined function to fetch the most recent mint timestamp
 	getLastMint: async (address: Address): Promise<number | undefined> => {
 		try {
-			// Fetch both V1 and V2 last mint timestamps in parallel
 			const [lastMintV1, lastMintV2] = await Promise.all([
 				avatarRepository.getLastMintV1(address),
 				avatarRepository.getLastMintV2(address)
 			])
 
-			// If both are undefined, return undefined
-			if (lastMintV1 === undefined && lastMintV2 === undefined) {
-				return undefined
-			}
-
-			// If one is undefined, return the other
+			if (lastMintV1 === undefined && lastMintV2 === undefined) return undefined
 			if (lastMintV1 === undefined) return lastMintV2
 			if (lastMintV2 === undefined) return lastMintV1
-
-			// Return the most recent timestamp
 			return Math.max(lastMintV1, lastMintV2)
 		} catch (error) {
 			logger.error('[Repository] Failed to fetch last mint:', error)
@@ -251,49 +221,16 @@ export const avatarRepository = {
 		}
 	},
 
-	// Fetch invited by information
+	// Fetch invited by information — origin inviter (the avatar that initiated the
+	// invite via InvitationModule), not the Hub-level proxy inviter that signed the
+	// registration tx. circles_getInvitationOrigin checks all invitation mechanisms
+	// (v2_standard, v2_escrow, v2_at_scale, v1_signup) in one query.
+	//
+	// Wrapped in try/catch because this runs in Promise.all alongside the avatar
+	// info / last-mint fetches; an RPC hiccup here should not fail the whole page.
 	getInvitedBy: async (address: Address): Promise<Address | undefined> => {
 		try {
-			const LIMIT_ONE = 1
-			// todo: it'll be changed to circlesData.getInvitedBy after sdk fix
-			const query = new CirclesQuery<{
-				blockNumber: number
-				timestamp: number
-				transactionIndex: number
-				logIndex: number
-				transactionHash: string
-				avatar: Address
-				inviter: Address
-			}>(circlesData.rpc, {
-				namespace: 'CrcV2',
-				table: 'RegisterHuman',
-				columns: [
-					'blockNumber',
-					'timestamp',
-					'transactionIndex',
-					'logIndex',
-					'transactionHash',
-					'avatar',
-					'inviter'
-				],
-				filter: [
-					{
-						Type: 'FilterPredicate',
-						FilterType: 'Equals',
-						Column: 'avatar',
-						Value: address.toLowerCase()
-					}
-				],
-				sortOrder: 'DESC',
-				limit: LIMIT_ONE
-			})
-
-			const hasResults = await query.queryNextPage()
-			if (!hasResults || !query.currentPage?.results.length) {
-				return undefined
-			}
-
-			return query.currentPage.results[0].inviter
+			return await circlesRpcV2.invitation.getInvitedBy(address)
 		} catch (error) {
 			logger.error('[Repository] Failed to fetch invited by:', error)
 			return undefined
@@ -301,10 +238,10 @@ export const avatarRepository = {
 	}
 }
 
-// React Query hooks
 // Cache time constants
 const AVATAR_CACHE_MINUTES = 5
 
+// React Query hooks
 export const useAvatar = (address?: Address) =>
 	useQuery({
 		queryKey: address ? avatarKeys.detail(address) : avatarKeys.all,

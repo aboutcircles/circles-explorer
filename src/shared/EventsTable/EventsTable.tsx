@@ -1,5 +1,5 @@
 import { Button } from '@nextui-org/react'
-import type { ReactElement } from 'react'
+import { useCallback, useEffect, useRef, type ReactElement } from 'react'
 
 import type { Column, Row } from 'components/VirtualizedTable'
 import { VirtualizedTable } from 'components/VirtualizedTable'
@@ -12,7 +12,6 @@ import { VirtualizedEventCards } from './VirtualizedEventCards'
 
 // todo:
 // write documentation how it works (with some specific details on other things)
-// infinite scroll (fetching events)
 // fetching profiles
 // virtualized table
 // virtualized event cards (mobile)
@@ -97,8 +96,52 @@ export function EventsTable({
 	// Choose columns based on context
 	const columns = txHash ? transactionColumns : defaultColumns
 
+	// Auto-load next page when scrolling near the end. The scroll listener in
+	// useVirtualScroll fires repeatedly while in range; gate explicitly so we
+	// don't queue redundant fetches between renders.
+	const handleAutoLoad = useCallback(() => {
+		if (!isLoadMoreEnabled || isLoadingMore || !hasMoreEvents) return
+		void loadMoreEvents()
+	}, [isLoadMoreEnabled, isLoadingMore, hasMoreEvents, loadMoreEvents])
+
+	// IntersectionObserver on a sentinel placed where the Load More button
+	// sits. Only fires after the user has actually scrolled — without that
+	// gate, a short list (e.g. when the avatar-scoped filter drops most events)
+	// keeps the sentinel in the viewport on mount and triggers an infinite
+	// fetch loop the user never asked for. rootMargin is 0 so the sentinel
+	// must be genuinely on-screen, not just within 200px of it.
+	const sentinelRef = useRef<HTMLDivElement>(null)
+	const handleAutoLoadRef = useRef(handleAutoLoad)
+	const hasUserScrolledRef = useRef(false)
+	handleAutoLoadRef.current = handleAutoLoad
+
+	useEffect(() => {
+		const markScrolled = () => {
+			hasUserScrolledRef.current = true
+		}
+		window.addEventListener('scroll', markScrolled, { passive: true })
+		return () => window.removeEventListener('scroll', markScrolled)
+	}, [])
+
+	useEffect(() => {
+		const sentinel = sentinelRef.current
+		if (!sentinel || !isLoadMoreEnabled) return undefined
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const intersecting = entries[0]?.isIntersecting ?? false
+				if (intersecting && hasUserScrolledRef.current) {
+					handleAutoLoadRef.current()
+				}
+			},
+			{ rootMargin: '0px' }
+		)
+		observer.observe(sentinel)
+		return () => observer.disconnect()
+	}, [isLoadMoreEnabled])
+
 	const loadMoreButton = isLoadMoreEnabled && (
-		<div className='my-4 flex justify-center'>
+		<div className='my-4 flex flex-col items-center'>
+			<div ref={sentinelRef} aria-hidden className='h-px w-full' />
 			<Button
 				color='primary'
 				isLoading={isLoadingMore}
@@ -135,6 +178,7 @@ export function EventsTable({
 							) : undefined
 						}
 						bottomContent={loadMoreButton || undefined}
+						onLoadMore={handleAutoLoad}
 					/>
 				</div>
 			) : null}
@@ -153,6 +197,7 @@ export function EventsTable({
 							renderCell={renderCell}
 							isLoading={isEventsLoading}
 							height={500}
+							onLoadMore={handleAutoLoad}
 						/>
 
 						{loadMoreButton ? (
