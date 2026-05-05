@@ -1,4 +1,4 @@
-import type { CirclesEventType } from 'types/events'
+import type { CirclesEventType } from '@circles-sdk/data'
 
 import {
 	V1_EVENTS,

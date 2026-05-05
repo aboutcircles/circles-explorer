@@ -1,4 +1,4 @@
-import type { TokenInfo } from '@aboutcircles/sdk-types'
+import type { TokenInfoRow } from '@circles-sdk/data/dist/rows/tokenInfoRow'
 import type { Address } from 'viem'
 import { formatUnits } from 'viem'
 
@@ -11,34 +11,21 @@ import { formatTokenUnits } from 'utils/number'
 import type { Token, TokenBalance } from './types'
 
 /**
- * Adapts a token from the SDK format to our domain model.
- * `timestamp` is not exposed by the new SDK's getTokenInfo; defaults to 0
- * (the field is currently unread anywhere in the explorer).
- *
- * Validates required fields at the boundary — a malformed RPC response
- * (e.g. missing tokenAddress/tokenOwner) would silently produce a Token
- * with undefined values that downstream code then casts to Address.
+ * Adapts a token from the SDK format to our domain model
  */
 export const adaptTokenFromSdk = (
-	sdkToken: TokenInfo,
+	sdkToken: TokenInfoRow,
 	totalSupply = '0',
 	isStopped = false
-): Token => {
-	if (!sdkToken.tokenAddress || !sdkToken.tokenOwner) {
-		throw new Error(
-			`adaptTokenFromSdk: missing required field(s) — tokenAddress=${sdkToken.tokenAddress}, tokenOwner=${sdkToken.tokenOwner}`
-		)
-	}
-	return {
-		address: sdkToken.tokenAddress,
-		owner: sdkToken.tokenOwner,
-		totalSupply,
-		type: sdkToken.type ?? sdkToken.tokenType,
-		version: sdkToken.version,
-		isStopped,
-		timestamp: 0
-	}
-}
+): Token => ({
+	address: sdkToken.token,
+	owner: sdkToken.tokenOwner,
+	totalSupply,
+	type: sdkToken.type,
+	version: sdkToken.version,
+	isStopped,
+	timestamp: sdkToken.timestamp
+})
 
 /**
  * Creates a token balance object

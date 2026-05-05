@@ -1,47 +1,19 @@
-import type { CirclesEventType } from 'types/events'
-import { avatarFields } from 'constants/avatarFields'
+import type { CirclesEventType } from '@circles-sdk/data'
 import type { Event, ProcessedEvent } from 'types/events'
 import { isAddress, isHash } from 'viem'
 
 const MIN_EVENTS_FOR_VIRTUAL_SUMMARY = 2
 
-const eventInvolves = (event: Event, lowerAddress: string): boolean => {
-	const record = event as unknown as Record<string, unknown>
-	for (const field of avatarFields) {
-		const value = record[field]
-		if (typeof value === 'string' && value.toLowerCase() === lowerAddress) {
-			return true
-		}
-	}
-	return false
-}
-
-const eventHasParticipantField = (event: Event): boolean => {
-	const record = event as unknown as Record<string, unknown>
-	for (const field of avatarFields) {
-		if (typeof record[field] === 'string') return true
-	}
-	return false
-}
-
 /**
  * Process events by grouping related events by transaction hash
- * and identifying summary events and their sub-events.
- *
- * When `address` is provided (avatar profile pages), drop tx groups whose
- * events have no participant overlap with the address. Required because the
- * indexer's `circles_events(address, ...)` over-returns flow-scope events
- * from unrelated transactions.
+ * and identifying summary events and their sub-events
  */
 export const processEvents = (
 	events: Event[],
 	eventTypes: Set<CirclesEventType>,
-	isTransactionPage = false,
-	address: string | null = null
+	isTransactionPage = false
 ): ProcessedEvent[] => {
 	if (events.length === 0) return []
-
-	const lowerAddress = address?.toLowerCase() ?? null
 
 	// Create a map to group events by transaction hash
 	const eventsByTxHash = new Map<string, Event[]>()
@@ -59,14 +31,6 @@ export const processEvents = (
 	const result: ProcessedEvent[] = []
 
 	for (const eventGroup of eventsByTxHash.values()) {
-		// Avatar-scoped pages: drop tx groups that don't involve this avatar.
-		if (
-			lowerAddress &&
-			!eventGroup.some((event) => eventInvolves(event, lowerAddress))
-		) {
-			continue
-		}
-
 		// Check if there's a summary event in this transaction
 		const summaryEvent = eventGroup.find(
 			(event) =>
@@ -88,18 +52,14 @@ export const processEvents = (
 			!isTransactionPage &&
 			eventGroup.length >= MIN_EVENTS_FOR_VIRTUAL_SUMMARY
 		) {
-			// Pick a template with participant fields so the summary row renders
-			// avatars instead of "No participants" when the first event happens
-			// to be a flow-scope event with no `from`/`to`/`avatar`/etc.
-			const summaryTemplate =
-				eventGroup.find((event) => eventHasParticipantField(event)) ??
-				eventGroup[0]
+			// Create virtual summary event for multiple events in same transaction (no real summary exists)
+			const [firstEvent] = eventGroup
 			const virtualSummaryEvent: ProcessedEvent = {
-				...summaryTemplate,
+				...firstEvent,
 				event: 'CrcV2_TransferSummary' as CirclesEventType,
 				isExpandable: false,
 				subEvents: eventGroup,
-				key: `${summaryTemplate.transactionHash}-virtual-summary`
+				key: `${firstEvent.transactionHash}-virtual-summary`
 			}
 			result.push(virtualSummaryEvent)
 		} else {

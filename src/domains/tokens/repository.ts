@@ -6,14 +6,17 @@ import tokenAbi from 'abis/tokenAbi.json'
 import {
 	CRC_TOKEN_DECIMALS,
 	MIGRATION_CONTRACT,
+	ONE,
 	PERCENTAGE_DIVIDER
 } from 'constants/common'
 import { MILLISECONDS_IN_A_MINUTE } from 'constants/time'
-import { circlesRpcV2 } from 'services/circlesData'
+import { circlesData } from 'services/circlesData'
 import { circlesRpc } from 'services/circlesRpc'
 import logger from 'services/logger'
 import { viemClient } from 'services/viemClient'
 
+import type { EventRow, TokenBalanceRow } from '@circles-sdk/data'
+import { CirclesQuery } from '@circles-sdk/data'
 import type { Avatar } from 'domains/avatars/types'
 import { fetchCrcV2TotalSupply } from 'services/circlesIndex'
 import {
@@ -40,6 +43,36 @@ export const tokenKeys = {
 
 // Repository methods
 export const tokenRepository = {
+	// Get total balance (V1)
+	getTotalBalance: async (address: Address): Promise<string> => {
+		try {
+			return await circlesData.getTotalBalance(address)
+		} catch (error) {
+			logger.error('[Repository] Failed to get total balance:', error)
+			return '0'
+		}
+	},
+
+	// Get total balance (V2)
+	getTotalBalanceV2: async (address: Address): Promise<string> => {
+		try {
+			return await circlesData.getTotalBalanceV2(address)
+		} catch (error) {
+			logger.error('[Repository] Failed to get total balance V2:', error)
+			return '0'
+		}
+	},
+
+	// Get token balances
+	getTokenBalances: async (address: Address): Promise<TokenBalanceRow[]> => {
+		try {
+			return await circlesData.getTokenBalances(address)
+		} catch (error) {
+			logger.error('[Repository] Failed to get token balances:', error)
+			return []
+		}
+	},
+
 	// Check if V1 token is stopped
 	isV1TokenStopped: async (tokenAddress: Address): Promise<boolean> => {
 		try {
@@ -60,22 +93,33 @@ export const tokenRepository = {
 	// Check if V2 token is stopped
 	isV2TokenStopped: async (address: Address): Promise<boolean> => {
 		try {
-			const stoppedRows = await circlesRpcV2.query.query<{ avatar: Address }>({
-				Namespace: 'CrcV2',
-				Table: 'Stopped',
-				Columns: ['avatar'],
-				Filter: [
-					{
-						Type: 'FilterPredicate',
-						FilterType: 'Equals',
-						Column: 'avatar',
-						Value: address.toLowerCase()
-					}
-				],
-				Order: [{ Column: 'blockNumber', SortOrder: 'DESC' }],
-				Limit: 1
-			})
-			return stoppedRows.length > 0
+			const query = new CirclesQuery<EventRow & { avatar: Address }>(
+				circlesData.rpc,
+				{
+					namespace: 'CrcV2',
+					table: 'Stopped',
+					columns: ['avatar'],
+					filter: [
+						{
+							Type: 'Conjunction',
+							ConjunctionType: 'Or',
+							Predicates: [
+								{
+									Type: 'FilterPredicate',
+									FilterType: 'Equals',
+									Column: 'avatar',
+									Value: address.toLowerCase()
+								}
+							]
+						}
+					],
+					sortOrder: 'DESC',
+					limit: ONE
+				}
+			)
+
+			const hasResults = await query.queryNextPage()
+			return hasResults && (query.currentPage?.results.length ?? 0) > 0
 		} catch (error) {
 			logger.error(
 				'[Repository] Failed to check if V2 token is stopped:',
@@ -92,7 +136,8 @@ export const tokenRepository = {
 	): Promise<Token | undefined> => {
 		try {
 			// Fetch token info from SDK
-			const tokenInfo = await circlesRpcV2.token.getTokenInfo(address)
+			const tokenInfoPromise = circlesData.getTokenInfo(address)
+			const tokenInfo = await tokenInfoPromise
 
 			if (!tokenInfo) return undefined
 

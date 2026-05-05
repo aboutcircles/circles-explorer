@@ -1,4 +1,4 @@
-import type { CirclesEventType } from 'types/events'
+import type { CirclesEventType } from '@circles-sdk/data'
 
 export const V1_EVENTS: CirclesEventType[] = [
 	'CrcV1_HubTransfer',
@@ -171,11 +171,6 @@ export const LABELS_MAPPER: Record<CirclesEventType, string> = {
 	CrcV2_CirclesBackingInitiated: 'Circles Backing Initiated',
 	CrcV2_CirclesBackingCompleted: 'Circles Backing Completed',
 	CrcV2_LBPDeployed: 'LBP Deployed',
-
-	CrcV2_Approval: 'Approval',
-	CrcV2_EIP712DomainChanged: 'EIP-712 Domain Changed',
-	CrcV2_SetAdvancedUsageFlag: 'Set Advanced Usage Flag',
-	CrcV2_Transfer: 'Transfer',
 
 	Crc_UnknownEvent: 'Unknown Event'
 }

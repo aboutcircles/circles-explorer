@@ -38,7 +38,8 @@ export function TotalLabel({ totalEvents }: TotalLabelProperties) {
 		<div className='flex items-center justify-between'>
 			<span className='text-small text-default-400'>
 				<span className='font-semibold text-black'>
-					Total Events: {totalEvents}
+					Total Events:{' '}
+					{totalEvents === 0 ? '...' : totalEvents}
 				</span>
 				<span className='ml-2 text-small text-default-400'>
 					(From Block: {currentStartBlock}

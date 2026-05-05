@@ -1,93 +1,13 @@
-import { PagedQuery } from '@aboutcircles/sdk-rpc'
 import { useQuery } from '@tanstack/react-query'
 import type { Address } from 'viem'
 
 import { MILLISECONDS_IN_A_MINUTE } from 'constants/time'
-import { circlesRpcV2 } from 'services/circlesData'
+import { circlesData } from 'services/circlesData'
 import logger from 'services/logger'
 
-import { groupTrustRelations } from './adapters'
+import { CirclesQuery } from '@circles-sdk/data'
+import { adaptTrustRelationFromSdk, groupTrustRelations } from './adapters'
 import type { GroupedTrustRelations, Invitation, TrustRelation } from './types'
-
-interface TrustRow {
-	timestamp: number
-	version: number
-	trustee: Address
-	truster: Address
-	blockNumber: number
-	transactionIndex: number
-	logIndex: number
-}
-
-// Cursor-paginated; loops until the indexer reports `hasMore: false`. Page size
-// stays under the indexer's per-call cap. The legacy SDK paginated identically.
-const TRUST_PAGE_SIZE = 1000
-// Soft warning threshold — well below any current avatar's actual trust count.
-// If we ever cross this, the trust UI is already showing thousands of rows and
-// we should think about server-side aggregation instead of paginating in the
-// browser.
-const TRUST_PAGE_WARN_THRESHOLD = 9500
-
-// Aggregate raw V1+V2 trust event rows into per-counterpart `TrustRelation`s.
-// Replaces the legacy SDK's `getAggregatedTrustRelations` so we can compute the
-// `versions` field client-side from the unified V_Crc.TrustRelations view —
-// the new SDK's server-side equivalent only returns V2 and drops `versions`.
-const aggregateTrustRows = (
-	avatarAddress: string,
-	rows: TrustRow[]
-): TrustRelation[] => {
-	const buckets = new Map<
-		Address,
-		{ rows: TrustRow[]; versions: Set<number> }
-	>()
-
-	for (const row of rows) {
-		const counterpart =
-			row.truster.toLowerCase() === avatarAddress
-				? row.trustee
-				: row.truster
-		if (counterpart.toLowerCase() === avatarAddress) continue
-		const bucket = buckets.get(counterpart) ?? { rows: [], versions: new Set() }
-		bucket.rows.push(row)
-		bucket.versions.add(row.version)
-		buckets.set(counterpart, bucket)
-	}
-
-	const relations: TrustRelation[] = []
-
-	for (const [counterpart, { rows: bucketRows, versions }] of buckets) {
-		const versionRelations = new Map<number, TrustRelation['relation']>()
-
-		for (const ver of versions) {
-			const versionRows = bucketRows.filter((row) => row.version === ver)
-			if (versionRows.length >= 2) {
-				versionRelations.set(ver, 'mutuallyTrusts')
-			} else if (versionRows[0].trustee.toLowerCase() === avatarAddress) {
-				versionRelations.set(ver, 'trustedBy')
-			} else {
-				versionRelations.set(ver, 'trusts')
-			}
-		}
-
-		const distinct = new Set(versionRelations.values())
-		const relation: TrustRelation['relation'] =
-			distinct.size === 1
-				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					[...distinct][0]!
-				: 'variesByVersion'
-
-		relations.push({
-			subjectAvatar: avatarAddress as Address,
-			objectAvatar: counterpart,
-			relation,
-			timestamp: Math.max(...bucketRows.map((row) => row.timestamp)),
-			versions: [...versions],
-			isMutual: relation === 'mutuallyTrusts'
-		})
-	}
-
-	return relations
-}
 
 // Query keys
 export const trustKeys = {
@@ -103,58 +23,12 @@ export const trustRepository = {
 	// Fetch trust relations
 	getTrustRelations: async (address: Address): Promise<TrustRelation[]> => {
 		try {
-			const lowerAddress = address.toLowerCase()
-			const pagedQuery = new PagedQuery<TrustRow>(circlesRpcV2.client, {
-				namespace: 'V_Crc',
-				table: 'TrustRelations',
-				sortOrder: 'DESC',
-				columns: [
-					'blockNumber',
-					'transactionIndex',
-					'logIndex',
-					'timestamp',
-					'version',
-					'trustee',
-					'truster'
-				],
-				filter: [
-					{
-						Type: 'Conjunction',
-						ConjunctionType: 'Or',
-						Predicates: [
-							{
-								Type: 'FilterPredicate',
-								FilterType: 'Equals',
-								Column: 'trustee',
-								Value: lowerAddress
-							},
-							{
-								Type: 'FilterPredicate',
-								FilterType: 'Equals',
-								Column: 'truster',
-								Value: lowerAddress
-							}
-						]
-					}
-				],
-				limit: TRUST_PAGE_SIZE
-			})
+			const sdkTrustRelations =
+				await circlesData.getAggregatedTrustRelations(address)
 
-			const rows: TrustRow[] = []
-			while (await pagedQuery.queryNextPage()) {
-				const page = pagedQuery.currentPage
-				if (!page) break
-				rows.push(...page.results)
-				if (!page.hasMore) break
-			}
-
-			if (rows.length >= TRUST_PAGE_WARN_THRESHOLD) {
-				logger.warn(
-					`[Repository] Trust relations near indexer cap for ${lowerAddress}: ${rows.length} rows`
-				)
-			}
-
-			return aggregateTrustRows(lowerAddress, rows)
+			return sdkTrustRelations.map((relation) =>
+				adaptTrustRelationFromSdk(relation)
+			)
 		} catch (error) {
 			logger.error('[Repository] Failed to fetch trust relations:', error)
 			throw new Error('Failed to fetch trust relations')
@@ -169,26 +43,49 @@ export const trustRepository = {
 		return groupTrustRelations(relations)
 	},
 
-	// Fetch invitations — accounts that this avatar invited.
-	// Uses circles_getInvitationsFrom which aggregates origin invitations across
-	// all mechanisms (v2_standard, v2_escrow, v2_at_scale), so this returns the
-	// people the avatar genuinely invited (not just the proxy/Hub-level view from
-	// RegisterHuman that the previous implementation queried).
+	// Fetch invitations
 	getInvitations: async (address: Address): Promise<Invitation[]> => {
 		try {
-			const response = await circlesRpcV2.invitation.getInvitationsFrom(
-				address,
-				true
-			)
-			return response.results.map((invited) => ({
-				blockNumber: invited.blockNumber ?? 0,
-				transactionIndex: 0,
-				logIndex: 0,
-				timestamp: invited.timestamp ?? 0,
-				transactionHash: '',
-				inviter: address,
-				avatar: invited.address
-			}))
+			const pageSize = 200
+			// todo: it'll be changed to circlesData.getInvitations after sdk fix
+			const query = new CirclesQuery<Invitation>(circlesData.rpc, {
+				namespace: 'CrcV2',
+				table: 'RegisterHuman',
+				columns: [
+					'blockNumber',
+					'timestamp',
+					'transactionIndex',
+					'logIndex',
+					'transactionHash',
+					'avatar',
+					'inviter'
+				],
+				filter: [
+					{
+						Type: 'FilterPredicate',
+						FilterType: 'Equals',
+						Column: 'inviter',
+						Value: address.toLowerCase()
+					}
+				],
+				sortOrder: 'DESC',
+				limit: pageSize
+			})
+
+			const invitations: Invitation[] = []
+
+			// Fetch all pages
+			let hasMorePages = true
+			while (hasMorePages) {
+				// eslint-disable-next-line no-await-in-loop
+				hasMorePages = await query.queryNextPage()
+				const results = query.currentPage?.results ?? []
+				if (results.length === 0) break
+				invitations.push(...results)
+				if (results.length < pageSize) break // No more results to fetch
+			}
+
+			return invitations
 		} catch (error) {
 			logger.error('[Repository] Failed to fetch invitations:', error)
 			return []

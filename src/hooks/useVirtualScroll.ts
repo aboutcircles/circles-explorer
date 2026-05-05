@@ -147,16 +147,7 @@ export function useVirtualScroll({
 		return () => element.removeEventListener('scroll', handleScroll)
 	}, [containerRef, handleScroll])
 
-	// Latch onReachEnd so it fires once per "scrolled-into-range" episode. The
-	// scroll handler runs many times while the user lingers near the bottom;
-	// without a latch we'd spam the callback before the next page can land.
-	// The latch resets when itemCount grows (next page arrived) or when the
-	// user scrolls back out of the threshold window.
-	const reachEndLatched = useRef(false)
-	useEffect(() => {
-		reachEndLatched.current = false
-	}, [itemCount])
-
+	// Set up infinite scroll using scroll event
 	useEffect(() => {
 		if (!onReachEnd || !containerRef.current) return void 0
 
@@ -164,35 +155,17 @@ export function useVirtualScroll({
 
 		const handleInfiniteScroll = () => {
 			const { scrollTop, scrollHeight, clientHeight } = element
-			const inRange =
+			// If we're within endThreshold pixels of the end, trigger the callback
+			if (
 				scrollHeight - scrollTop - clientHeight < endThreshold &&
 				itemCount > 0
-
-			if (!inRange) {
-				reachEndLatched.current = false
-				return
+			) {
+				onReachEnd()
 			}
-
-			if (reachEndLatched.current) return
-			reachEndLatched.current = true
-			onReachEnd()
 		}
 
 		element.addEventListener('scroll', handleInfiniteScroll)
-
-		// Also check on mount / itemCount change. When the rendered content
-		// doesn't fill the virtualized container (e.g. only a handful of
-		// events match the current filter or block range), the inner scroll
-		// never fires and the user can't reach the bottom. Auto-load until
-		// the container fills or the consumer reports `hasMoreEvents=false`.
-		// rAF defers the check until layout has run so scrollHeight reflects
-		// the just-rendered virtual items.
-		const rafId = requestAnimationFrame(handleInfiniteScroll)
-
-		return () => {
-			cancelAnimationFrame(rafId)
-			element.removeEventListener('scroll', handleInfiniteScroll)
-		}
+		return () => element.removeEventListener('scroll', handleInfiniteScroll)
 	}, [containerRef, itemCount, onReachEnd, endThreshold])
 
 	// Calculate padding values
