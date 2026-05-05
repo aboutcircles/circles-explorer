@@ -147,25 +147,57 @@ export function useVirtualScroll({
 		return () => element.removeEventListener('scroll', handleScroll)
 	}, [containerRef, handleScroll])
 
-	// Set up infinite scroll using scroll event
+	// Latch onReachEnd so it fires once per "scrolled-into-range" episode. The
+	// scroll handler runs many times while the user lingers near the bottom;
+	// without a latch we'd spam the callback before the next page can land.
+	// The latch resets when itemCount grows (next page arrived) or when the
+	// user scrolls back out of the threshold window.
+	const reachEndLatched = useRef(false)
+	useEffect(() => {
+		reachEndLatched.current = false
+	}, [itemCount])
+
+	// Track whether the user has actually scrolled the container. Auto-load
+	// must only fire as a response to user scrolling — never as a side effect
+	// of mount, itemCount changes, or layout. Without this gate the rAF/scroll
+	// path can fire repeatedly when content is shorter than the container
+	// (e.g. avatar-scoped filter drops most events), creating an infinite
+	// fetch loop the user never asked for.
+	const hasUserScrolled = useRef(false)
+
 	useEffect(() => {
 		if (!onReachEnd || !containerRef.current) return void 0
 
 		const element = containerRef.current
 
 		const handleInfiniteScroll = () => {
+			if (!hasUserScrolled.current) return
+
 			const { scrollTop, scrollHeight, clientHeight } = element
-			// If we're within endThreshold pixels of the end, trigger the callback
-			if (
+			const inRange =
 				scrollHeight - scrollTop - clientHeight < endThreshold &&
 				itemCount > 0
-			) {
-				onReachEnd()
+
+			if (!inRange) {
+				reachEndLatched.current = false
+				return
 			}
+
+			if (reachEndLatched.current) return
+			reachEndLatched.current = true
+			onReachEnd()
 		}
 
-		element.addEventListener('scroll', handleInfiniteScroll)
-		return () => element.removeEventListener('scroll', handleInfiniteScroll)
+		const markScrolled = () => {
+			hasUserScrolled.current = true
+			handleInfiniteScroll()
+		}
+
+		element.addEventListener('scroll', markScrolled)
+
+		return () => {
+			element.removeEventListener('scroll', markScrolled)
+		}
 	}, [containerRef, itemCount, onReachEnd, endThreshold])
 
 	// Calculate padding values

@@ -1,4 +1,4 @@
-import type { CirclesEventType } from '@circles-sdk/data'
+import type { CirclesEventType } from 'types/events'
 import cn from 'classnames'
 import type React from 'react'
 import { useCallback, useMemo } from 'react'

@@ -1,4 +1,4 @@
-import type { CirclesEventType } from '@circles-sdk/data'
+import type { CirclesEventType } from 'types/events'
 import { isNil } from 'utils/isNil'
 import { create } from 'zustand'
 

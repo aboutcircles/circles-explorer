@@ -10,3 +10,4 @@ coverage
 cypress/videos
 .env
 stats.html
+.netlify
