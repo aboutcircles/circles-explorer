@@ -2,7 +2,7 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import type { Address, Hex } from 'viem'
 import { hexToNumber, isAddress } from 'viem'
 
-import type { CirclesEventType } from '@circles-sdk/data'
+import type { CirclesEventType } from 'types/events'
 import axios from 'axios'
 import {
 	DEFAULT_BLOCK_RANGE,
@@ -14,7 +14,6 @@ import {
 import { CIRCLES_INDEXER_URL, MINUS_ONE, ONE } from 'constants/common'
 import { MILLISECONDS_IN_A_MINUTE } from 'constants/time'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { circlesData } from 'services/circlesData'
 import logger from 'services/logger'
 import { useFilterStore } from 'stores/useFilterStore'
 import type { CirclesEventsResponse, Event } from 'types/events'
@@ -24,6 +23,7 @@ import { useStartBlock } from 'hooks/useStartBlock'
 import { useParams } from 'react-router-dom'
 import { useBlockNumber } from 'services/viemClient'
 import { defineFiltersFromSearch, getEventKey, processEvents } from './adapters'
+import { subscribeWithResubscribe } from './resilientSubscription'
 import type {
 	EventsInfiniteData,
 	EventsQueryResult,
@@ -109,11 +109,13 @@ export const eventsRepository = {
 		}
 	},
 
-	// Subscribe to events
+	// Subscribe to events. The SDK reconnects on close but never re-issues
+	// circles_subscribe, so the server forgets the subscription on the first
+	// reconnect. The wrapper polls the SDK's WS state and re-issues subscribe
+	// on disconnect→reconnect transitions. Cache deduplication in
+	// watchEventUpdates absorbs any transient overlap.
 	subscribeToEvents: async (address?: Address) =>
-		address
-			? circlesData.subscribeToEvents(address)
-			: circlesData.subscribeToEvents()
+		subscribeWithResubscribe(address)
 }
 
 /**
@@ -245,18 +247,33 @@ const watchEventUpdates = async (
 
 			// add new event
 			if (eventIndex === MINUS_ONE) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-				// @ts-expect-error
+				// WS payloads from the SDK land here parsed as `{ $event, ... }`
+				// (see @aboutcircles/sdk-rpc parseRpcEvent). Read `$event`
+				// first; the `event` fallback is purely defensive in case a
+				// future SDK version changes the field name. Cast at the
+				// boundary because the cache uses a legacy union that's a
+				// strict superset of the new SDK's CirclesEventType.
+				const eventNameRaw =
+					(event as { $event?: unknown }).$event ??
+					(event as { event?: unknown }).event
+				if (typeof eventNameRaw !== 'string') {
+					logger.error(
+						'[Repository] Subscription event missing event name',
+						event
+					)
+					return cacheData
+				}
+				const eventName = eventNameRaw as CirclesEventType
 				updatedEventsData.unshift({
 					...event,
 					key,
-					event: event.$event
-				})
+					event: eventName
+				} as unknown as Event)
 
 				// update eventTypesAmount
 				eventTypesAmount.set(
-					event.$event,
-					(eventTypesAmount.get(event.$event) ?? 0) + ONE
+					eventName,
+					(eventTypesAmount.get(eventName) ?? 0) + ONE
 				)
 			}
 
@@ -308,26 +325,52 @@ export const useEventsInfinite = (
 
 		// Flag to track if effect is still active
 		let isActive = true
+		// Tracked so cleanup can cancel a pending backoff timer; otherwise the
+		// closure (with captured queryClient/queryKey/search) stays alive for
+		// up to MAX_DELAY_MS after unmount.
+		let retryTimer: ReturnType<typeof setTimeout> | null = null
 
-		// Setup subscription
+		// Setup subscription with retry+backoff. A single failure here used to
+		// kill live updates for the whole page session — now we retry until
+		// the effect is torn down or we hit the cap.
 		const setupSubscription = async () => {
-			try {
-				const addressToUse = isAddress(search ?? '') ? search : null
-				const cleanup = await watchEventUpdates(
-					queryKey,
-					queryClient,
-					addressToUse as Address | null
-				)
+			const MAX_ATTEMPTS = 6
+			const BASE_DELAY_MS = 1000
+			const MAX_DELAY_MS = 30_000
 
-				// Store cleanup function only if effect is still active
-				if (isActive) {
-					subscriptionReference.current = cleanup
-				} else {
-					// If effect was cleaned up during async operation, call cleanup directly
-					cleanup()
+			for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+				if (!isActive) return
+				try {
+					const addressToUse = isAddress(search ?? '') ? search : null
+					const cleanup = await watchEventUpdates(
+						queryKey,
+						queryClient,
+						addressToUse as Address | null
+					)
+
+					if (isActive) {
+						subscriptionReference.current = cleanup
+					} else {
+						cleanup()
+					}
+					return
+				} catch (error) {
+					const delayMs = Math.min(
+						MAX_DELAY_MS,
+						BASE_DELAY_MS * 2 ** (attempt - 1)
+					)
+					logger.error(
+						`[Repository] Subscription setup failed (attempt ${attempt}/${MAX_ATTEMPTS}); retrying in ${delayMs}ms`,
+						error
+					)
+					if (attempt === MAX_ATTEMPTS) return
+					await new Promise<void>((resolve) => {
+						retryTimer = setTimeout(() => {
+							retryTimer = null
+							resolve()
+						}, delayMs)
+					})
 				}
-			} catch (error) {
-				logger.error('[Repository] Failed to set up event subscription', error)
 			}
 		}
 
@@ -337,6 +380,10 @@ export const useEventsInfinite = (
 		// Clean up function
 		return function cleanup() {
 			isActive = false
+			if (retryTimer) {
+				clearTimeout(retryTimer)
+				retryTimer = null
+			}
 			if (subscriptionReference.current) {
 				const unsubscribe = subscriptionReference.current
 				subscriptionReference.current = null
@@ -460,10 +507,13 @@ export const useEvents = (
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data, updateEventTypesAmount, updateStartBlock])
 
-	// Process and filter events
+	// Process and filter events. Pass `address` so profile pages drop tx groups
+	// that don't actually involve the avatar — works around an indexer bug where
+	// `circles_events(address, ...)` over-returns flow-scope events from
+	// transactions the avatar isn't a participant in.
 	const filteredEvents = useMemo(
-		() => processEvents(allEvents, eventTypes, Boolean(txHash)),
-		[allEvents, eventTypes, txHash]
+		() => processEvents(allEvents, eventTypes, Boolean(txHash), address),
+		[allEvents, eventTypes, txHash, address]
 	)
 
 	// Load more events function
