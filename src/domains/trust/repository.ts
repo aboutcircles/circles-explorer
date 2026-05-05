@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import axios from 'axios'
 import type { Address } from 'viem'
 
 import { MILLISECONDS_IN_A_MINUTE } from 'constants/time'
@@ -7,7 +8,18 @@ import logger from 'services/logger'
 
 import { CirclesQuery } from '@circles-sdk/data'
 import { adaptTrustRelationFromSdk, groupTrustRelations } from './adapters'
-import type { GroupedTrustRelations, Invitation, TrustRelation } from './types'
+import type {
+	GroupedTrustRelations,
+	Invitation,
+	TrustRelation,
+	ValidateTrustRequest,
+	ValidateTrustResponse
+} from './types'
+
+// API endpoint for trust validation
+const TRUST_VALIDATION_API_URL: string =
+	(import.meta.env.VITE_TRUST_VALIDATION_API_URL as string) ||
+	'https://safe-watch-api-dev.ai.gnosisdev.com/validate-trust'
 
 // Query keys
 export const trustKeys = {
@@ -15,7 +27,8 @@ export const trustKeys = {
 	relations: (id: string) => [...trustKeys.all, 'relations', id] as const,
 	groupedRelations: (id: string) =>
 		[...trustKeys.all, 'groupedRelations', id] as const,
-	invitations: (id: string) => [...trustKeys.all, 'invitations', id] as const
+	invitations: (id: string) => [...trustKeys.all, 'invitations', id] as const,
+	validation: ['trust', 'validation'] as const
 }
 
 // Repository methods
@@ -90,6 +103,22 @@ export const trustRepository = {
 			logger.error('[Repository] Failed to fetch invitations:', error)
 			return []
 		}
+	},
+
+	// Validate trust connection
+	validateTrust: async (
+		request: ValidateTrustRequest
+	): Promise<ValidateTrustResponse> => {
+		try {
+			const response = await axios.post<ValidateTrustResponse>(
+				TRUST_VALIDATION_API_URL,
+				request
+			)
+			return response.data
+		} catch (error) {
+			logger.error('[Repository] Failed to validate trust:', error)
+			throw new Error('Failed to validate trust connection')
+		}
 	}
 }
 
@@ -128,4 +157,10 @@ export const useInvitations = (address?: Address) =>
 		},
 		enabled: !!address,
 		staleTime: TRUST_CACHE_MINUTES * MILLISECONDS_IN_A_MINUTE
+	})
+
+export const useValidateTrust = () =>
+	useMutation<ValidateTrustResponse, Error, ValidateTrustRequest>({
+		mutationFn: trustRepository.validateTrust,
+		mutationKey: trustKeys.validation
 	})

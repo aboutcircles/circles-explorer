@@ -25,6 +25,10 @@ export default function App(): ReactElement {
 							path='/avatar/:address'
 							element={<Navigate to='events' replace />}
 						/>
+						<Route
+							path='/avatar/:address/simulate-trust'
+							element={<Navigate to='simulate' replace />}
+						/>
 						<Route path='/avatar/:address/:tab' element={<AvatarPage />} />
 						<Route
 							path='/tx/:txHash'

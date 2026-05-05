@@ -21,6 +21,7 @@ import { useProfileStore } from 'stores/useProfileStore'
 
 import { AvatarInfo } from './AvatarInfo'
 import { AvatarStats } from './AvatarStats'
+import { SimulateTrustForm } from './SimulateTrustForm'
 import TokenHolders from './TokenHolders'
 import { TrustRelations } from './TrustRelations'
 
@@ -28,7 +29,7 @@ import { TrustRelations } from './TrustRelations'
 const SocialGraph = lazy(async () => import('./SocialGraph/index'))
 
 // Tab keys must match the URL paths
-const TABS = ['events', 'holders', 'trust', 'graph'] as const
+const TABS = ['events', 'holders', 'trust', 'graph', 'simulate'] as const
 type TabKey = (typeof TABS)[number]
 
 export default function Avatar() {
@@ -147,6 +148,9 @@ export default function Avatar() {
 					) : (
 						<Loader />
 					)}
+				</Tab>
+				<Tab key='simulate' title='Simulate Trust'>
+					{address ? <SimulateTrustForm address={address as Address} /> : null}
 				</Tab>
 			</Tabs>
 		</div>
