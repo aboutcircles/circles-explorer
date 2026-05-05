@@ -157,12 +157,22 @@ export function useVirtualScroll({
 		reachEndLatched.current = false
 	}, [itemCount])
 
+	// Track whether the user has actually scrolled the container. Auto-load
+	// must only fire as a response to user scrolling — never as a side effect
+	// of mount, itemCount changes, or layout. Without this gate the rAF/scroll
+	// path can fire repeatedly when content is shorter than the container
+	// (e.g. avatar-scoped filter drops most events), creating an infinite
+	// fetch loop the user never asked for.
+	const hasUserScrolled = useRef(false)
+
 	useEffect(() => {
 		if (!onReachEnd || !containerRef.current) return void 0
 
 		const element = containerRef.current
 
 		const handleInfiniteScroll = () => {
+			if (!hasUserScrolled.current) return
+
 			const { scrollTop, scrollHeight, clientHeight } = element
 			const inRange =
 				scrollHeight - scrollTop - clientHeight < endThreshold &&
@@ -178,20 +188,15 @@ export function useVirtualScroll({
 			onReachEnd()
 		}
 
-		element.addEventListener('scroll', handleInfiniteScroll)
+		const markScrolled = () => {
+			hasUserScrolled.current = true
+			handleInfiniteScroll()
+		}
 
-		// Also check on mount / itemCount change. When the rendered content
-		// doesn't fill the virtualized container (e.g. only a handful of
-		// events match the current filter or block range), the inner scroll
-		// never fires and the user can't reach the bottom. Auto-load until
-		// the container fills or the consumer reports `hasMoreEvents=false`.
-		// rAF defers the check until layout has run so scrollHeight reflects
-		// the just-rendered virtual items.
-		const rafId = requestAnimationFrame(handleInfiniteScroll)
+		element.addEventListener('scroll', markScrolled)
 
 		return () => {
-			cancelAnimationFrame(rafId)
-			element.removeEventListener('scroll', handleInfiniteScroll)
+			element.removeEventListener('scroll', markScrolled)
 		}
 	}, [containerRef, itemCount, onReachEnd, endThreshold])
 

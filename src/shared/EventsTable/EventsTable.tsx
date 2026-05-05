@@ -105,14 +105,23 @@ export function EventsTable({
 	}, [isLoadMoreEnabled, isLoadingMore, hasMoreEvents, loadMoreEvents])
 
 	// IntersectionObserver on a sentinel placed where the Load More button
-	// sits. Triggers regardless of whether the user is scrolling the page or
-	// the inner virtualized container. Re-fires while the sentinel stays in
-	// view as new pages arrive (events.length changes), so the list keeps
-	// loading until either the sentinel scrolls out or hasMoreEvents=false.
+	// sits. Only fires after the user has actually scrolled — without that
+	// gate, a short list (e.g. when the avatar-scoped filter drops most events)
+	// keeps the sentinel in the viewport on mount and triggers an infinite
+	// fetch loop the user never asked for. rootMargin is 0 so the sentinel
+	// must be genuinely on-screen, not just within 200px of it.
 	const sentinelRef = useRef<HTMLDivElement>(null)
 	const handleAutoLoadRef = useRef(handleAutoLoad)
-	const isIntersectingRef = useRef(false)
+	const hasUserScrolledRef = useRef(false)
 	handleAutoLoadRef.current = handleAutoLoad
+
+	useEffect(() => {
+		const markScrolled = () => {
+			hasUserScrolledRef.current = true
+		}
+		window.addEventListener('scroll', markScrolled, { passive: true })
+		return () => window.removeEventListener('scroll', markScrolled)
+	}, [])
 
 	useEffect(() => {
 		const sentinel = sentinelRef.current
@@ -120,18 +129,15 @@ export function EventsTable({
 		const observer = new IntersectionObserver(
 			(entries) => {
 				const intersecting = entries[0]?.isIntersecting ?? false
-				isIntersectingRef.current = intersecting
-				if (intersecting) handleAutoLoadRef.current()
+				if (intersecting && hasUserScrolledRef.current) {
+					handleAutoLoadRef.current()
+				}
 			},
-			{ rootMargin: '200px 0px' }
+			{ rootMargin: '0px' }
 		)
 		observer.observe(sentinel)
 		return () => observer.disconnect()
 	}, [isLoadMoreEnabled])
-
-	useEffect(() => {
-		if (isIntersectingRef.current) handleAutoLoadRef.current()
-	}, [events.length])
 
 	const loadMoreButton = isLoadMoreEnabled && (
 		<div className='my-4 flex flex-col items-center'>
