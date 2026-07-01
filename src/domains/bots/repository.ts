@@ -7,9 +7,7 @@ import logger from 'services/logger'
 
 import type { BotApiResponse, BotVerdict, BotVerdictMap } from './types'
 
-// API endpoint for bot detection
-const BOT_API_URL =
-	'https://squid-app-3gxnl.ondigitalocean.app/aboutcircles-advanced-analytics2/bot-analytics/classify'
+const BOT_API_URL = 'https://rpc.aboutcircles.com/analytics/bot-analytics/classify'
 
 // Cache time constants
 const BOT_CACHE_MINUTES = 30
